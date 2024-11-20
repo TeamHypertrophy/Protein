@@ -10,5 +10,4 @@ async fn rocket() -> _ {
     rocket::build()
         .mount("/", routes![index])
         .mount("/hi", routes![index])
-    
 }

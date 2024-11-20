@@ -1,15 +1,21 @@
+version: '3.8'
+
 services:
   db:
-    image: postgres
+    container_name: hypertrophy-database
+    image: postgres:15
     restart: always
     environment:
       POSTGRES_USER: ghoul
       POSTGRES_DB: mei
       POSTGRES_PASSWORD: password
     volumes:
-      - pgdata:/var/lib/postgresql/data 
+      - pgdata:/var/lib/postgresql/
+    networks:
+      - server
 
   api:
+    container_name: hypertrophy-api
     build: .
     depends_on:
       db:
@@ -18,16 +24,22 @@ services:
       redis:
         condition: service_started
     environment:
-      - DATABASE_URL=postgres://ghoul:password@db/mei
+      - DATABASE_URL=postgres://ghoul:password@hypertrophy-database/mei
     ports:
       - "8000:5000"
+    networks:
+      - server
 
 
   redis:
+    container_name: hypertrophy-redis
     image: "redis:alpine"
     restart: always
     ports:
       - "6379:6379"
  
 volumes:
-  pgdata:
+  pgdata: {}
+
+networks:
+  server: {}
