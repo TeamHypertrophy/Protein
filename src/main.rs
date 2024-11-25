@@ -1,13 +1,27 @@
+// Rocket Boilerplate
 #[macro_use] extern crate rocket;
 
-#[get("/")]
-async fn index() -> &'static str {
-    "Hello, world!"
-}
+// Schema File
+mod schema;
 
+// Database
+mod models;
+mod db;
+
+// API Routes
+pub mod api;
+
+// Error Handlers
+pub mod errors;
+
+// Launch Rocket Instance
 #[launch]
 async fn rocket() -> _ {
+    let pool = db::establish_connection();
+
     rocket::build()
-        .mount("/", routes![index])
-        .mount("/hi", routes![index])
+        .manage(pool)
+        .mount("/", routes![api::index::index])
+        .mount("/users", routes![api::users::get])
+        .register("/", catchers![errors::default, errors::not_found])
 }
