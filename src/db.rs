@@ -1,22 +1,30 @@
-// Diesel Imports
-use diesel::r2d2::{ConnectionManager, Pool};
-use diesel::PgConnection;
+// Diesel Async
+use diesel_async::AsyncPgConnection;
+use diesel_async::pooled_connection::AsyncDieselConnectionManager;
+use diesel_async::pooled_connection::bb8::Pool;
+
+// .env Loader
 use dotenvy::dotenv;
 use std::env;
 
-
 // Establish Database Connection Pool
 
-pub type DatabasePool = Pool<ConnectionManager<PgConnection>>;
+pub type DatabasePool = Pool<AsyncPgConnection>;
 
-pub fn establish_connection() -> DatabasePool {
+pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::Error>> {
+    // -- Load .env
     dotenv().ok();
 
+    // -- Get Database URL
     let database_url = env::var("DATABASE_URL").expect("[!] DATABASE_URL Environment Variable Must Be Set");
 
-    let manager = ConnectionManager::<PgConnection>::new(database_url);
+    // -- Create Manager
+    let manager = AsyncDieselConnectionManager::<AsyncPgConnection>::new(database_url);
 
-    Pool::builder()
+    // -- Create Pool and Return
+    let pool = Pool::builder()
         .build(manager)
-        .expect("[!] Failed to Create Database Pool")
+        .await?;
+
+    Ok(pool)
 }

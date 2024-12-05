@@ -1,0 +1,12 @@
+{
+    "recommendations": [
+        "rust-lang.rust-analyzer",
+        "rangav.vscode-thunder-client",
+        "fill-labs.dependi",
+        "tamasfe.even-better-toml",
+        "seatonjiang.gitmoji-vscode",
+        "yzhang.markdown-all-in-one",
+        "DavidAnson.vscode-markdownlint",
+        "dustypomerleau.rust-syntax",
+    ]
+}

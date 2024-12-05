@@ -1,0 +1,7 @@
+# Source files
+# ============
+*          text=auto
+
+*.rs       text diff=rust
+*.toml     text diff=toml
+Cargo.lock text

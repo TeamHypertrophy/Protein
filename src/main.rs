@@ -11,17 +11,21 @@ mod db;
 // API Routes
 pub mod api;
 
+// Fairings
+pub mod fairings;
+
 // Error Handlers
 pub mod errors;
 
 // Launch Rocket Instance
 #[launch]
-async fn rocket() -> _ {
-    let pool = db::establish_connection();
+async fn protein() -> _ {
+    let pool = db::establish_connection().await.ok().unwrap();
 
     rocket::build()
         .manage(pool)
-        .mount("/", routes![api::index::index])
+        .attach(fairings::cors::Cors)
+        .mount("/", routes![api::index::index, api::index::cat])
         .mount("/users", routes![api::users::get])
         .register("/", catchers![errors::default, errors::not_found])
 }

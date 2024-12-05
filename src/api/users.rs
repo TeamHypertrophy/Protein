@@ -1,3 +1,4 @@
+use diesel_async::RunQueryDsl;
 // Rocket
 use rocket::get;
 use rocket::State;
@@ -20,14 +21,14 @@ pub async fn get(user_id: i32, pool: &State<DatabasePool>) -> Option<Json<User>>
     let pool = pool;
 
     // [=] Creating Database Connection
-    let conn = &mut pool.get().expect("Failed");
+    let conn = &mut pool.get().await.ok()?;
 
     // [>] Fetch User and Return
     users
         .find(user_id)
         .select(User::as_select())
         .first(conn)
-        .map(Json)
+        .await
         .ok()
+        .map(Json)
 }
-

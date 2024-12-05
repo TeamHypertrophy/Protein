@@ -4,9 +4,19 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+# -- Base API Requirement
 rocket = {version = "0.5.1", features = ["json"]}
-diesel = { version = "2.2.5", features = ["postgres", "r2d2"] }
-dotenvy = "0.15"
+# -- Diesel Requirements (Database)
+diesel = { version = "2.2.6", features = ["postgres", "r2d2"] }
+diesel-async = { version = "0.5.2", features = ["postgres", "bb8"] }
+## -- Async
+tokio = { version = "1.42.0", features = ["full"] }
+# -- Requests
+reqwest = { version = "0.12", features = ["json"] }
+# -- Serialization
 serde = {version = "1.0.215", features = ["derive"]}
 serde_json = { version = "1.0.133", optional = true }
-tokio = { version = "1.41.1", features = ["full"] }
+# -- .env
+dotenvy = "0.15"
+# -- Extras
+futures-util = "0.3.21"
