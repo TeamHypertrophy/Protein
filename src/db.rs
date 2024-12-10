@@ -1,5 +1,5 @@
 // Diesel Async
-use diesel_async::AsyncPgConnection;
+use diesel_async::pg::AsyncPgConnection;
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_async::pooled_connection::bb8::Pool;
 
@@ -10,6 +10,7 @@ use std::env;
 // Establish Database Connection Pool
 
 pub type DatabasePool = Pool<AsyncPgConnection>;
+pub type DatabaseConnection = AsyncPgConnection;
 
 pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::Error>> {
     // -- Load .env
@@ -23,6 +24,7 @@ pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::
 
     // -- Create Pool and Return
     let pool = Pool::builder()
+        .max_size(10)
         .build(manager)
         .await?;
 

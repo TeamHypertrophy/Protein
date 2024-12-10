@@ -9,6 +9,7 @@ rocket = {version = "0.5.1", features = ["json"]}
 # -- Diesel Requirements (Database)
 diesel = { version = "2.2.6", features = ["postgres", "r2d2"] }
 diesel-async = { version = "0.5.2", features = ["postgres", "bb8"] }
+diesel_async_migrations = { version = "0.15.0"}
 ## -- Async
 tokio = { version = "1.42.0", features = ["full"] }
 # -- Requests
