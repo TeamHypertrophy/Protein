@@ -5,6 +5,7 @@ use diesel::prelude::*;
 use rocket::serde::{Serialize, Deserialize};
 
 // User Model
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[derive(Queryable, Selectable)]
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
