@@ -24,6 +24,11 @@ pub mod fairings;
 // Error Handlers
 pub mod errors;
 
+// Shadow
+use shadow_rs::shadow;
+
+shadow!(build);
+
 // Migrations
 
 //pub const MIGRATIONS: diesel_async_migrations::EmbeddedMigrations = diesel_async_migrations::embed_migrations!();
@@ -46,6 +51,7 @@ async fn protein() -> _ {
         //.attach(AdHoc::on_ignite("[!] Database Migrations", run_database_migrations(conn)))
         .mount("/", routes![api::index::index])
         .mount("/health", routes![api::health::api, api::health::redis, api::health::postgres])
+        .mount("/system", routes![api::system::rust])
         .mount("/v1/users", routes![api::users::get, api::users::all])
         .register("/", catchers![errors::default, errors::not_found])
 }
