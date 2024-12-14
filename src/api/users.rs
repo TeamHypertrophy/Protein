@@ -31,13 +31,13 @@ pub async fn get(user_id: i32, pool: &State<DatabasePool>, redis: &State<RedisPo
     if cache.is_null() {
 
         // [=] Create Database Connection
-        let conn = &mut pool.get().await.ok()?;
+        let connection = &mut pool.get().await.ok()?;
 
         // [>] Fetch User from Database
         data = users
             .find(user_id)
             .select(User::as_select())
-            .first(conn)
+            .first(connection)
             .await
             .ok();
 
@@ -63,12 +63,12 @@ pub async fn get(user_id: i32, pool: &State<DatabasePool>, redis: &State<RedisPo
 #[get("/all", format = "json")]
 pub async fn all(pool: &State<DatabasePool>) -> Option<Json<Vec<User>>> {
     // [=] Creating Database Connection
-    let conn = &mut pool.get().await.ok()?;
+    let connection = &mut pool.get().await.ok()?;
 
     // [>] Fetch List of Users and Return
     users
         .select(User::as_select())
-        .load(conn)
+        .load(connection)
         .await
         .ok()
         .map(Json)

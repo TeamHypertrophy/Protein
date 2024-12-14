@@ -51,7 +51,7 @@ async fn protein() -> _ {
         //.attach(AdHoc::on_ignite("[!] Database Migrations", run_database_migrations(conn)))
         .mount("/", routes![api::index::index])
         .mount("/health", routes![api::health::api, api::health::redis, api::health::postgres])
-        .mount("/system", routes![api::system::rust])
+        .mount("/system", routes![api::system::rust, api::system::package, api::system::git])
         .mount("/v1/users", routes![api::users::get, api::users::all])
         .register("/", catchers![errors::default, errors::not_found])
 }
