@@ -6,17 +6,17 @@ build = "build.rs"
 
 [dependencies]
 # -- Base API Requirement
-rocket = {version = "0.5.1", features = ["json"]}
+rocket = { version = "0.5.1", features = ["json"] }
 # -- Diesel Requirements (Database)
 diesel = { version = "2.2.6", features = ["postgres", "r2d2"] }
 diesel-async = { version = "0.5.2", features = ["postgres", "bb8"] }
-diesel_async_migrations = { version = "0.15.0"}
+diesel_async_migrations = { version = "0.15.0" }
 ## -- Async
 tokio = { version = "1.42.0", features = ["full"] }
 # -- Requests
 reqwest = { version = "0.12", features = ["json"] }
 # -- Serialization
-serde = {version = "1.0.216", features = ["derive"]}
+serde = { version = "1.0.216", features = ["derive"] }
 serde_json = { version = "1.0.133", optional = true }
 # -- .env
 dotenvy = "0.15"
@@ -28,12 +28,22 @@ tracing-subscriber = "0.3.19"
 # -- Error Handling
 anyhow = "1.0"
 # -- Redis
-fred = { version = "10.0.1", features = ["serde-json", "i-redis-json", "i-keys"]}
+fred = { version = "10.0.1", features = [
+    "serde-json",
+    "i-redis-json",
+    "i-keys",
+] }
 ## -- Shadow
-shadow-rs = "0.36.1"
+shadow-rs = {version = "0.37.0", features = ["metadata"]}
 
 [build-dependencies]
-shadow-rs = "0.36.1"
+shadow-rs = {version = "0.37.0", features = ["metadata"]}
 
 [package.metadata.cargo-udeps.ignore]
-normal = ["anyhow", "tracing", "tracing-subscriber", "reqwest", "diesel_async_migrations"]
+normal = [
+    "anyhow",
+    "tracing",
+    "tracing-subscriber",
+    "reqwest",
+    "diesel_async_migrations",
+]

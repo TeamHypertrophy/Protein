@@ -5,7 +5,7 @@ use rocket::serde::json::{json, Value};
 // Shadow
 use crate::build;
 
-#[get("/rust", format = "json")]
+#[get("/rust", format = "application/json")]
 pub async fn rust() -> Value {
     json!({
         "RUST_VERSION": build::RUST_VERSION,
@@ -14,7 +14,7 @@ pub async fn rust() -> Value {
     })
 }
 
-#[get("/package", format = "json")]
+#[get("/package", format = "application/json")]
 pub async fn package() -> Value {
     json!({
         "BUILD_OS": build::BUILD_OS,
@@ -26,7 +26,7 @@ pub async fn package() -> Value {
     })
 }
 
-#[get("/git", format = "json")]
+#[get("/git", format = "application/json")]
 pub async fn git() -> Value {
     json!({
         "GIT_BRANCH": shadow_rs::branch(),

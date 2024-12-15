@@ -10,7 +10,9 @@ repos:
     -   id: end-of-file-fixer
     -   id: mixed-line-ending
     -   id: trailing-whitespace
-- repo: https://github.com/est31/cargo-udeps
-  rev: v0.1.47
-  hooks:
-  - id: udeps
+# DEVELOPER NOTE: My machine is running a very slow HDD, and compiling the entire build at each commit takes an exponentional amount of time
+# I am commenting this out until I get an NVME SSD which would significantly improve build times and allow less annoynance
+# - repo: https://github.com/est31/cargo-udeps
+#   rev: v0.1.47
+#   hooks:
+#   - id: udeps

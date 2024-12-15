@@ -1,4 +1,4 @@
 @echo off
 
 cls
-cargo run
+cargo run --release

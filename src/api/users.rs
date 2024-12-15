@@ -1,6 +1,5 @@
 // Rocket
-use rocket::get;
-use rocket::State;
+use rocket::{get, State};
 use rocket::serde::json;
 use rocket::serde::json::{Json, Value};
 
@@ -19,7 +18,7 @@ use crate::schema::users::dsl::*;
 // Redis
 use fred::prelude::*;
 
-#[get("/get/<user_id>", format = "application/json")]
+#[get("/<user_id>", format = "application/json")]
 pub async fn get(user_id: i32, pool: &State<DatabasePool>, redis: &State<RedisPool>) -> Option<Json<User>> {
     // [?] Check if User Data is in Redis Cache
     let cache: Value = redis.get(user_id.to_string()).await.expect("[-] Getting User In Cache Failed!");
@@ -56,7 +55,7 @@ pub async fn get(user_id: i32, pool: &State<DatabasePool>, redis: &State<RedisPo
         let user: User = json::from_value(cache).unwrap();
 
         // [>] Return User
-        return Some(user).map(Json);
+        Some(user).map(Json)
     }
 }
 
