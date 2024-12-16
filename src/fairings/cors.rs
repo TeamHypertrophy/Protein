@@ -1,6 +1,7 @@
+// Rocket
+use rocket::{Request, Response};
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
-use rocket::{Request, Response};
 
 pub struct Cors;
 

@@ -1,10 +1,5 @@
 // Rocket Macro
 #[macro_use] extern crate rocket;
-#[macro_use] extern crate diesel_async_migrations;
-
-// Rocket
-use rocket::{Rocket, Build};
-use rocket::fairing::AdHoc;
 
 // Schema File
 mod schema;
@@ -30,31 +25,39 @@ use shadow_rs::shadow;
 
 shadow!(build);
 
-// Database Migrations
-
-pub async fn run_database_migrations(rocket: Rocket<Build>) -> Rocket<Build> {
-    pub const MIGRATIONS: diesel_async_migrations::EmbeddedMigrations = embed_migrations!("migrations");
-
-    // Run Migrations
-    //let pool = rocket.state::<db::DatabasePool>().unwrap();
-    //let mut connection = pool.get().await.ok().unwrap();
-    //MIGRATIONS.run_pending_migrations(&mut connection).await.unwrap();
-
-    // Return Rocket<Build> Instance
-    rocket
-}
+// Tracing
+use std::path::Path;
+use tracing_appender::rolling::{RollingFileAppender, Rotation};
+use tracing_subscriber::fmt::writer::MakeWriterExt;
+use tracing_subscriber;
 
 // Launch Rocket Instance
 #[launch]
 async fn protein() -> _ {
+    let path = Path::new("./logs/protein/");
+
+    let appender = RollingFileAppender::builder()
+        .rotation(Rotation::DAILY)
+        .filename_suffix("[Protein].log")
+        .build(path)
+        .expect("[!] Error Building Log Files");
+
+    let (non_blocking_appender, _guard) = tracing_appender::non_blocking(appender);
+    let stdout = std::io::stdout.with_max_level(tracing::Level::INFO);
+
+    tracing_subscriber::fmt()
+        .with_writer(stdout.and(non_blocking_appender))
+        .init();
+
     let pool = db::establish_connection().await.ok().unwrap();
     let redis = cache::redis::build_redis().await.ok().unwrap();
+
 
     rocket::build()
         .manage(pool)
         .manage(redis)
         .attach(fairings::cors::Cors)
-        .attach(AdHoc::on_ignite("[!] Database Migrations", run_database_migrations))
+        .attach(fairings::logging::Logging)
         .mount("/", routes![api::index::index])
         .mount("/health", routes![api::health::redis, api::health::postgres])
         .mount("/system", routes![api::system::rust, api::system::package, api::system::git])
