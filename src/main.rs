@@ -34,7 +34,7 @@ use tracing_subscriber;
 // Launch Rocket Instance
 #[launch]
 async fn protein() -> _ {
-    let path = Path::new("./logs/protein/");
+    let path = Path::new("./logs/");
 
     let appender = RollingFileAppender::builder()
         .rotation(Rotation::DAILY)

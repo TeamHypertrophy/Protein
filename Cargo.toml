@@ -32,7 +32,6 @@ anyhow = "1.0"
 # -- Redis
 fred = { version = "10.0.1", features = [
     "serde-json",
-    "i-redis-json",
     "i-keys",
 ] }
 ## -- Shadow
