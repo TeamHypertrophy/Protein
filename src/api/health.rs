@@ -36,13 +36,12 @@ pub async fn postgres(pool: &State<DatabasePool>) -> Value {
     let connection = &mut pool.get().await.ok();
 
     // [>] Compare and Return
-    if connection.is_some() {
-        json!({
+    match connection {
+       Some(_connection) => json!({
             "is_healthy": true
-        })
-    } else {
-        json!({
+        }),
+       None => json!({
             "is_healthy": false
         })
-    }
+	 }
 }

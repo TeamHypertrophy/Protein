@@ -39,17 +39,17 @@ pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::
         .expect("[!] Could Not Create Database Pool");
 
     // -- Define Migrations
-    //pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
+   // pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
     // -- Get Database Connection
     //let mut connection = pool.clone().get().await.ok().unwrap();
 
     // -- Run Migrations
-    //let wrapper = AsyncConnectionWrapper::from(connection);
+  //  let wrapper = AsyncConnectionWrapper::from(connection);
 
     //tokio::task::spawn_blocking(move || {
-        //wrapper.run_pending_migrations(MIGRATIONS).unwrap();
-    //}).await?;
+      //  wrapper.run_pending_migrations(MIGRATIONS).unwrap();
+   //	}).await?;
 
     // Return Pool
     Ok(pool)
