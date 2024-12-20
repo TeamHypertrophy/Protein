@@ -17,6 +17,11 @@ rustflags = ["-C", "link-arg=-fuse-ld=lld"]
 [target.x86_64-pc-windows-msvc]
 linker = "rust-lld.exe"
 
+# PostgreSQL
+[target.x86_64-pc-windows-msvc.pq]
+rustc-link-search = ["C:\\Program Files\\PostgreSQL\\17\\lib"]
+rustc-link-lib = ["libpq"]
+
 # Cranelift
 [unstable]
 codegen-backend = true

@@ -31,6 +31,8 @@ use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::fmt::writer::MakeWriterExt;
 use tracing_subscriber;
 
+use rocket::fairing::AdHoc;
+
 // Launch Rocket Instance
 #[launch]
 async fn protein() -> _ {
@@ -58,6 +60,9 @@ async fn protein() -> _ {
         .manage(redis)
         .attach(fairings::cors::Cors)
         .attach(fairings::logging::Logging)
+        .attach(AdHoc::on_shutdown("[!] Write Logs to Disk", |_| Box::pin(async move {
+            drop(_guard)
+        })))
         .mount("/", routes![api::index::index])
         .mount("/health", routes![api::health::redis, api::health::postgres])
         .mount("/system", routes![api::system::rust, api::system::package, api::system::git])
