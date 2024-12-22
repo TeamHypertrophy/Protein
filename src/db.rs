@@ -1,24 +1,33 @@
+/*
+______          _       _       
+| ___ \        | |     (_)      
+| |_/ / __ ___ | |_ ___ _ _ __  
+|  __/ '__/ _ \| __/ _ \ | '_ \ 
+| |  | | | (_) | ||  __/ | | | |
+\_|  |_|  \___/ \__\___|_|_| |_|
+
+        Made with ❤️ 
+*/
+
 // Rocket
-//use rocket::tokio;
+use rocket::tokio;
 
 // Diesel Async
-use diesel_async::pg::AsyncPgConnection;
-//use diesel_async::async_connection_wrapper::AsyncConnectionWrapper;
+use diesel_async::{pg::AsyncPgConnection, pooled_connection::deadpool};
+use diesel_async::async_connection_wrapper::AsyncConnectionWrapper;
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
-use diesel_async::pooled_connection::bb8::Pool;
+use diesel_async::pooled_connection::deadpool::Pool;
 
 // Diesel Async Migrations
-//use diesel_async_migrations::{EmbeddedMigrations, embed_migrations};
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
 // .env Loader
 use dotenvy::dotenv;
 use std::env;
 
-// Error Handling
-//use anyhow::anyhow;
-
 // Establish Database Connection Pool
 
+pub type DatabaseConnection = deadpool::Object<AsyncPgConnection>;
 pub type DatabasePool = Pool<AsyncPgConnection>;
 
 pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::Error>> {
@@ -32,24 +41,23 @@ pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::
     let manager = AsyncDieselConnectionManager::<AsyncPgConnection>::new(database_uri);
 
     // -- Create Database Pool
-    let pool = Pool::builder()
-        .max_size(10)
-        .build(manager)
-        .await
-        .expect("[!] Could Not Create Database Pool");
+    let pool = Pool::builder(manager)
+            .max_size(10)
+            .build()
+            .expect("[!] Could Not Create Database Pool");
 
     // -- Define Migrations
-   // pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
+    pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
     // -- Get Database Connection
-    //let mut connection = pool.clone().get().await.ok().unwrap();
+    let connection = pool.clone().get().await?;
 
     // -- Run Migrations
-  //  let wrapper = AsyncConnectionWrapper::from(connection);
+    let mut wrapper: AsyncConnectionWrapper<DatabaseConnection> = AsyncConnectionWrapper::from(connection);
 
-    //tokio::task::spawn_blocking(move || {
-      //  wrapper.run_pending_migrations(MIGRATIONS).unwrap();
-   //	}).await?;
+    tokio::task::spawn_blocking(move || {
+        wrapper.run_pending_migrations(MIGRATIONS).unwrap();
+    }).await?;
 
     // Return Pool
     Ok(pool)

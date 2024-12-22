@@ -8,16 +8,20 @@ build = "build.rs"
 # -- Base API Requirement
 rocket = { version = "0.5.1", features = ["json", "secrets"] }
 # -- Diesel Requirements (Database)
-diesel = { version = "2.2.6", features = ["postgres", "r2d2"] }
-diesel-async = { version = "0.5.2", features = ["postgres", "bb8", "async-connection-wrapper"] }
-diesel_async_migrations = { version = "0.15.0" }
+diesel = { version = "2.2.6", features = ["postgres"] }
+diesel-async = { version = "0.5.2", features = [
+    "postgres",
+    "deadpool",
+    "async-connection-wrapper",
+] }
+diesel_migrations = { version = "2.2.0" }
 ## -- Async
 tokio = { version = "1.42.0", features = ["full"] }
 # -- Requests
 reqwest = { version = "0.12", features = ["json"] }
 # -- Serialization
 serde = { version = "1.0.216", features = ["derive"] }
-serde_json = { version = "1.0.133", optional = true }
+serde_json = { version = "1.0.134", optional = true }
 # -- .env
 dotenvy = "0.15"
 # -- Extras
@@ -28,17 +32,14 @@ tracing-subscriber = "0.3.19"
 tracing-appender = "0.2.3"
 tracing-log = "0.2.0"
 # -- Error Handling
-anyhow = "1.0"
+anyhow = "1.0.95"
 # -- Redis
-fred = { version = "10.0.1", features = [
-    "serde-json",
-    "i-keys",
-] }
+fred = { version = "10.0.1", features = ["serde-json", "i-keys"] }
 ## -- Shadow
-shadow-rs = {version = "0.37.0", features = ["metadata"]}
+shadow-rs = { version = "0.37.0", features = ["metadata"] }
 
 [build-dependencies]
-shadow-rs = {version = "0.37.0", features = ["metadata"]}
+shadow-rs = { version = "0.37.0", features = ["metadata"] }
 
 [package.metadata.cargo-udeps.ignore]
 normal = [

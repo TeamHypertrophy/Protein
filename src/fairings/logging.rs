@@ -1,6 +1,17 @@
+/*
+______          _       _       
+| ___ \        | |     (_)      
+| |_/ / __ ___ | |_ ___ _ _ __  
+|  __/ '__/ _ \| __/ _ \ | '_ \ 
+| |  | | | (_) | ||  __/ | | | |
+\_|  |_|  \___/ \__\___|_|_| |_|
+
+        Made with ❤️ 
+*/
+
 // Rocket
-use rocket::{Request, Data};
 use rocket::fairing::{Fairing, Info, Kind};
+use rocket::{Request, Data};
 
 // Tracing
 use tracing::info;
@@ -17,6 +28,6 @@ impl Fairing for Logging {
     }
 
     async fn on_request(&self, request: &mut Request<'_>, _data: &mut Data<'_>) {
-        info!("Request Received, URI: {}", {request.uri()})
+        info!("Request Received, URI: {}", { request.uri() })
     }
 }

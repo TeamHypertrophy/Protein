@@ -1,7 +1,18 @@
+/*
+______          _       _       
+| ___ \        | |     (_)      
+| |_/ / __ ___ | |_ ___ _ _ __  
+|  __/ '__/ _ \| __/ _ \ | '_ \ 
+| |  | | | (_) | ||  __/ | | | |
+\_|  |_|  \___/ \__\___|_|_| |_|
+
+        Made with ❤️ 
+*/
+
 // Rocket
-use rocket::{get, State};
 use rocket::serde::json;
 use rocket::serde::json::{Json, Value};
+use rocket::{get, State};
 
 // Diesel
 use diesel::prelude::*;
@@ -10,10 +21,9 @@ use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 
 // Protein
-use crate::models::user::User;
-use crate::db::DatabasePool;
-use crate::cache::redis::RedisPool;
-use crate::schema::users::dsl::*;
+use crate::{
+    cache::redis::RedisPool, models::user::User, db::DatabasePool, constants::*, schema::users::dsl::*
+};
 
 // Redis
 use fred::prelude::*;
@@ -21,7 +31,10 @@ use fred::prelude::*;
 #[get("/<user_id>", format = "application/json")]
 pub async fn get(user_id: i32, pool: &State<DatabasePool>, redis: &State<RedisPool>) -> Option<Json<User>> {
     // [?] Check if User Data is in Redis Cache
-    let cache: Value = redis.get(user_id.to_string()).await.expect("[-] Getting User In Cache Failed!");
+    let cache: Value = redis
+        .get(user_id.to_string())
+        .await
+        .expect("[-] Getting User In Cache Failed!");
 
     // [-] User Variable
     let data: Option<User>;
@@ -44,7 +57,14 @@ pub async fn get(user_id: i32, pool: &State<DatabasePool>, redis: &State<RedisPo
         let serialized_user: String = json::to_string(&data).unwrap();
 
         // [=] Set User Data in Cache
-        let _: () = redis.set(user_id.to_string(), serialized_user, None, None, false)
+        let _: () = redis
+            .set(
+                user_id.to_string(), 
+                serialized_user, 
+                Some(Expiration::EX(CACHE_EXPIRATION_TIME)), 
+                None, 
+                false
+            )
             .await
             .expect("[!] Failed to Set User Data In Cache!");
 
@@ -55,7 +75,7 @@ pub async fn get(user_id: i32, pool: &State<DatabasePool>, redis: &State<RedisPo
         let user: User = json::from_value(cache).unwrap();
 
         // [>] Return User
-        Some(user).map(Json)
+        Some(Json(user))
     }
 }
 

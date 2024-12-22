@@ -9,7 +9,4 @@ ______          _       _
         Made with ❤️ 
 */
 
-pub mod users;
-pub mod index;
-pub mod health;
-pub mod system;
+pub const CACHE_EXPIRATION_TIME: i64 = 1800;

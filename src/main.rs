@@ -1,3 +1,14 @@
+/*
+______          _       _       
+| ___ \        | |     (_)      
+| |_/ / __ ___ | |_ ___ _ _ __  
+|  __/ '__/ _ \| __/ _ \ | '_ \ 
+| |  | | | (_) | ||  __/ | | | |
+\_|  |_|  \___/ \__\___|_|_| |_|
+
+        Made with ❤️ 
+*/
+
 // Rocket Macro
 #[macro_use] extern crate rocket;
 
@@ -20,6 +31,9 @@ pub mod fairings;
 // Error Handlers
 pub mod errors;
 
+// Constants
+pub mod constants;
+
 // Shadow
 use shadow_rs::shadow;
 
@@ -29,7 +43,6 @@ shadow!(build);
 use std::path::Path;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::fmt::writer::MakeWriterExt;
-use tracing_subscriber;
 
 use rocket::fairing::AdHoc;
 
@@ -60,12 +73,24 @@ async fn protein() -> _ {
         .manage(redis)
         .attach(fairings::cors::Cors)
         .attach(fairings::logging::Logging)
-        .attach(AdHoc::on_shutdown("[!] Write Logs to Disk", |_| Box::pin(async move {
+        .attach(AdHoc::on_shutdown("[!] Write Logs", |_| Box::pin(async move {
             drop(_guard)
         })))
         .mount("/", routes![api::index::index])
-        .mount("/health", routes![api::health::redis, api::health::postgres])
-        .mount("/system", routes![api::system::rust, api::system::package, api::system::git])
-        .mount("/v1/users", routes![api::users::get, api::users::all])
-        .register("/", catchers![errors::default, errors::not_found])
+        .mount(
+            "/health", 
+            routes![api::health::redis, api::health::postgres]
+        )
+        .mount(
+            "/system", 
+            routes![api::system::rust, api::system::package, api::system::git]
+        )
+        .mount(
+            "/v1/users", 
+            routes![api::users::get, api::users::all]
+        )
+        .register(
+            "/", 
+            catchers![errors::default, errors::not_found]
+        )
 }

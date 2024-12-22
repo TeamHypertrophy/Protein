@@ -1,13 +1,22 @@
+/*
+______          _       _       
+| ___ \        | |     (_)      
+| |_/ / __ ___ | |_ ___ _ _ __  
+|  __/ '__/ _ \| __/ _ \ | '_ \ 
+| |  | | | (_) | ||  __/ | | | |
+\_|  |_|  \___/ \__\___|_|_| |_|
+
+        Made with ❤️ 
+*/
+
 // Diesel
 use diesel::prelude::*;
 
 // Serde Serialization
-use rocket::serde::{Serialize, Deserialize};
+use rocket::serde::{Deserialize, Serialize};
 
 // User Model
-#[derive(Clone, Debug, Eq, PartialEq)]
-#[derive(Queryable, Selectable)]
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Queryable, Selectable, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
 #[diesel(table_name = crate::schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]

@@ -1,10 +1,21 @@
+/*
+______          _       _       
+| ___ \        | |     (_)      
+| |_/ / __ ___ | |_ ___ _ _ __  
+|  __/ '__/ _ \| __/ _ \ | '_ \ 
+| |  | | | (_) | ||  __/ | | | |
+\_|  |_|  \___/ \__\___|_|_| |_|
+
+        Made with ❤️ 
+*/
+
 // Rocket
-use rocket::{get, State};
 use rocket::serde::json::{json, Value};
+use rocket::{get, State};
 
 // Redis
-use fred::interfaces::ClientLike;
 use crate::cache::redis::RedisPool;
+use fred::interfaces::ClientLike;
 
 // Database
 use crate::db::DatabasePool;
@@ -15,7 +26,10 @@ pub async fn redis(redis: &State<RedisPool>) -> Value {
     let health_message: String = String::from("PONG");
 
     // [-] Run 'ping "PONG"'
-    let healthy: String = redis.ping(Some(health_message.clone())).await.expect("[!] Could Not Ping Redis");
+    let healthy: String = redis
+        .ping(Some(health_message.clone()))
+        .await
+        .expect("[!] Could Not Ping Redis");
 
     // [>] Compare and Return
     if healthy == health_message {
@@ -43,5 +57,5 @@ pub async fn postgres(pool: &State<DatabasePool>) -> Value {
        None => json!({
             "is_healthy": false
         })
-	 }
+     }
 }
