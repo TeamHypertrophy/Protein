@@ -11,6 +11,7 @@ ______          _       _
 
 // Rocket
 use rocket::serde::json;
+use rocket::serde::uuid::Uuid;
 use rocket::serde::json::{Json, Value};
 use rocket::{get, State};
 
@@ -29,7 +30,7 @@ use crate::{
 use fred::prelude::*;
 
 #[get("/<user_id>", format = "application/json")]
-pub async fn get(user_id: i32, pool: &State<DatabasePool>, redis: &State<RedisPool>) -> Option<Json<User>> {
+pub async fn get(user_id: Uuid, pool: &State<DatabasePool>, redis: &State<RedisPool>) -> Option<Json<User>> {
     // [?] Check if User Data is in Redis Cache
     let cache: Value = redis
         .get(user_id.to_string())

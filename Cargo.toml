@@ -6,9 +6,9 @@ build = "build.rs"
 
 [dependencies]
 # -- Base API Requirement
-rocket = { version = "0.5.1", features = ["json", "secrets"] }
+rocket = { version = "0.5.1", features = ["json", "secrets", "uuid"] }
 # -- Diesel Requirements (Database)
-diesel = { version = "2.2.6", features = ["postgres"] }
+diesel = { version = "2.2.6", features = ["postgres", "uuid"] }
 diesel-async = { version = "0.5.2", features = [
     "postgres",
     "deadpool",
@@ -22,6 +22,7 @@ reqwest = { version = "0.12", features = ["json"] }
 # -- Serialization
 serde = { version = "1.0.216", features = ["derive"] }
 serde_json = { version = "1.0.134", optional = true }
+uuid = { version = "1.11.0", features = ["v7", "fast-rng"]}
 # -- .env
 dotenvy = "0.15"
 # -- Extras

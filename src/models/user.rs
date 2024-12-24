@@ -9,6 +9,9 @@ ______          _       _
         Made with ❤️ 
 */
 
+// Uuid
+use uuid::Uuid;
+
 // Diesel
 use diesel::prelude::*;
 
@@ -21,7 +24,7 @@ use rocket::serde::{Deserialize, Serialize};
 #[diesel(table_name = crate::schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
-    pub id: i32,
+    pub id: Uuid,
     pub username: String,
     pub is_dev: bool,
 }
@@ -30,6 +33,6 @@ pub struct User {
 #[derive(Insertable)]
 #[diesel(table_name = crate::schema::users)]
 pub struct NewUser<'a> {
-    pub id: i32,
+    pub id: Uuid,
     pub username: &'a str,
 }
