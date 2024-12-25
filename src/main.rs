@@ -42,15 +42,18 @@ shadow!(build);
 // Tracing
 use std::path::Path;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
-use tracing_subscriber::fmt::writer::MakeWriterExt;
+use tracing_subscriber::{fmt, prelude::*};
+use tracing_subscriber::fmt::format::FmtSpan;
 
 use rocket::fairing::AdHoc;
 
 // Launch Rocket Instance
 #[launch]
 async fn protein() -> _ {
+    // Build Path for Logs Directory
     let path = Path::new("./logs/");
 
+    // This Creates a Log File that Rotates Daily
     let appender = RollingFileAppender::builder()
         .rotation(Rotation::DAILY)
         .filename_suffix("[Protein].log")
@@ -58,14 +61,39 @@ async fn protein() -> _ {
         .expect("[!] Error Building Log Files");
 
     let (non_blocking_appender, _guard) = tracing_appender::non_blocking(appender);
-    let stdout = std::io::stdout.with_max_level(tracing::Level::INFO);
 
-    tracing_subscriber::fmt()
-        .with_writer(stdout.and(non_blocking_appender))
+    // Seperate Layers for File and Terminal Logging
+    let file_layer = fmt::layer()
+        .with_writer(non_blocking_appender)
+        .with_ansi(false)
+        .with_span_events(FmtSpan::CLOSE);
+
+    let terminal_layer = fmt::layer()
+        .with_ansi(true)
+        .without_time()
+        .with_span_events(FmtSpan::CLOSE);
+
+    // Register Layers
+    tracing_subscriber::registry()
+        .with(file_layer)
+        .with(terminal_layer)
         .init();
 
-    let pool = db::establish_connection().await.ok().unwrap();
-    let redis = cache::redis::build_redis().await.ok().unwrap();
+    let pool = match db::establish_connection().await {
+        Ok(pool) => pool,
+        Err(e) => {
+            tracing::error!("[-] Error Connecting to Database: {:?}", e);
+            panic!("[!] Error Connecting to Database - Aborting");
+        }
+    };
+
+    let redis = match cache::redis::build_redis().await {
+        Ok(redis) => redis,
+        Err(e) => {
+            tracing::error!("[-] Error Connecting to Redis: {:?}", e);
+            panic!("[!] Error Connecting to Redis - Aborting");
+        }
+    };
 
 
     rocket::build()
