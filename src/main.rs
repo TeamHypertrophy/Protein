@@ -9,8 +9,10 @@ ______          _       _
         Made with ❤️ 
 */
 
-// Rocket Macro
+// Rocket 
 #[macro_use] extern crate rocket;
+
+use rocket::fairing::AdHoc;
 
 // Schema File
 mod schema;
@@ -34,56 +36,31 @@ pub mod errors;
 // Constants
 pub mod constants;
 
+// Utils
+pub mod utils;
+
 // Shadow
 use shadow_rs::shadow;
 
 shadow!(build);
 
-// Tracing
-use std::path::Path;
-use tracing_appender::rolling::{RollingFileAppender, Rotation};
-use tracing_subscriber::{fmt, prelude::*};
-use tracing_subscriber::fmt::format::FmtSpan;
-
-use rocket::fairing::AdHoc;
-
 // Launch Rocket Instance
 #[launch]
 async fn protein() -> _ {
-    // Build Path for Logs Directory
-    let path = Path::new("./logs/");
-
-    // This Creates a Log File that Rotates Daily
-    let appender = RollingFileAppender::builder()
-        .rotation(Rotation::DAILY)
-        .filename_suffix("[Protein].log")
-        .build(path)
-        .expect("[!] Error Building Log Files");
-
-    let (non_blocking_appender, _guard) = tracing_appender::non_blocking(appender);
-
-    // Seperate Layers for File and Terminal Logging
-    let file_layer = fmt::layer()
-        .with_writer(non_blocking_appender)
-        .with_ansi(false)
-        .with_span_events(FmtSpan::CLOSE);
-
-    let terminal_layer = fmt::layer()
-        .with_ansi(true)
-        .without_time()
-        .with_span_events(FmtSpan::CLOSE);
-
-    // Register Layers
-    tracing_subscriber::registry()
-        .with(file_layer)
-        .with(terminal_layer)
-        .init();
+    // Setup Logging, PostgreSQL and Redis
+    let (guard, ()) = match utils::logging::setup_logging() {
+        Ok((guard, ())) => (guard, ()),
+        Err(e) => {
+            tracing::error!("[-] Error Setting Up Logging: {:?}", e);
+            panic!("[!] Error Setting Up Logging - Aborting")
+        }
+    };
 
     let pool = match db::establish_connection().await {
         Ok(pool) => pool,
         Err(e) => {
             tracing::error!("[-] Error Connecting to Database: {:?}", e);
-            panic!("[!] Error Connecting to Database - Aborting");
+            panic!("[!] Error Connecting to Database - Aborting")
         }
     };
 
@@ -91,18 +68,18 @@ async fn protein() -> _ {
         Ok(redis) => redis,
         Err(e) => {
             tracing::error!("[-] Error Connecting to Redis: {:?}", e);
-            panic!("[!] Error Connecting to Redis - Aborting");
+            panic!("[!] Error Connecting to Redis - Aborting")
         }
     };
 
-
+    // Build Rocket Instance
     rocket::build()
         .manage(pool)
         .manage(redis)
         .attach(fairings::cors::Cors)
         .attach(fairings::logging::Logging)
         .attach(AdHoc::on_shutdown("[!] Write Logs", |_| Box::pin(async move {
-            drop(_guard)
+            drop(guard)
         })))
         .mount("/", routes![api::index::index])
         .mount(
