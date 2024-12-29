@@ -35,10 +35,10 @@ pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::
     dotenv().ok();
 
     // -- Get Database URL
-    let database_uri = env::var("DATABASE_URL").expect("[!] DATABASE_URL Environment Variable Must Be Set");
+    let database_uri: String = env::var("DATABASE_URL").expect("[!] DATABASE_URL Environment Variable Must Be Set");
 
     // -- Create Manager
-    let manager = AsyncDieselConnectionManager::<AsyncPgConnection>::new(database_uri);
+    let manager: AsyncDieselConnectionManager<AsyncPgConnection> = AsyncDieselConnectionManager::<AsyncPgConnection>::new(database_uri);
 
     // -- Create Database Pool
     let pool = Pool::builder(manager)

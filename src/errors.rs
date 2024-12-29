@@ -41,3 +41,15 @@ pub fn not_found(status: Status, request: &Request) -> Value {
         }
     )
 }
+
+// 500 - Internal Server Error
+#[catch(500)]
+pub fn internal_server_error(status: Status, request: &Request) -> Value {
+    json!(
+        {
+            "status": status.code,
+            "path": request.uri(),
+            "message": "[!!] There was an Internal Server Issue!"
+        }
+    )
+}

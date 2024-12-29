@@ -10,73 +10,42 @@ ______          _       _
 */
 
 // Rocket
-use rocket::serde::json;
-use rocket::serde::uuid::Uuid;
 use rocket::serde::json::{Json, Value};
-use rocket::{get, State};
-
-// Diesel
-use diesel::prelude::*;
-
-// Diesel Async
-use diesel_async::RunQueryDsl;
+use rocket::serde::uuid::Uuid;
+use rocket::http::Status;
+use rocket::{get, post, State};
 
 // Protein
 use crate::{
-    cache::redis::RedisPool, models::user::User, db::DatabasePool, constants::*, schema::users::dsl::*
+    cache::redis::{RedisPool, Cache}, models::user::{NewUser, User}, db::DatabasePool,
 };
 
-// Redis
-use fred::prelude::*;
-
 #[get("/<user_id>", format = "application/json")]
-pub async fn get(user_id: Uuid, pool: &State<DatabasePool>, redis: &State<RedisPool>) -> Option<Json<User>> {
-    // [?] Check if User Data is in Redis Cache
-    let cache: Value = redis
-        .get(user_id.to_string())
+pub async fn get(user_id: Uuid, pool: &State<DatabasePool>, redis: &State<RedisPool>) -> Result<Json<User>, Status> {
+    let cache: Value = Cache::get(redis, user_id.to_string())
         .await
-        .expect("[-] Getting User In Cache Failed!");
+        .expect("tuff");
 
-    // [-] User Variable
-    let data: Option<User>;
-
-    // [?] Check if Redis Cache is Empty
     if cache.is_null() {
-
-        // [=] Create Database Connection
-        let connection = &mut pool.get().await.ok()?;
-
-        // [>] Fetch User from Database
-        data = users
-            .find(user_id)
-            .select(User::as_select())
-            .first(connection)
+        let connection = &mut pool.get()
             .await
-            .ok();
+            .map_err(|_| Status::InternalServerError)
+            .unwrap();
 
-        // [-] Serialize User Object
-        let serialized_user: String = json::to_string(&data).unwrap();
-
-        // [=] Set User Data in Cache
-        let _: () = redis
-            .set(
-                user_id.to_string(), 
-                serialized_user, 
-                Some(Expiration::EX(CACHE_EXPIRATION_TIME)), 
-                None, 
-                false
-            )
+        let user = User::find(user_id, connection)
             .await
-            .expect("[!] Failed to Set User Data In Cache!");
+            .map_err(|_| Status::InternalServerError)
+            .unwrap();
 
-        // [>] Return User
-        data.map(Json)
+        Cache::set(redis, user_id.to_string(), Cache::serialize(&user))
+            .await
+            .expect("[!] Failed to Set Cache");
+
+        Ok(Json(user))
     } else {
-        // [-] Deserialize User
-        let user: User = json::from_value(cache).unwrap();
+        let user: User = Cache::deserialize(cache);
 
-        // [>] Return User
-        Some(Json(user))
+        Ok(Json(user))
     }
 }
 
@@ -86,10 +55,23 @@ pub async fn all(pool: &State<DatabasePool>) -> Option<Json<Vec<User>>> {
     let connection = &mut pool.get().await.ok()?;
 
     // [>] Fetch List of Users and Return
-    users
-        .select(User::as_select())
-        .load(connection)
+    User::all(connection)
         .await
         .ok()
         .map(Json)
+}
+
+#[post("/create", format = "application/json", data = "<user>")]
+pub async fn create(pool: &State<DatabasePool>, redis: &State<RedisPool>, user: Json<NewUser>) -> Json<User> {
+    todo!()
+}
+
+#[post("/delete/<user_id>", format = "application/json")]
+pub async fn delete(user_id: Uuid, pool: &State<DatabasePool>) -> Json<User> {
+    todo!()
+}
+
+#[post("/update/<user_id>", format = "application/json", data = "<user>")]
+pub async fn update(user_id: Uuid, pool: &State<DatabasePool>, redis: &State<RedisPool>, user: Json<User>) -> Json<User> {
+    todo!()
 }

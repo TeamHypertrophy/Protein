@@ -8,6 +8,11 @@ ______          _       _
 
         Made with ❤️ 
 */
+// Rocket
+use rocket::State;
+use rocket::serde::json;
+use rocket::serde::json::Value;
+use rocket::serde::{Serialize, Deserialize};
 
 // Fred
 use fred::prelude::*;
@@ -19,9 +24,11 @@ use std::env;
 // STD
 use std::time::Duration;
 
+use crate::constants::CACHE_EXPIRATION_TIME;
+
 pub type RedisPool = Pool;
 
-pub async fn build_redis() -> Result<Pool, Error> {
+pub async fn create_redis_pool() -> Result<Pool, Error> {
     // -- Load .env
     dotenv().ok();
 
@@ -47,4 +54,35 @@ pub async fn build_redis() -> Result<Pool, Error> {
         .expect("[!!] Failed to Initialize Redis Pool");
 
     Ok(pool)
+}
+
+// -- Redis Functions
+pub struct Cache;
+
+impl Cache {
+    pub async fn get(pool: &State<RedisPool>, key: String) -> Result<Value, Error> {
+        pool
+            .get(key)
+            .await
+    }
+
+    pub async fn set(pool: &State<RedisPool>, key: String, value: String) -> Result<(), Error> {
+        pool
+            .set(
+                key,
+                value,
+                Some(Expiration::EX(CACHE_EXPIRATION_TIME)),
+                None,
+                false
+            )
+            .await
+    }
+
+    pub fn serialize<T: Serialize>(data: &T) -> String {
+        json::to_string(data).unwrap()
+    }
+
+    pub fn deserialize<T: for<'de> Deserialize<'de>>(data: Value) -> T {
+        json::from_value(data).unwrap()
+    }
 }

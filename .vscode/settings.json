@@ -1,4 +1,8 @@
 {
+    "[rust]": {
+        "editor.defaultFormatter": "rust-lang.rust-analyzer",
+        "editor.formatOnSave": true
+    },
     "files.readonlyInclude": {
         "**/.cargo/registry/src/**/*.rs": true,
         "**/lib/rustlib/src/rust/library/**/*.rs": true,

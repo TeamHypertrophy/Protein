@@ -64,7 +64,7 @@ async fn protein() -> _ {
         }
     };
 
-    let redis = match cache::redis::build_redis().await {
+    let redis = match cache::redis::create_redis_pool().await {
         Ok(redis) => redis,
         Err(e) => {
             tracing::error!("[-] Error Connecting to Redis: {:?}", e);
@@ -92,10 +92,10 @@ async fn protein() -> _ {
         )
         .mount(
             "/v1/users", 
-            routes![api::users::get, api::users::all]
+            routes![api::users::get, api::users::create, api::users::update, api::users::delete, api::users::all]
         )
         .register(
             "/", 
-            catchers![errors::default, errors::not_found]
+            catchers![errors::default, errors::not_found, errors::internal_server_error]
         )
 }
