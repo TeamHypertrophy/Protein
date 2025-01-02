@@ -62,7 +62,10 @@ pub struct NewUser {
 }
 
 impl NewUser {
-    pub async fn create(&self, connection: &mut DatabaseConnection) -> Result<User, diesel::result::Error> {
-        todo!()
+    pub async fn create(connection: &mut DatabaseConnection, user: NewUser) -> Result<User, diesel::result::Error> {
+        diesel::insert_into(users::table)
+            .values(&user)
+            .get_result::<User>(connection)
+            .await
     }
 }

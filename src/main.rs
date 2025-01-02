@@ -39,6 +39,9 @@ pub mod constants;
 // Utils
 pub mod utils;
 
+// Responders
+pub mod responders;
+
 // Shadow
 use shadow_rs::shadow;
 
