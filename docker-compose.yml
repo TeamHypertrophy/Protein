@@ -1,10 +1,9 @@
-version: '3.8'
+name: protein
 
 services:
   db:
     container_name: hypertrophy-database
-    image: postgres:15
-    restart: always
+    image: postgres:17.2-bookworm
     environment:
       POSTGRES_USER: ghoul
       POSTGRES_DB: mei
@@ -13,33 +12,53 @@ services:
       - pgdata:/var/lib/postgresql/
     networks:
       - server
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+    restart: unless-stopped
 
   api:
     container_name: hypertrophy-api
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile
     depends_on:
       db:
         condition: service_healthy
         restart: true
       redis:
-        condition: service_started
-    environment:
-      - DATABASE_URI=postgres://ghoul:password@hypertrophy-database/mei
+        condition: service_healthy
+        restart: true
+    env_file:
+      - docker.env
     ports:
       - "8000:5000"
     networks:
       - server
-
+    restart: unless-stopped
 
   redis:
     container_name: hypertrophy-redis
-    image: "redis:alpine"
-    restart: always
+    image: "redis:7-alpine"
+    restart: unless-stopped
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - server
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
 
 volumes:
   pgdata: {}
+  redis_data: {}
 
 networks:
-  server: {}
+  server:
+    driver: bridge
