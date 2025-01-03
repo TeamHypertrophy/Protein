@@ -52,7 +52,7 @@ pub async fn get(user_id: Uuid, pool: &State<DatabasePool>, redis: &State<RedisP
             .await
             .map_err(|error| {
                 tracing::error!("[!] Redis Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                ProteinError::Cache(error.to_string())
             });
         
         Ok(Json(user))
