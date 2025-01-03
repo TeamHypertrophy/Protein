@@ -11,6 +11,7 @@ ______          _       _
 
 // Rocket
 use rocket::tokio;
+use rocket::State;
 
 // Diesel Async
 use diesel_async::{pg::AsyncPgConnection, pooled_connection::deadpool};
@@ -20,6 +21,9 @@ use diesel_async::pooled_connection::deadpool::Pool;
 
 // Diesel Async Migrations
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+
+// Protein
+use crate::responders::ProteinError;
 
 // .env Loader
 use dotenvy::dotenv;
@@ -61,4 +65,15 @@ pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::
 
     // Return Pool
     Ok(pool)
+}
+
+pub async fn get_connection(pool: &State<DatabasePool>) -> Result<DatabaseConnection, ProteinError> {
+    let connection = pool.get()
+        .await
+        .map_err(|error| {
+            tracing::error!("[!] PostgreSQL Error {:?}", error);
+            ProteinError::Database(error.to_string())
+        });
+    
+    connection
 }

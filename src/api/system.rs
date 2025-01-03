@@ -11,10 +11,26 @@ ______          _       _
 
 // Rocket
 use rocket::get;
+use rocket::State;
 use rocket::serde::json::{json, Value};
+
+// SysInfo
+use sysinfo::System;
 
 // Shadow
 use crate::build;
+
+#[get("/", format = "application/json")]
+pub async fn system(sys: &State<System>) -> Value {
+    json!({
+        "KERNEL_VERSION": System::kernel_version(),
+        "OS_VERSION": System::long_os_version(),
+        "UPTIME": System::uptime(),
+        "BOOT_TIME": System::boot_time(),
+        "CPU_CORE_COUNT": sys.physical_core_count(),
+        "TOTAL_MEM": sys.total_memory(),
+    })
+}
 
 #[get("/rust", format = "application/json")]
 pub async fn rust() -> Value {

@@ -75,10 +75,14 @@ async fn protein() -> _ {
         }
     };
 
+    let system = sysinfo::System::new_all();
+
     // Build Rocket Instance
     rocket::build()
         .manage(pool)
         .manage(redis)
+        .manage(system)
+        .attach(fairings::auth::Auth)
         .attach(fairings::cors::Cors)
         .attach(fairings::logging::Logging)
         .attach(AdHoc::on_shutdown("[!] Write Logs", |_| Box::pin(async move {
@@ -91,11 +95,11 @@ async fn protein() -> _ {
         )
         .mount(
             "/system", 
-            routes![api::system::rust, api::system::package, api::system::git]
+            routes![api::system::rust, api::system::package, api::system::git, api::system::system]
         )
         .mount(
             "/v1/users", 
-            routes![api::users::get, api::users::create, api::users::update, api::users::delete, api::users::all]
+            routes![api::users::get, api::users::create, api::users::update, api::users::delete, api::users::all, api::users::me]
         )
         .register(
             "/", 

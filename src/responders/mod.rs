@@ -35,6 +35,8 @@ pub enum ProteinError {
 
     Cache(String),
 
+    Authorization(String),
+
     Database(String),
 }
 
@@ -44,6 +46,7 @@ impl ProteinError {
             ProteinError::Internal(_) => Status::InternalServerError,
             ProteinError::Cache(_) => Status::InternalServerError,
             ProteinError::Database(_) => Status::InternalServerError,
+            ProteinError::Authorization(_) => Status::Unauthorized,
             ProteinError::NotFound(_) => Status::NotFound,
             _ => Status::BadRequest,
         }

@@ -24,6 +24,7 @@ use std::env;
 // STD
 use std::time::Duration;
 
+use crate::responders::ProteinError;
 use crate::constants::CACHE_EXPIRATION_TIME;
 
 pub type RedisPool = Pool;
@@ -60,13 +61,17 @@ pub async fn create_redis_pool() -> Result<Pool, Error> {
 pub struct Cache;
 
 impl Cache {
-    pub async fn get(pool: &State<RedisPool>, key: String) -> Result<Value, Error> {
+    pub async fn get(pool: &State<RedisPool>, key: String) -> Result<Value, ProteinError> {
         pool
             .get(key)
             .await
+            .map_err(|error| {
+                tracing::error!("[!] Redis Error: {:?}", error);
+                ProteinError::Cache(error.to_string())
+            })
     }
 
-    pub async fn set(pool: &State<RedisPool>, key: String, value: String) -> Result<(), Error> {
+    pub async fn set(pool: &State<RedisPool>, key: String, value: String) -> Result<(), ProteinError> {
         pool
             .set(
                 key,
@@ -76,6 +81,10 @@ impl Cache {
                 false
             )
             .await
+            .map_err(|error| {
+                tracing::error!("[!] Redis Error: {:?}", error);
+                ProteinError::Cache(error.to_string())
+            })
     }
 
     pub fn serialize<T: Serialize>(data: &T) -> String {

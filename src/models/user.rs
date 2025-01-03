@@ -22,10 +22,10 @@ use diesel_async::RunQueryDsl;
 use rocket::serde::{Deserialize, Serialize};
 
 // Users
-use crate::{schema::users, db::DatabaseConnection};
+use crate::{schema::users, schema::users::dsl::*, db::DatabaseConnection, models::keys::APIKey};
 
 // User Model
-#[derive(Clone, Debug, Eq, PartialEq, Queryable, Selectable, Serialize, Deserialize, AsChangeset)]
+#[derive(Clone, Debug, Eq, PartialEq, Queryable, Selectable, Serialize, Deserialize, AsChangeset, Identifiable)]
 #[serde(crate = "rocket::serde")]
 #[diesel(table_name = users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
@@ -50,6 +50,22 @@ impl User {
             .load(connection)
             .await
     }
+
+    pub async fn delete(user_id: Uuid, connection: &mut DatabaseConnection) -> Result<usize, diesel::result::Error> {
+        diesel::delete(users::table.filter(id.eq(user_id)))
+            .execute(connection)
+            .await
+    }
+
+    pub async fn update(user_id: Uuid, new_username: String, connection: &mut DatabaseConnection) -> Result<User, diesel::result::Error> {
+        diesel::update(users::table)
+            .filter(id.eq(user_id))
+            .set((
+                username.eq(new_username),
+            ))
+            .get_result::<User>(connection)
+            .await
+    }
 }
 
 // New User Model
@@ -69,3 +85,21 @@ impl NewUser {
             .await
     }
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct CreatedUser {
+    pub user: User,
+    pub api_key: Uuid,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Me {
+    pub user: User,
+    pub api_key: APIKey,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct UpdateUser {
+    pub username: String
+}
+

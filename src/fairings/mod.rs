@@ -11,3 +11,4 @@ ______          _       _
 
 pub mod cors;
 pub mod logging;
+pub mod auth;
