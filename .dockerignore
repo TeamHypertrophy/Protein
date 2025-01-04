@@ -1,2 +1,15 @@
 /logs
 /target
+/.github
+/.vscode
+/scripts
+.env.example
+.gitattributes
+.markdownlint.json
+.pre-commit-config.yaml
+bacon.toml
+AUTHORS.md
+CHANGELOG.md
+CODE_OF_CONDUCT.md
+protein.bat
+README.md
