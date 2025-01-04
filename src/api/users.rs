@@ -49,7 +49,7 @@ pub async fn get(
         })?;
 
         // Set User in Cache
-        let _ = Cache::set(redis, user_id.to_string(), Cache::serialize(&user)).await?;
+        Cache::set(redis, user_id.to_string(), Cache::serialize(&user)).await?;
 
         Ok(Json(user))
     } else {
@@ -106,7 +106,7 @@ pub async fn create(
         })?;
 
     // Set New User in Cache
-    let _ = Cache::set(redis, result.id.to_string(), Cache::serialize(&result)).await?;
+    Cache::set(redis, result.id.to_string(), Cache::serialize(&result)).await?;
 
     Ok(Json(CreatedUser {
         user: result,
@@ -156,7 +156,7 @@ pub async fn update(
         })?;
 
     // Update Cache With User
-    let _ = Cache::set(redis, user_id.to_string(), Cache::serialize(&updated_user)).await?;
+    Cache::set(redis, user_id.to_string(), Cache::serialize(&updated_user)).await?;
 
     // Return Updated User
     Ok(Json(updated_user))
