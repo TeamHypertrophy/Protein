@@ -1,12 +1,12 @@
 /*
-______          _       _       
-| ___ \        | |     (_)      
-| |_/ / __ ___ | |_ ___ _ _ __  
-|  __/ '__/ _ \| __/ _ \ | '_ \ 
+______          _       _
+| ___ \        | |     (_)
+| |_/ / __ ___ | |_ ___ _ _ __
+|  __/ '__/ _ \| __/ _ \ | '_ \
 | |  | | | (_) | ||  __/ | | | |
 \_|  |_|  \___/ \__\___|_|_| |_|
 
-        Made with ❤️ 
+        Made with ❤️
 */
 // Rocket
 use rocket::State;
@@ -49,8 +49,7 @@ pub async fn create_redis_pool() -> Result<Pool, Error> {
         .build_pool(5)
         .expect("[!] Failed to Create Redis Pool");
 
-    pool
-        .init()
+    pool.init()
         .await
         .expect("[!!] Failed to Initialize Redis Pool");
 
@@ -62,29 +61,29 @@ pub struct Cache;
 
 impl Cache {
     pub async fn get(pool: &State<RedisPool>, key: String) -> Result<Value, ProteinError> {
-        pool
-            .get(key)
-            .await
-            .map_err(|error| {
-                tracing::error!("[!] Redis Error: {:?}", error);
-                ProteinError::Cache(error.to_string())
-            })
+        pool.get(key).await.map_err(|error| {
+            tracing::error!("[!] Redis Error: {:?}", error);
+            ProteinError::Cache(error.to_string())
+        })
     }
 
-    pub async fn set(pool: &State<RedisPool>, key: String, value: String) -> Result<(), ProteinError> {
-        pool
-            .set(
-                key,
-                value,
-                Some(Expiration::EX(CACHE_EXPIRATION_TIME)),
-                None,
-                false
-            )
-            .await
-            .map_err(|error| {
-                tracing::error!("[!] Redis Error: {:?}", error);
-                ProteinError::Cache(error.to_string())
-            })
+    pub async fn set(
+        pool: &State<RedisPool>,
+        key: String,
+        value: String,
+    ) -> Result<(), ProteinError> {
+        pool.set(
+            key,
+            value,
+            Some(Expiration::EX(CACHE_EXPIRATION_TIME)),
+            None,
+            false,
+        )
+        .await
+        .map_err(|error| {
+            tracing::error!("[!] Redis Error: {:?}", error);
+            ProteinError::Cache(error.to_string())
+        })
     }
 
     pub fn serialize<T: Serialize>(data: &T) -> String {

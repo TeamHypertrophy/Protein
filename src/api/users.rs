@@ -1,12 +1,12 @@
 /*
-______          _       _       
-| ___ \        | |     (_)      
-| |_/ / __ ___ | |_ ___ _ _ __  
-|  __/ '__/ _ \| __/ _ \ | '_ \ 
+______          _       _
+| ___ \        | |     (_)
+| |_/ / __ ___ | |_ ___ _ _ __
+|  __/ '__/ _ \| __/ _ \ | '_ \
 | |  | | | (_) | ||  __/ | | | |
 \_|  |_|  \___/ \__\___|_|_| |_|
 
-        Made with ❤️ 
+        Made with ❤️
 */
 
 // Rocket
@@ -18,11 +18,22 @@ use rocket::{get, post, State};
 
 // Protein
 use crate::{
-    cache::redis::{RedisPool, Cache}, models::user::{NewUser, CreatedUser, UpdateUser, User, Me}, models::keys::APIKey, db, db::DatabasePool, responders::ProteinError
+    cache::redis::{RedisPool, Cache},
+    models::user::{NewUser, CreatedUser, UpdateUser, User, Me},
+    models::keys::APIKey,
+    db,
+    db::DatabasePool,
+    responders::ProteinError,
+    auth::Auth,
 };
 
 #[get("/<user_id>", format = "application/json")]
-pub async fn get(user_id: Uuid, pool: &State<DatabasePool>, redis: &State<RedisPool>) -> Result<Json<User>, ProteinError> {
+pub async fn get(
+    _auth: Auth,
+    user_id: Uuid,
+    pool: &State<DatabasePool>,
+    redis: &State<RedisPool>,
+) -> Result<Json<User>, ProteinError> {
     // Check Cache
     let cache: Value = Cache::get(redis, user_id.to_string()).await?;
 
@@ -30,18 +41,16 @@ pub async fn get(user_id: Uuid, pool: &State<DatabasePool>, redis: &State<RedisP
     if cache.is_null() {
         // Crate Database Connection
         let connection = &mut db::get_connection(pool).await?;
-            
+
         // Grab User
-        let user = User::find(user_id, connection)
-            .await
-            .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error {:?}", error);
-                ProteinError::Database(error.to_string())
-            })?;
+        let user = User::find(user_id, connection).await.map_err(|error| {
+            tracing::error!("[!] PostgreSQL Error {:?}", error);
+            ProteinError::Database(error.to_string())
+        })?;
 
         // Set User in Cache
         let _ = Cache::set(redis, user_id.to_string(), Cache::serialize(&user)).await?;
-        
+
         Ok(Json(user))
     } else {
         // Deserialize User
@@ -52,27 +61,29 @@ pub async fn get(user_id: Uuid, pool: &State<DatabasePool>, redis: &State<RedisP
 }
 
 #[get("/all", format = "application/json")]
-pub async fn all(pool: &State<DatabasePool>) -> Result<Json<Vec<User>>, ProteinError> {
+pub async fn all(_auth: Auth, pool: &State<DatabasePool>) -> Result<Json<Vec<User>>, ProteinError> {
     // Creating Database Connection
     let connection = &mut db::get_connection(pool).await?;
 
     // Fetch List of Users and Return
-    let users = User::all(connection)
-        .await
-        .map_err(|error| {
-            tracing::error!("[!] PostgreSQL Error {:?}", error);
-            ProteinError::Database(error.to_string())
-        })?;
-    
+    let users = User::all(connection).await.map_err(|error| {
+        tracing::error!("[!] PostgreSQL Error {:?}", error);
+        ProteinError::Database(error.to_string())
+    })?;
+
     Ok(Json(users))
 }
 
 #[post("/create", format = "application/json", data = "<user>")]
-pub async fn create(pool: &State<DatabasePool>, redis: &State<RedisPool>, user: Json<NewUser>) -> Result<Json<CreatedUser>, ProteinError> {
+pub async fn create(
+    pool: &State<DatabasePool>,
+    redis: &State<RedisPool>,
+    user: Json<NewUser>,
+) -> Result<Json<CreatedUser>, ProteinError> {
     // Create New User Struct
     let new_user = NewUser {
         username: user.username.clone(),
-        is_dev: user.is_dev.clone()
+        is_dev: user.is_dev.clone(),
     };
 
     // Create Database Connection
@@ -97,26 +108,27 @@ pub async fn create(pool: &State<DatabasePool>, redis: &State<RedisPool>, user: 
     // Set New User in Cache
     let _ = Cache::set(redis, result.id.to_string(), Cache::serialize(&result)).await?;
 
-    Ok(Json(CreatedUser 
-    {
+    Ok(Json(CreatedUser {
         user: result,
-        api_key: api_key.api_key
+        api_key: api_key.api_key,
     }))
 }
 
 #[get("/delete/<user_id>", format = "application/json")]
-pub async fn delete(user_id: Uuid, pool: &State<DatabasePool>) -> Result<status::Accepted<Value>, ProteinError> {
+pub async fn delete(
+    _auth: Auth,
+    user_id: Uuid,
+    pool: &State<DatabasePool>,
+) -> Result<status::Accepted<Value>, ProteinError> {
     // Create Database Connection
     let connection = &mut db::get_connection(pool).await?;
 
     // Delete User
-    User::delete(user_id, connection)
-        .await
-        .map_err(|error| {
-            tracing::error!("[!] PostgreSQL Error {:?}", error);
-            ProteinError::Database(error.to_string())
-        })?;
-    
+    User::delete(user_id, connection).await.map_err(|error| {
+        tracing::error!("[!] PostgreSQL Error {:?}", error);
+        ProteinError::Database(error.to_string())
+    })?;
+
     // Return Okay Message with Deleted ID
     Ok(status::Accepted(json!({
         "message": "User Deleted Successfully",
@@ -125,7 +137,13 @@ pub async fn delete(user_id: Uuid, pool: &State<DatabasePool>) -> Result<status:
 }
 
 #[post("/update/<user_id>", format = "application/json", data = "<user>")]
-pub async fn update(user_id: Uuid, pool: &State<DatabasePool>, redis: &State<RedisPool>, user: Json<UpdateUser>) -> Result<Json<User>, ProteinError> {
+pub async fn update(
+    _auth: Auth,
+    user_id: Uuid,
+    pool: &State<DatabasePool>,
+    redis: &State<RedisPool>,
+    user: Json<UpdateUser>,
+) -> Result<Json<User>, ProteinError> {
     // Create Database Connection
     let connection = &mut db::get_connection(pool).await?;
 
@@ -136,38 +154,37 @@ pub async fn update(user_id: Uuid, pool: &State<DatabasePool>, redis: &State<Red
             tracing::error!("[!] PostgreSQL Error {:?}", error);
             ProteinError::Database(error.to_string())
         })?;
-        
+
     // Update Cache With User
     let _ = Cache::set(redis, user_id.to_string(), Cache::serialize(&updated_user)).await?;
 
-    // Return Updated User       
+    // Return Updated User
     Ok(Json(updated_user))
 }
 
 #[get("/me/<user_id>", format = "application/json")]
-pub async fn me(user_id: Uuid, pool: &State<DatabasePool>) -> Result<Json<Me>, ProteinError> {
+pub async fn me(
+    _auth: Auth,
+    user_id: Uuid,
+    pool: &State<DatabasePool>,
+) -> Result<Json<Me>, ProteinError> {
     // Create Database Connection
     let connection = &mut db::get_connection(pool).await?;
 
     // Grab User
-    let user = User::find(user_id, connection)
-        .await
-        .map_err(|error| {
-            tracing::error!("[!] PostgreSQL Error {:?}", error);
-            ProteinError::Database(error.to_string())
-        })?;
-    
-    // Grab API Key
-    let api_key = APIKey::get(&user, connection)
-        .await
-        .map_err(|error| {
-            tracing::error!("[!] PostgreSQL Error {:?}", error);
-            ProteinError::Database(error.to_string())
-        })?;
+    let user = User::find(user_id, connection).await.map_err(|error| {
+        tracing::error!("[!] PostgreSQL Error {:?}", error);
+        ProteinError::Database(error.to_string())
+    })?;
 
-    Ok(Json(Me
-    {
+    // Grab API Key
+    let api_key = APIKey::get(&user, connection).await.map_err(|error| {
+        tracing::error!("[!] PostgreSQL Error {:?}", error);
+        ProteinError::Database(error.to_string())
+    })?;
+
+    Ok(Json(Me {
         user: user,
-        api_key: api_key[0].clone()
+        api_key: api_key.clone(),
     }))
 }

@@ -1,12 +1,12 @@
 /*
-______          _       _       
-| ___ \        | |     (_)      
-| |_/ / __ ___ | |_ ___ _ _ __  
-|  __/ '__/ _ \| __/ _ \ | '_ \ 
+______          _       _
+| ___ \        | |     (_)
+| |_/ / __ ___ | |_ ___ _ _ __
+|  __/ '__/ _ \| __/ _ \ | '_ \
 | |  | | | (_) | ||  __/ | | | |
 \_|  |_|  \___/ \__\___|_|_| |_|
 
-        Made with ❤️ 
+        Made with ❤️
 */
 
 // Rocket
@@ -39,16 +39,18 @@ pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::
     dotenv().ok();
 
     // -- Get Database URL
-    let database_uri: String = env::var("DATABASE_URL").expect("[!] DATABASE_URL Environment Variable Must Be Set");
+    let database_uri: String =
+        env::var("DATABASE_URL").expect("[!] DATABASE_URL Environment Variable Must Be Set");
 
     // -- Create Manager
-    let manager: AsyncDieselConnectionManager<AsyncPgConnection> = AsyncDieselConnectionManager::<AsyncPgConnection>::new(database_uri);
+    let manager: AsyncDieselConnectionManager<AsyncPgConnection> =
+        AsyncDieselConnectionManager::<AsyncPgConnection>::new(database_uri);
 
     // -- Create Database Pool
     let pool = Pool::builder(manager)
-            .max_size(10)
-            .build()
-            .expect("[!] Could Not Create Database Pool");
+        .max_size(10)
+        .build()
+        .expect("[!] Could Not Create Database Pool");
 
     // -- Define Migrations
     pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
@@ -57,23 +59,25 @@ pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::
     let connection = pool.clone().get().await?;
 
     // -- Run Migrations
-    let mut wrapper: AsyncConnectionWrapper<DatabaseConnection> = AsyncConnectionWrapper::from(connection);
+    let mut wrapper: AsyncConnectionWrapper<DatabaseConnection> =
+        AsyncConnectionWrapper::from(connection);
 
     tokio::task::spawn_blocking(move || {
         wrapper.run_pending_migrations(MIGRATIONS).unwrap();
-    }).await?;
+    })
+    .await?;
 
     // Return Pool
     Ok(pool)
 }
 
-pub async fn get_connection(pool: &State<DatabasePool>) -> Result<DatabaseConnection, ProteinError> {
-    let connection = pool.get()
-        .await
-        .map_err(|error| {
-            tracing::error!("[!] PostgreSQL Error {:?}", error);
-            ProteinError::Database(error.to_string())
-        });
-    
+pub async fn get_connection(
+    pool: &State<DatabasePool>,
+) -> Result<DatabaseConnection, ProteinError> {
+    let connection = pool.get().await.map_err(|error| {
+        tracing::error!("[!] PostgreSQL Error {:?}", error);
+        ProteinError::Database(error.to_string())
+    });
+
     connection
 }

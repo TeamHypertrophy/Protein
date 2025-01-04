@@ -1,12 +1,12 @@
 /*
-______          _       _       
-| ___ \        | |     (_)      
-| |_/ / __ ___ | |_ ___ _ _ __  
-|  __/ '__/ _ \| __/ _ \ | '_ \ 
+______          _       _
+| ___ \        | |     (_)
+| |_/ / __ ___ | |_ ___ _ _ __
+|  __/ '__/ _ \| __/ _ \ | '_ \
 | |  | | | (_) | ||  __/ | | | |
 \_|  |_|  \___/ \__\___|_|_| |_|
 
-        Made with ❤️ 
+        Made with ❤️
 */
 
 // Uuid
@@ -25,7 +25,18 @@ use rocket::serde::{Deserialize, Serialize};
 use crate::{schema::users, schema::users::dsl::*, db::DatabaseConnection, models::keys::APIKey};
 
 // User Model
-#[derive(Clone, Debug, Eq, PartialEq, Queryable, Selectable, Serialize, Deserialize, AsChangeset, Identifiable)]
+#[derive(
+    Clone,
+    Debug,
+    Eq,
+    PartialEq,
+    Queryable,
+    Selectable,
+    Serialize,
+    Deserialize,
+    AsChangeset,
+    Identifiable,
+)]
 #[serde(crate = "rocket::serde")]
 #[diesel(table_name = users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
@@ -36,7 +47,10 @@ pub struct User {
 }
 
 impl User {
-    pub async fn find(user_id: Uuid, connection: &mut DatabaseConnection) -> Result<User, diesel::result::Error> {
+    pub async fn find(
+        user_id: Uuid,
+        connection: &mut DatabaseConnection,
+    ) -> Result<User, diesel::result::Error> {
         users::table
             .find(user_id)
             .select(User::as_select())
@@ -44,25 +58,32 @@ impl User {
             .await
     }
 
-    pub async fn all(connection: &mut DatabaseConnection) -> Result<Vec<User>, diesel::result::Error> {
+    pub async fn all(
+        connection: &mut DatabaseConnection,
+    ) -> Result<Vec<User>, diesel::result::Error> {
         users::table
             .select(User::as_select())
             .load(connection)
             .await
     }
 
-    pub async fn delete(user_id: Uuid, connection: &mut DatabaseConnection) -> Result<usize, diesel::result::Error> {
+    pub async fn delete(
+        user_id: Uuid,
+        connection: &mut DatabaseConnection,
+    ) -> Result<usize, diesel::result::Error> {
         diesel::delete(users::table.filter(id.eq(user_id)))
             .execute(connection)
             .await
     }
 
-    pub async fn update(user_id: Uuid, new_username: String, connection: &mut DatabaseConnection) -> Result<User, diesel::result::Error> {
+    pub async fn update(
+        user_id: Uuid,
+        new_username: String,
+        connection: &mut DatabaseConnection,
+    ) -> Result<User, diesel::result::Error> {
         diesel::update(users::table)
             .filter(id.eq(user_id))
-            .set((
-                username.eq(new_username),
-            ))
+            .set((username.eq(new_username),))
             .get_result::<User>(connection)
             .await
     }
@@ -78,7 +99,10 @@ pub struct NewUser {
 }
 
 impl NewUser {
-    pub async fn create(connection: &mut DatabaseConnection, user: NewUser) -> Result<User, diesel::result::Error> {
+    pub async fn create(
+        connection: &mut DatabaseConnection,
+        user: NewUser,
+    ) -> Result<User, diesel::result::Error> {
         diesel::insert_into(users::table)
             .values(&user)
             .get_result::<User>(connection)
@@ -100,6 +124,5 @@ pub struct Me {
 
 #[derive(Serialize, Deserialize)]
 pub struct UpdateUser {
-    pub username: String
+    pub username: String,
 }
-

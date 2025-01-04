@@ -1,12 +1,12 @@
 /*
-______          _       _       
-| ___ \        | |     (_)      
-| |_/ / __ ___ | |_ ___ _ _ __  
-|  __/ '__/ _ \| __/ _ \ | '_ \ 
+______          _       _
+| ___ \        | |     (_)
+| |_/ / __ ___ | |_ ___ _ _ __
+|  __/ '__/ _ \| __/ _ \ | '_ \
 | |  | | | (_) | ||  __/ | | | |
 \_|  |_|  \___/ \__\___|_|_| |_|
 
-        Made with ❤️ 
+        Made with ❤️
 */
 
 // Uuid
@@ -27,7 +27,18 @@ use chrono::NaiveDateTime;
 // Users
 use crate::{schema::api_keys, schema::api_keys::dsl::*, models::user::User, db::DatabaseConnection};
 
-#[derive(Serialize, Deserialize, Queryable, Identifiable, Associations, Selectable, Insertable, Debug, Clone, PartialEq)]
+#[derive(
+    Serialize,
+    Deserialize,
+    Queryable,
+    Identifiable,
+    Associations,
+    Selectable,
+    Insertable,
+    Debug,
+    Clone,
+    PartialEq,
+)]
 #[serde(crate = "rocket::serde")]
 #[diesel(table_name = api_keys)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
@@ -42,17 +53,34 @@ pub struct APIKey {
 }
 
 impl APIKey {
-    pub async fn get(user: &User, connection: &mut DatabaseConnection) -> Result<Vec<APIKey>, diesel::result::Error> {
+    pub async fn get(
+        user: &User,
+        connection: &mut DatabaseConnection,
+    ) -> Result<APIKey, diesel::result::Error> {
         APIKey::belonging_to(user)
             .select(APIKey::as_select())
-            .load(connection)
+            .first(connection)
             .await
     }
 
-    pub async fn generate(user: &User, connection: &mut DatabaseConnection) -> Result<APIKey, diesel::result::Error> {
+    pub async fn generate(
+        user: &User,
+        connection: &mut DatabaseConnection,
+    ) -> Result<APIKey, diesel::result::Error> {
         diesel::insert_into(api_keys::table)
             .values(user_id.eq(user.id))
             .get_result(connection)
+            .await
+    }
+
+    pub async fn find_by_key(
+        key: Uuid,
+        mut connection: DatabaseConnection,
+    ) -> Result<APIKey, diesel::result::Error> {
+        api_keys::table
+            .filter(api_key.eq(key))
+            .select(APIKey::as_select())
+            .first(&mut connection)
             .await
     }
 }

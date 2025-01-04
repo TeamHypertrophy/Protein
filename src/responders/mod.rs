@@ -1,12 +1,12 @@
 /*
-______          _       _       
-| ___ \        | |     (_)      
-| |_/ / __ ___ | |_ ___ _ _ __  
-|  __/ '__/ _ \| __/ _ \ | '_ \ 
+______          _       _
+| ___ \        | |     (_)
+| |_/ / __ ___ | |_ ___ _ _ __
+|  __/ '__/ _ \| __/ _ \ | '_ \
 | |  | | | (_) | ||  __/ | | | |
 \_|  |_|  \___/ \__\___|_|_| |_|
 
-        Made with ❤️ 
+        Made with ❤️
 */
 
 // Rocket
@@ -37,6 +37,8 @@ pub enum ProteinError {
 
     Authorization(String),
 
+    Validation(String),
+
     Database(String),
 }
 
@@ -48,6 +50,7 @@ impl ProteinError {
             ProteinError::Database(_) => Status::InternalServerError,
             ProteinError::Authorization(_) => Status::Unauthorized,
             ProteinError::NotFound(_) => Status::NotFound,
+            ProteinError::Validation(_) => Status::BadRequest,
             _ => Status::BadRequest,
         }
     }
@@ -61,9 +64,10 @@ impl std::fmt::Display for ProteinError {
 
 impl<'r> Responder<'r, 'static> for ProteinError {
     fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
-        let error_response = json::to_string(&ErrorResponse{
+        let error_response = json::to_string(&ErrorResponse {
             message: self.to_string(),
-        }).unwrap();
+        })
+        .unwrap();
 
         Response::build()
             .status(self.get_http_status())

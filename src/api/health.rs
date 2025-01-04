@@ -1,12 +1,12 @@
 /*
-______          _       _       
-| ___ \        | |     (_)      
-| |_/ / __ ___ | |_ ___ _ _ __  
-|  __/ '__/ _ \| __/ _ \ | '_ \ 
+______          _       _
+| ___ \        | |     (_)
+| |_/ / __ ___ | |_ ___ _ _ __
+|  __/ '__/ _ \| __/ _ \ | '_ \
 | |  | | | (_) | ||  __/ | | | |
 \_|  |_|  \___/ \__\___|_|_| |_|
 
-        Made with ❤️ 
+        Made with ❤️
 */
 
 // Rocket
@@ -45,17 +45,16 @@ pub async fn redis(redis: &State<RedisPool>) -> Value {
 
 #[get("/postgres", format = "application/json")]
 pub async fn postgres(pool: &State<DatabasePool>) -> Value {
-
     // [-] Attempt to Create Database Connection
     let connection = &mut pool.get().await.ok();
 
     // [>] Compare and Return
     match connection {
-       Some(_connection) => json!({
+        Some(_connection) => json!({
             "is_healthy": true
         }),
-       None => json!({
+        None => json!({
             "is_healthy": false
-        })
-     }
+        }),
+    }
 }
