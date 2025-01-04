@@ -6,7 +6,7 @@ build = "build.rs"
 
 [dependencies]
 # -- Base API Requirement
-rocket = { version = "0.5.1", features = ["json", "secrets", "uuid"] }
+rocket = { version = "0.5.1", features = ["json", "uuid"] }
 # -- Diesel Requirements (Database)
 diesel = { version = "2.2.6", features = ["postgres", "uuid", "chrono"] }
 diesel-async = { version = "0.5.2", features = [
@@ -16,13 +16,13 @@ diesel-async = { version = "0.5.2", features = [
 ] }
 diesel_migrations = { version = "2.2.0" }
 ## -- Async
-tokio = { version = "1.42.0", features = ["full"] }
+tokio = { version = "1.42.0", features = ["rt"] }
 # -- Requests
 reqwest = { version = "0.12", features = ["json"] }
 # -- Serialization
 serde = { version = "1.0.217", features = ["derive"] }
 serde_json = { version = "1.0.134", optional = true }
-uuid = { version = "1.11.0", features = ["v7", "fast-rng"] }
+uuid = { version = "1.11.0", features = ["fast-rng"] }
 chrono = { version = "0.4.39", features = ["serde"] }
 # -- .env
 dotenvy = "0.15"
@@ -33,8 +33,6 @@ tracing = "0.1.41"
 tracing-subscriber = "0.3.19"
 tracing-appender = "0.2.3"
 tracing-log = "0.2.0"
-# -- Error Handling
-anyhow = "1.0.95"
 # -- Redis
 fred = { version = "10.0.3", features = ["serde-json", "i-keys"] }
 ## -- Shadow and SysInfo
@@ -46,9 +44,5 @@ shadow-rs = { version = "0.37.0", features = ["metadata"] }
 
 [package.metadata.cargo-udeps.ignore]
 normal = [
-    "anyhow",
-    "tracing",
-    "tracing-subscriber",
     "reqwest",
-    "diesel_async_migrations",
 ]

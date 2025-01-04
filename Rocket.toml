@@ -1,4 +1,3 @@
 [default]
 log_level = "normal"
 cli_colors = false
-secret_key = "GTFxgrgECvUDJiQKX44Ftnv4s5EjR7hoed28XGsm260="
