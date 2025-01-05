@@ -57,13 +57,13 @@ impl<'r> FromRequest<'r> for Auth {
             } else {
                 Outcome::Error((
                     Status::Unauthorized,
-                    ProteinError::Authorization("API Key Does Not Exist".to_string()),
+                    ProteinError::Authorization("API Key Does Not Match!".to_string()),
                 ))
             }
         } else {
             return Outcome::Error((
-                Status::InternalServerError,
-                ProteinError::Database("Error Fetching API Key From Database".to_string()),
+                Status::Unauthorized,
+                ProteinError::Unauthorized("API Key Does Not Match!".to_string()),
             ));
         }
     }

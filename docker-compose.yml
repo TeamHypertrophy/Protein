@@ -19,7 +19,7 @@ services:
 
   api:
     container_name: hypertrophy-api
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     depends_on:
@@ -32,7 +32,7 @@ services:
     env_file:
       - docker.env
     ports:
-      - "8000:5000"
+      - "8000:8000"
     restart: unless-stopped
 
   redis:

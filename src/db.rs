@@ -71,6 +71,7 @@ pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::
     Ok(pool)
 }
 
+// Retrieves Single Database Connection
 pub async fn get_connection(
     pool: &State<DatabasePool>,
 ) -> Result<DatabaseConnection, ProteinError> {

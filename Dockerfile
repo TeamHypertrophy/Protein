@@ -19,6 +19,7 @@ FROM debian:bookworm-slim
 WORKDIR /protein
 
 RUN apt-get update -y && apt-get upgrade -y && apt-get install -y --no-install-recommends libssl-dev libpq-dev
+COPY --from=build /protein/Rocket.toml ./
 COPY --from=build /protein/target/release/protein ./protein
 
 EXPOSE 8000
