@@ -63,7 +63,7 @@ impl<'r> FromRequest<'r> for Auth {
         } else {
             return Outcome::Error((
                 Status::Unauthorized,
-                ProteinError::Unauthorized("API Key Does Not Match!".to_string()),
+                ProteinError::Authorization("API Key Does Not Match!".to_string()),
             ));
         }
     }

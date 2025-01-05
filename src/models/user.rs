@@ -22,7 +22,10 @@ use diesel_async::RunQueryDsl;
 use rocket::serde::{Deserialize, Serialize};
 
 // Users
-use crate::{schema::users, schema::users::dsl::*, db::DatabaseConnection, models::keys::APIKey};
+use crate::{
+    schema::users, schema::users::dsl::*, db::DatabaseConnection, models::keys::APIKey,
+    responders::ProteinError,
+};
 
 // User Model
 #[derive(
@@ -50,42 +53,56 @@ impl User {
     pub async fn find(
         user_id: Uuid,
         connection: &mut DatabaseConnection,
-    ) -> Result<User, diesel::result::Error> {
+    ) -> Result<User, ProteinError> {
         users::table
             .find(user_id)
             .select(User::as_select())
             .first(connection)
             .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
     }
 
-    pub async fn all(
-        connection: &mut DatabaseConnection,
-    ) -> Result<Vec<User>, diesel::result::Error> {
+    pub async fn all(connection: &mut DatabaseConnection) -> Result<Vec<User>, ProteinError> {
         users::table
             .select(User::as_select())
             .load(connection)
             .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
     }
 
     pub async fn delete(
         user_id: Uuid,
         connection: &mut DatabaseConnection,
-    ) -> Result<usize, diesel::result::Error> {
+    ) -> Result<usize, ProteinError> {
         diesel::delete(users::table.filter(id.eq(user_id)))
             .execute(connection)
             .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
     }
 
     pub async fn update(
         user_id: Uuid,
         new_username: String,
         connection: &mut DatabaseConnection,
-    ) -> Result<User, diesel::result::Error> {
+    ) -> Result<User, ProteinError> {
         diesel::update(users::table)
             .filter(id.eq(user_id))
             .set((username.eq(new_username),))
             .get_result::<User>(connection)
             .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
     }
 }
 
@@ -102,11 +119,15 @@ impl NewUser {
     pub async fn create(
         connection: &mut DatabaseConnection,
         user: NewUser,
-    ) -> Result<User, diesel::result::Error> {
+    ) -> Result<User, ProteinError> {
         diesel::insert_into(users::table)
             .values(&user)
             .get_result::<User>(connection)
             .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
     }
 }
 

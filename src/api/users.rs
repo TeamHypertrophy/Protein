@@ -43,10 +43,7 @@ pub async fn get(
         let connection = &mut db::get_connection(pool).await?;
 
         // Grab User
-        let user = User::find(user_id, connection).await.map_err(|error| {
-            tracing::error!("[!] PostgreSQL Error {:?}", error);
-            ProteinError::Database(error.to_string())
-        })?;
+        let user = User::find(user_id, connection).await?;
 
         // Set User in Cache
         Cache::set(redis, user_id.to_string(), Cache::serialize(&user)).await?;
@@ -66,10 +63,7 @@ pub async fn all(_auth: Auth, pool: &State<DatabasePool>) -> Result<Json<Vec<Use
     let connection = &mut db::get_connection(pool).await?;
 
     // Fetch List of Users and Return
-    let users = User::all(connection).await.map_err(|error| {
-        tracing::error!("[!] PostgreSQL Error {:?}", error);
-        ProteinError::Database(error.to_string())
-    })?;
+    let users = User::all(connection).await?;
 
     Ok(Json(users))
 }
@@ -90,20 +84,10 @@ pub async fn create(
     let connection = &mut db::get_connection(pool).await?;
 
     // Create User and Grab Result
-    let result = NewUser::create(connection, new_user)
-        .await
-        .map_err(|error| {
-            tracing::error!("[!] PostgreSQL Error {:?}", error);
-            ProteinError::Database(error.to_string())
-        })?;
+    let result = NewUser::create(connection, new_user).await?;
 
     // Generate API Key
-    let api_key = APIKey::generate(&result, connection)
-        .await
-        .map_err(|error| {
-            tracing::error!("[!] PostgreSQL Error {:?}", error);
-            ProteinError::Database(error.to_string())
-        })?;
+    let api_key = APIKey::generate(&result, connection).await?;
 
     // Set New User in Cache
     Cache::set(redis, result.id.to_string(), Cache::serialize(&result)).await?;
@@ -124,10 +108,7 @@ pub async fn delete(
     let connection = &mut db::get_connection(pool).await?;
 
     // Delete User
-    User::delete(user_id, connection).await.map_err(|error| {
-        tracing::error!("[!] PostgreSQL Error {:?}", error);
-        ProteinError::Database(error.to_string())
-    })?;
+    User::delete(user_id, connection).await?;
 
     // Return Okay Message with Deleted ID
     Ok(status::Accepted(json!({
@@ -148,12 +129,7 @@ pub async fn update(
     let connection = &mut db::get_connection(pool).await?;
 
     // Update User
-    let updated_user = User::update(user_id, user.username.clone(), connection)
-        .await
-        .map_err(|error| {
-            tracing::error!("[!] PostgreSQL Error {:?}", error);
-            ProteinError::Database(error.to_string())
-        })?;
+    let updated_user = User::update(user_id, user.username.clone(), connection).await?;
 
     // Update Cache With User
     Cache::set(redis, user_id.to_string(), Cache::serialize(&updated_user)).await?;
@@ -172,16 +148,10 @@ pub async fn me(
     let connection = &mut db::get_connection(pool).await?;
 
     // Grab User
-    let user = User::find(user_id, connection).await.map_err(|error| {
-        tracing::error!("[!] PostgreSQL Error {:?}", error);
-        ProteinError::Database(error.to_string())
-    })?;
+    let user = User::find(user_id, connection).await?;
 
     // Grab API Key
-    let api_key = APIKey::get(&user, connection).await.map_err(|error| {
-        tracing::error!("[!] PostgreSQL Error {:?}", error);
-        ProteinError::Database(error.to_string())
-    })?;
+    let api_key = APIKey::get(&user, connection).await?;
 
     Ok(Json(Me {
         user: user,

@@ -23,6 +23,7 @@ use std::io::Cursor;
 #[derive(Serialize)]
 pub struct ErrorResponse {
     pub message: String,
+    pub status_code: Status,
 }
 
 #[derive(Debug, Clone)]
@@ -64,13 +65,26 @@ impl std::fmt::Display for ProteinError {
 
 impl<'r> Responder<'r, 'static> for ProteinError {
     fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
+        let status = self.get_http_status();
+
+        let message = match self {
+            ProteinError::Internal(msg) => msg,
+            ProteinError::NotFound(msg) => msg,
+            ProteinError::BadRequest(msg) => msg,
+            ProteinError::Cache(msg) => msg,
+            ProteinError::Authorization(msg) => msg,
+            ProteinError::Validation(msg) => msg,
+            ProteinError::Database(msg) => msg,
+        };
+
         let error_response = json::to_string(&ErrorResponse {
-            message: self.to_string(),
+            message: message,
+            status_code: status,
         })
         .unwrap();
 
         Response::build()
-            .status(self.get_http_status())
+            .status(status)
             .header(ContentType::JSON)
             .sized_body(error_response.len(), Cursor::new(error_response))
             .ok()

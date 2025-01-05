@@ -25,7 +25,10 @@ use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
 // Users
-use crate::{schema::api_keys, schema::api_keys::dsl::*, models::user::User, db::DatabaseConnection};
+use crate::{
+    schema::api_keys, schema::api_keys::dsl::*, models::user::User, db::DatabaseConnection,
+    responders::ProteinError,
+};
 
 #[derive(
     Serialize,
@@ -56,31 +59,43 @@ impl APIKey {
     pub async fn get(
         user: &User,
         connection: &mut DatabaseConnection,
-    ) -> Result<APIKey, diesel::result::Error> {
+    ) -> Result<APIKey, ProteinError> {
         APIKey::belonging_to(user)
             .select(APIKey::as_select())
             .first(connection)
             .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
     }
 
     pub async fn generate(
         user: &User,
         connection: &mut DatabaseConnection,
-    ) -> Result<APIKey, diesel::result::Error> {
+    ) -> Result<APIKey, ProteinError> {
         diesel::insert_into(api_keys::table)
             .values(user_id.eq(user.id))
             .get_result(connection)
             .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
     }
 
     pub async fn find_by_key(
         key: Uuid,
         mut connection: DatabaseConnection,
-    ) -> Result<APIKey, diesel::result::Error> {
+    ) -> Result<APIKey, ProteinError> {
         api_keys::table
             .filter(api_key.eq(key))
             .select(APIKey::as_select())
             .first(&mut connection)
             .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
     }
 }

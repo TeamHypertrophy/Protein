@@ -86,6 +86,16 @@ impl Cache {
         })
     }
 
+    pub async fn ping(
+        pool: &State<RedisPool>,
+        message: Option<String>,
+    ) -> Result<String, ProteinError> {
+        pool.ping(message).await.map_err(|error| {
+            tracing::error!("[!] Redis Error: {:?}", error);
+            ProteinError::Cache(error.to_string())
+        })
+    }
+
     pub fn serialize<T: Serialize>(data: &T) -> String {
         json::to_string(data).unwrap()
     }
