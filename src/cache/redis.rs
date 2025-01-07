@@ -30,10 +30,10 @@ use crate::constants::CACHE_EXPIRATION_TIME;
 pub type RedisPool = Pool;
 
 pub async fn create_redis_pool() -> Result<Pool, Error> {
-    // -- Load .env
+    // Load .env
     dotenv().ok();
 
-    // -- Get Redis URI
+    // Get Redis URI
     let redis_uri = env::var("REDIS_URI").expect("[!] REDIS_URI Environment Variable Must Be Set");
 
     // Create Redis Config
@@ -49,6 +49,7 @@ pub async fn create_redis_pool() -> Result<Pool, Error> {
         .build_pool(5)
         .expect("[!] Failed to Create Redis Pool");
 
+    // Initialize Pool
     pool.init()
         .await
         .expect("[!!] Failed to Initialize Redis Pool");

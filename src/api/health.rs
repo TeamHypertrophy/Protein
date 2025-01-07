@@ -25,13 +25,13 @@ use crate::db::DatabasePool;
 
 #[get("/redis", format = "application/json")]
 pub async fn redis(redis: &State<RedisPool>) -> Result<Value, ProteinError> {
-    // [-] Create Message To Test Connection
+    // Create Message To Test Connection
     let pong: String = String::from("PONG");
 
-    // [-] Run 'ping "PONG"'
+    // Run 'ping "PONG"'
     let ping: String = Cache::ping(redis, Some(pong.clone())).await?;
 
-    // [>] Compare and Return
+    // Compare and Return
     if ping == pong {
         Ok(json!({
             "is_healthy": true
