@@ -24,12 +24,13 @@ use rocket::serde::{Deserialize, Serialize};
 // Time
 use chrono::NaiveDateTime;
 
-// Users
+// Protein
 use crate::{
     schema::api_keys, schema::api_keys::dsl::*, models::user::User, db::DatabaseConnection,
     responders::ProteinError,
 };
 
+// APIKey Model
 #[derive(
     Serialize,
     Deserialize,

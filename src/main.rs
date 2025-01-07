@@ -13,8 +13,6 @@ ______          _       _
 #[macro_use]
 extern crate rocket;
 
-use rocket::fairing::AdHoc;
-
 // Schema File
 mod schema;
 
@@ -45,9 +43,7 @@ pub mod auth;
 pub mod responders;
 
 // Shadow
-use shadow_rs::shadow;
-
-shadow!(build);
+shadow_rs::shadow!(build);
 
 // Launch Rocket Instance
 #[launch]
@@ -86,9 +82,11 @@ async fn protein() -> _ {
         .manage(system)
         .attach(fairings::cors::Cors)
         .attach(fairings::logging::Logging)
-        .attach(AdHoc::on_shutdown("[!] Write Logs", |_| {
-            Box::pin(async move { drop(guard) })
-        }))
+        .attach(rocket_sentry::RocketSentry::fairing())
+        .attach(rocket::fairing::AdHoc::on_shutdown(
+            "[!] Write Logs",
+            |_| Box::pin(async move { drop(guard) }),
+        ))
         .mount("/", routes![api::index::index])
         .mount(
             "/health",

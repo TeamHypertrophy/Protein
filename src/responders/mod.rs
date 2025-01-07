@@ -68,16 +68,16 @@ impl<'r> Responder<'r, 'static> for ProteinError {
         let status = self.get_http_status();
 
         let message = match self {
-            ProteinError::Internal(msg) => msg,
-            ProteinError::NotFound(msg) => msg,
-            ProteinError::BadRequest(msg) => msg,
-            ProteinError::Cache(msg) => msg,
-            ProteinError::Authorization(msg) => msg,
-            ProteinError::Validation(msg) => msg,
-            ProteinError::Database(msg) => msg,
+            ProteinError::Internal(error) => error,
+            ProteinError::NotFound(error) => error,
+            ProteinError::BadRequest(error) => error,
+            ProteinError::Cache(error) => error,
+            ProteinError::Authorization(error) => error,
+            ProteinError::Validation(error) => error,
+            ProteinError::Database(error) => error,
         };
 
-        let error_response = json::to_string(&ErrorResponse {
+        let response = json::to_string(&ErrorResponse {
             message: message,
             status_code: status,
         })
@@ -86,7 +86,7 @@ impl<'r> Responder<'r, 'static> for ProteinError {
         Response::build()
             .status(status)
             .header(ContentType::JSON)
-            .sized_body(error_response.len(), Cursor::new(error_response))
+            .sized_body(response.len(), Cursor::new(response))
             .ok()
     }
 }

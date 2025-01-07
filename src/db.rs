@@ -75,10 +75,8 @@ pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::
 pub async fn get_connection(
     pool: &State<DatabasePool>,
 ) -> Result<DatabaseConnection, ProteinError> {
-    let connection = pool.get().await.map_err(|error| {
+    pool.get().await.map_err(|error| {
         tracing::error!("[!] PostgreSQL Error {:?}", error);
         ProteinError::Database(error.to_string())
-    });
-
-    connection
+    })
 }

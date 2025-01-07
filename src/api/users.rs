@@ -35,7 +35,7 @@ pub async fn get(
     redis: &State<RedisPool>,
 ) -> Result<Json<User>, ProteinError> {
     // Check Cache
-    let cache: Value = Cache::get(redis, user_id.to_string()).await?;
+    let cache: Value = Cache::get(redis, format!("user:{}", user_id)).await?;
 
     // If Cache is Null, Fetch From Database
     if cache.is_null() {
@@ -46,7 +46,7 @@ pub async fn get(
         let user = User::find(user_id, connection).await?;
 
         // Set User in Cache
-        Cache::set(redis, user_id.to_string(), Cache::serialize(&user)).await?;
+        Cache::set(redis, format!("user:{}", user_id), Cache::serialize(&user)).await?;
 
         Ok(Json(user))
     } else {
@@ -90,7 +90,12 @@ pub async fn create(
     let api_key = APIKey::generate(&result, connection).await?;
 
     // Set New User in Cache
-    Cache::set(redis, result.id.to_string(), Cache::serialize(&result)).await?;
+    Cache::set(
+        redis,
+        format!("user:{}", result.id),
+        Cache::serialize(&result),
+    )
+    .await?;
 
     Ok(Json(CreatedUser {
         user: result,
@@ -132,7 +137,12 @@ pub async fn update(
     let updated_user = User::update(user_id, user.username.clone(), connection).await?;
 
     // Update Cache With User
-    Cache::set(redis, user_id.to_string(), Cache::serialize(&updated_user)).await?;
+    Cache::set(
+        redis,
+        format!("user:{}", user_id),
+        Cache::serialize(&updated_user),
+    )
+    .await?;
 
     // Return Updated User
     Ok(Json(updated_user))

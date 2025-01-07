@@ -9,4 +9,4 @@ ______          _       _
         Made with ❤️
 */
 
-pub const CACHE_EXPIRATION_TIME: i64 = 1800;
+pub const CACHE_EXPIRATION_TIME: i64 = 1800; // 30 minutes
