@@ -9,14 +9,11 @@ ______          _       _
         Made with ❤️
 */
 
-// Standard Library
 use std::path::Path;
 
-// Tracing
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_appender::non_blocking::WorkerGuard;
-use tracing_subscriber::fmt::format::FmtSpan;
-use tracing_subscriber::{fmt, prelude::*};
+use tracing_subscriber::{fmt, fmt::format::FmtSpan, prelude::*};
 
 pub fn setup_logging() -> Result<(WorkerGuard, ()), Box<dyn std::error::Error>> {
     // Build Path for Logs Directory

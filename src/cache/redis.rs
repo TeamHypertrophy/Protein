@@ -8,24 +8,20 @@ ______          _       _
 
         Made with ❤️
 */
-// Rocket
-use rocket::State;
-use rocket::serde::json;
-use rocket::serde::json::Value;
-use rocket::serde::{Serialize, Deserialize};
 
-// Fred
+
+use rocket::{
+    serde::{json, json::Value, Deserialize, Serialize},
+    State,
+};
+
 use fred::prelude::*;
 
-// .env Loader
 use dotenvy::dotenv;
 use std::env;
 
-// STD
 use std::time::Duration;
-
-use crate::responders::ProteinError;
-use crate::constants::CACHE_EXPIRATION_TIME;
+use crate::{constants::CACHE_EXPIRATION_TIME, responders::ProteinError};
 
 pub type RedisPool = Pool;
 
@@ -38,9 +34,11 @@ pub async fn create_redis_pool() -> Result<Pool, Error> {
 
     // Create Redis Config
     let config = Config::from_url(&redis_uri).unwrap();
+
     let pool = Builder::from_config(config)
         .with_connection_config(|config| {
             config.connection_timeout = Duration::from_secs(10);
+
             config.tcp = TcpConfig {
                 nodelay: Some(true),
                 ..Default::default()
@@ -61,9 +59,10 @@ pub async fn create_redis_pool() -> Result<Pool, Error> {
 pub struct Cache;
 
 impl Cache {
-    pub async fn get(pool: &State<RedisPool>, key: String) -> Result<Value, ProteinError> {
-        tracing::info!("[>] Fetching Key From Redis Cache: {}", key);
-        pool.get(key).await.map_err(|error| {
+    pub async fn get(pool: &State<RedisPool>, group: &str, key: String) -> Result<Value, ProteinError> {
+        tracing::info!("[>] Fetching Key From Redis Cache: {}", format!("{}:{}", group, key));
+
+        pool.get(format!("{}:{}", group, key)).await.map_err(|error| {
             tracing::error!("[!] Redis Error: {:?}", error);
             ProteinError::Cache(error.to_string())
         })
@@ -71,16 +70,18 @@ impl Cache {
 
     pub async fn set(
         pool: &State<RedisPool>,
+        group: &str,
         key: String,
         value: String,
     ) -> Result<(), ProteinError> {
         tracing::info!(
             "[>] Setting Key In Redis Cache: `{}` With Values: `{}`",
-            key,
+            format!("{}:{}", group, key),
             value
         );
+
         pool.set(
-            key,
+            format!("{}:{}", group, key),
             value,
             Some(Expiration::EX(CACHE_EXPIRATION_TIME)),
             None,
@@ -98,6 +99,7 @@ impl Cache {
         message: Option<String>,
     ) -> Result<String, ProteinError> {
         tracing::info!("[>] Pinging Redis For Health Check");
+
         pool.ping(message).await.map_err(|error| {
             tracing::error!("[!] Redis Error: {:?}", error);
             ProteinError::Cache(error.to_string())

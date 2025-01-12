@@ -9,15 +9,14 @@ ______          _       _
         Made with ❤️
 */
 
-// Rocket
-use rocket::get;
-use rocket::State;
-use rocket::serde::json::{json, Value};
+use rocket::{
+    get,
+    serde::json::{json, Value},
+    State,
+};
 
-// SysInfo
 use sysinfo::System;
 
-// Shadow
 use crate::build;
 
 #[get("/", format = "application/json")]

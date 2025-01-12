@@ -9,22 +9,17 @@ ______          _       _
         Made with ❤️
 */
 
-// Uuid
 use uuid::Uuid;
 
-// Diesel
 use diesel::prelude::*;
 
-// Diesel Async
 use diesel_async::RunQueryDsl;
 
-// Serde Serialization
 use rocket::serde::{Deserialize, Serialize};
 
-// Users
 use crate::{
-    schema::users, schema::users::dsl::*, db::DatabaseConnection, models::keys::APIKey,
-    responders::ProteinError,
+    db::DatabaseConnection, models::keys::APIKey, responders::ProteinError, schema::users,
+    schema::users::dsl::*,
 };
 
 // User Model
@@ -40,7 +35,6 @@ use crate::{
     AsChangeset,
     Identifiable,
 )]
-#[serde(crate = "rocket::serde")]
 #[diesel(table_name = users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {

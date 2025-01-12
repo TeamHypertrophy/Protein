@@ -47,6 +47,7 @@ shadow_rs::shadow!(build);
 
 // Launch Rocket Instance
 #[launch]
+
 async fn protein() -> _ {
     // Setup Logging, PostgreSQL and Redis
     let (guard, ()) = match utils::logging::setup_logging() {

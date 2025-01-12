@@ -9,10 +9,10 @@ ______          _       _
         Made with ❤️
 */
 
-// Rocket
-use rocket::fairing::{Fairing, Info, Kind};
-use rocket::{Request, Data};
-
+use rocket::{
+    fairing::{Fairing, Info, Kind},
+    Data, Request,
+};
 // Tracing
 use tracing::info;
 

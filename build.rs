@@ -5,5 +5,6 @@ fn main() {
         .deny_const(Default::default())
         .build()
         .unwrap();
+
     println!("cargo:rerun-if-changed=migrations");
 }

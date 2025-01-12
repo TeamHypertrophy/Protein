@@ -9,25 +9,20 @@ ______          _       _
         Made with ❤️
 */
 
-// Uuid
+
 use uuid::Uuid;
 
-// Diesel
 use diesel::prelude::*;
 
-// Diesel Async
 use diesel_async::RunQueryDsl;
 
-// Serde Serialization
 use rocket::serde::{Deserialize, Serialize};
 
-// Time
 use chrono::NaiveDateTime;
 
-// Protein
 use crate::{
-    schema::api_keys, schema::api_keys::dsl::*, models::user::User, db::DatabaseConnection,
-    responders::ProteinError,
+    db::DatabaseConnection, models::user::User, responders::ProteinError, schema::api_keys,
+    schema::api_keys::dsl::*,
 };
 
 // APIKey Model
@@ -43,7 +38,6 @@ use crate::{
     Clone,
     PartialEq,
 )]
-#[serde(crate = "rocket::serde")]
 #[diesel(table_name = api_keys)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(belongs_to(User))]

@@ -1,11 +1,21 @@
-use rocket::request::{self, Request, FromRequest, Outcome};
-use rocket::http::Status;
+/*
+______          _       _
+| ___ \        | |     (_)
+| |_/ / __ ___ | |_ ___ _ _ __
+|  __/ '__/ _ \| __/ _ \ | '_ \
+| |  | | | (_) | ||  __/ | | | |
+\_|  |_|  \___/ \__\___|_|_| |_|
+
+        Made with ❤️
+*/
+
+use rocket::{
+    http::Status,
+    request::{self, FromRequest, Outcome, Request},
+};
 use uuid::Uuid;
+use crate::{db, models::keys::APIKey, responders::ProteinError};
 
-use crate::responders::ProteinError;
-use crate::db;
-
-use crate::models::keys::APIKey;
 pub struct Auth;
 
 #[rocket::async_trait]

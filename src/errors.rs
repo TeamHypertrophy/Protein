@@ -9,11 +9,8 @@ ______          _       _
         Made with ❤️
 */
 
-// Rocket
-use rocket::http::Status;
-use rocket::Request;
+use rocket::{http::Status, Request};
 
-//JSON
 use rocket::serde::json::{json, Value};
 
 // Default Catcher

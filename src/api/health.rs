@@ -9,19 +9,18 @@ ______          _       _
         Made with ❤️
 */
 
-// Rocket
-use rocket::serde::json::{json, Value};
-use rocket::{get, State};
 
-// Redis
-use crate::cache::redis::{RedisPool, Cache};
+use rocket::{
+    get,
+    serde::json::{json, Value},
+    State,
+};
 
-// Errors
+use crate::cache::redis::{Cache, RedisPool};
+
 use crate::responders::ProteinError;
 
-// Database
-use crate::db;
-use crate::db::DatabasePool;
+use crate::{db, db::DatabasePool};
 
 #[get("/redis", format = "application/json")]
 pub async fn redis(redis: &State<RedisPool>) -> Result<Value, ProteinError> {

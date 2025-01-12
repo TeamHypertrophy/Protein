@@ -10,21 +10,24 @@ ______          _       _
 */
 
 // Rocket
-use rocket::serde::json::{Json, Value};
-use rocket::serde::json::json;
-use rocket::response::status;
-use rocket::serde::uuid::Uuid;
-use rocket::{get, post, State};
-
+use rocket::{
+    get, post,
+    response::status,
+    serde::{
+        json::{json, Json, Value},
+        uuid::Uuid,
+    },
+    State,
+};
 // Protein
 use crate::{
-    cache::redis::{RedisPool, Cache},
-    models::user::{NewUser, CreatedUser, UpdateUser, User, Me},
-    models::keys::APIKey,
+    auth::Auth,
+    cache::redis::{Cache, RedisPool},
     db,
     db::DatabasePool,
+    models::keys::APIKey,
+    models::user::{CreatedUser, Me, NewUser, UpdateUser, User},
     responders::ProteinError,
-    auth::Auth,
 };
 
 #[get("/<user_id>", format = "application/json")]
@@ -35,7 +38,7 @@ pub async fn get(
     redis: &State<RedisPool>,
 ) -> Result<Json<User>, ProteinError> {
     // Check Cache
-    let cache: Value = Cache::get(redis, format!("user:{}", user_id)).await?;
+    let cache: Value = Cache::get(redis, "user", user_id.to_string()).await?;
 
     // If Cache is Null, Fetch From Database
     if cache.is_null() {
@@ -46,7 +49,7 @@ pub async fn get(
         let user = User::find(user_id, connection).await?;
 
         // Set User in Cache
-        Cache::set(redis, format!("user:{}", user_id), Cache::serialize(&user)).await?;
+        Cache::set(redis, "user", user_id.to_string(), Cache::serialize(&user)).await?;
 
         Ok(Json(user))
     } else {
@@ -92,7 +95,8 @@ pub async fn create(
     // Set New User in Cache
     Cache::set(
         redis,
-        format!("user:{}", result.id),
+        "user",
+        result.id.to_string(),
         Cache::serialize(&result),
     )
     .await?;
@@ -139,7 +143,8 @@ pub async fn update(
     // Update Cache With User
     Cache::set(
         redis,
-        format!("user:{}", user_id),
+        "user",
+        user_id.to_string(),
         Cache::serialize(&updated_user),
     )
     .await?;
@@ -154,6 +159,11 @@ pub async fn me(
     user_id: Uuid,
     pool: &State<DatabasePool>,
 ) -> Result<Json<Me>, ProteinError> {
+    // TODO
+    // this function is a huge security flaw
+    // If you find user_id == you can run actions as that user
+    // Filter this function so that it checks IP Address instead of user_id
+
     // Create Database Connection
     let connection = &mut db::get_connection(pool).await?;
 

@@ -9,14 +9,13 @@ ______          _       _
         Made with ❤️
 */
 
-// Rocket
-use rocket::response::{self, Response, Responder};
-use rocket::http::ContentType;
-use rocket::request::Request;
-use rocket::http::Status;
-use rocket::serde::json;
+use rocket::{
+    http::{ContentType, Status},
+    request::Request,
+    response::{self, Responder, Response},
+    serde::json,
+};
 
-// JSON
 use serde::Serialize;
 use std::io::Cursor;
 

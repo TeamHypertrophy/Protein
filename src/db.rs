@@ -9,27 +9,20 @@ ______          _       _
         Made with ❤️
 */
 
-// Rocket
-use rocket::tokio;
-use rocket::State;
+use rocket::{tokio, State};
 
-// Diesel Async
 use diesel_async::{pg::AsyncPgConnection, pooled_connection::deadpool};
-use diesel_async::async_connection_wrapper::AsyncConnectionWrapper;
-use diesel_async::pooled_connection::AsyncDieselConnectionManager;
-use diesel_async::pooled_connection::deadpool::Pool;
+use diesel_async::{
+    async_connection_wrapper::AsyncConnectionWrapper,
+    pooled_connection::{deadpool::Pool, AsyncDieselConnectionManager},
+};
 
-// Diesel Async Migrations
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
-// Protein
 use crate::responders::ProteinError;
 
-// .env Loader
 use dotenvy::dotenv;
 use std::env;
-
-// Establish Database Connection Pool
 
 pub type DatabaseConnection = deadpool::Object<AsyncPgConnection>;
 pub type DatabasePool = Pool<AsyncPgConnection>;
