@@ -9,29 +9,27 @@ ______          _       _
         Made with ❤️
 */
 
-
 use rocket::{
     get,
     serde::json::{json, Value},
     State,
 };
 
-use crate::cache::redis::{Cache, RedisPool};
-
-use crate::responders::ProteinError;
-
-use crate::{db, db::DatabasePool};
+use crate::{
+    cache::redis::{Cache, RedisPool},
+    constants::PONG,
+    db,
+    db::DatabasePool,
+    responders::ProteinError,
+};
 
 #[get("/redis", format = "application/json")]
 pub async fn redis(redis: &State<RedisPool>) -> Result<Value, ProteinError> {
-    // Create Message To Test Connection
-    let pong: String = String::from("PONG");
-
     // Run 'ping "PONG"'
-    let ping: String = Cache::ping(redis, Some(pong.clone())).await?;
+    let ping: String = Cache::ping(redis, Some(PONG.to_owned())).await?;
 
     // Compare and Return
-    if ping == pong {
+    if ping == *PONG {
         Ok(json!({
             "is_healthy": true
         }))

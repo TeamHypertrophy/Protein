@@ -9,18 +9,13 @@ ______          _       _
         Made with ❤️
 */
 
-
 use rocket::{
     serde::{json, json::Value, Deserialize, Serialize},
     State,
 };
-
 use fred::prelude::*;
-
 use dotenvy::dotenv;
-use std::env;
-
-use std::time::Duration;
+use std::{env, time::Duration};
 use crate::{constants::CACHE_EXPIRATION_TIME, responders::ProteinError};
 
 pub type RedisPool = Pool;
@@ -59,13 +54,22 @@ pub async fn create_redis_pool() -> Result<Pool, Error> {
 pub struct Cache;
 
 impl Cache {
-    pub async fn get(pool: &State<RedisPool>, group: &str, key: String) -> Result<Value, ProteinError> {
-        tracing::info!("[>] Fetching Key From Redis Cache: {}", format!("{}:{}", group, key));
+    pub async fn get(
+        pool: &State<RedisPool>,
+        group: &str,
+        key: String,
+    ) -> Result<Value, ProteinError> {
+        tracing::info!(
+            "[>] Fetching Key From Redis Cache: {}",
+            format!("{}:{}", group, key)
+        );
 
-        pool.get(format!("{}:{}", group, key)).await.map_err(|error| {
-            tracing::error!("[!] Redis Error: {:?}", error);
-            ProteinError::Cache(error.to_string())
-        })
+        pool.get(format!("{}:{}", group, key))
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] Redis Error: {:?}", error);
+                ProteinError::Cache(error.to_string())
+            })
     }
 
     pub async fn set(

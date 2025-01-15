@@ -15,7 +15,6 @@ use rocket::{
     response::{self, Responder, Response},
     serde::json,
 };
-
 use serde::Serialize;
 use std::io::Cursor;
 
@@ -64,7 +63,7 @@ impl std::fmt::Display for ProteinError {
 
 impl<'r> Responder<'r, 'static> for ProteinError {
     fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
-        let status = self.get_http_status();
+        let status_code = self.get_http_status();
 
         let message = match self {
             ProteinError::Internal(error) => error,
@@ -77,13 +76,13 @@ impl<'r> Responder<'r, 'static> for ProteinError {
         };
 
         let response = json::to_string(&ErrorResponse {
-            message: message,
-            status_code: status,
+            message,
+            status_code,
         })
         .unwrap();
 
         Response::build()
-            .status(status)
+            .status(status_code)
             .header(ContentType::JSON)
             .sized_body(response.len(), Cursor::new(response))
             .ok()

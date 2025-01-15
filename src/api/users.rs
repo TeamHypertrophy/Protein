@@ -80,7 +80,7 @@ pub async fn create(
     // Create New User Struct
     let new_user = NewUser {
         username: user.username.clone(),
-        is_dev: user.is_dev.clone(),
+        is_dev: user.is_dev,
     };
 
     // Create Database Connection
@@ -174,7 +174,7 @@ pub async fn me(
     let api_key = APIKey::get(&user, connection).await?;
 
     Ok(Json(Me {
-        user: user,
+        user,
         api_key: api_key.clone(),
     }))
 }

@@ -14,9 +14,7 @@ use rocket::{
     serde::json::{json, Value},
     State,
 };
-
 use sysinfo::System;
-
 use crate::build;
 
 #[get("/", format = "application/json")]

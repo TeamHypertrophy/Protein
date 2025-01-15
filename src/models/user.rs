@@ -10,16 +10,14 @@ ______          _       _
 */
 
 use uuid::Uuid;
-
 use diesel::prelude::*;
-
 use diesel_async::RunQueryDsl;
-
 use rocket::serde::{Deserialize, Serialize};
-
 use crate::{
-    db::DatabaseConnection, models::keys::APIKey, responders::ProteinError, schema::users,
-    schema::users::dsl::*,
+    db::DatabaseConnection,
+    models::keys::APIKey,
+    responders::ProteinError,
+    schema::{users, users::dsl::*},
 };
 
 // User Model

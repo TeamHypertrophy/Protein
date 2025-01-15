@@ -10,17 +10,13 @@ ______          _       _
 */
 
 use rocket::{tokio, State};
-
-use diesel_async::{pg::AsyncPgConnection, pooled_connection::deadpool};
 use diesel_async::{
     async_connection_wrapper::AsyncConnectionWrapper,
-    pooled_connection::{deadpool::Pool, AsyncDieselConnectionManager},
+    pg::AsyncPgConnection,
+    pooled_connection::{deadpool, deadpool::Pool, AsyncDieselConnectionManager},
 };
-
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-
 use crate::responders::ProteinError;
-
 use dotenvy::dotenv;
 use std::env;
 

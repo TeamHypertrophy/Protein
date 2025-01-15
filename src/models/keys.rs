@@ -9,20 +9,16 @@ ______          _       _
         Made with ❤️
 */
 
-
 use uuid::Uuid;
-
 use diesel::prelude::*;
-
 use diesel_async::RunQueryDsl;
-
 use rocket::serde::{Deserialize, Serialize};
-
 use chrono::NaiveDateTime;
-
 use crate::{
-    db::DatabaseConnection, models::user::User, responders::ProteinError, schema::api_keys,
-    schema::api_keys::dsl::*,
+    db::DatabaseConnection,
+    models::user::User,
+    responders::ProteinError,
+    schema::{api_keys, api_keys::dsl::*},
 };
 
 // APIKey Model

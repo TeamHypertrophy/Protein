@@ -9,9 +9,7 @@ ______          _       _
         Made with ❤️
 */
 
-
 use rocket::get;
-
 
 #[get("/")]
 pub async fn index() -> &'static str {

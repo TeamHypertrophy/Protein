@@ -9,9 +9,11 @@ ______          _       _
         Made with ❤️
 */
 
-use rocket::{http::Status, Request};
-
-use rocket::serde::json::{json, Value};
+use rocket::{
+    http::Status,
+    serde::json::{json, Value},
+    Request,
+};
 
 // Default Catcher
 #[catch(default)]
