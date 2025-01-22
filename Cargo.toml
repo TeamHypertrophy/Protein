@@ -21,7 +21,7 @@ diesel-async = { version = "0.5.2", features = [
 diesel_migrations = { version = "2.2.0" }
 # -- Serialization
 serde = { version = "1.0.217", features = ["derive"] }
-uuid = { version = "1.11.1", features = ["fast-rng"] }
+uuid = { version = "1.12.1", features = ["fast-rng"] }
 chrono = { version = "0.4.39", features = ["serde"] }
 # -- .env
 dotenvy = "0.15"
@@ -32,10 +32,10 @@ tracing-appender = "0.2.3"
 # -- Redis
 fred = { version = "10.0.3", features = ["serde-json", "i-keys"] }
 ## -- Shadow and SysInfo
-shadow-rs = { version = "0.37.0", features = ["metadata"] }
+shadow-rs = { version = "0.38.0", features = ["metadata"] }
 sysinfo = "0.33.1"
 ## -- Sentry
 rocket-sentry = "0.18.0"
 
 [build-dependencies]
-shadow-rs = { version = "0.37.0", features = ["metadata"] }
+shadow-rs = { version = "0.38.0", features = ["metadata"] }
