@@ -14,6 +14,7 @@ use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
+
 use crate::{
     db::DatabaseConnection,
     models::user::User,
@@ -63,10 +64,11 @@ impl APIKey {
 
     pub async fn generate(
         user: &User,
+        is_dev: bool,
         connection: &mut DatabaseConnection,
     ) -> Result<APIKey, ProteinError> {
         diesel::insert_into(api_keys::table)
-            .values(user_id.eq(user.id))
+            .values((user_id.eq(user.id), is_developer_key.eq(is_dev)))
             .get_result(connection)
             .await
             .map_err(|error| {

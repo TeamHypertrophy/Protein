@@ -113,6 +113,15 @@ async fn protein() -> _ {
                 api::users::me
             ],
         )
+        .mount(
+            "/v1/profile",
+            routes![
+                api::profile::get,
+                api::profile::create,
+                api::profile::update,
+                api::profile::delete
+            ],
+        )
         .register(
             "/",
             catchers![

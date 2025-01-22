@@ -11,5 +11,6 @@ ______          _       _
 
 pub mod health;
 pub mod index;
+pub mod profile;
 pub mod system;
 pub mod users;

@@ -9,10 +9,16 @@ build = "build.rs"
 [dependencies]
 # -- Base API Requirement
 rocket = { version = "0.5.1", features = ["json", "uuid"] }
+rocket-client-addr = {git = "https://github.com/guenhter/rocket-client-addr", version = "*"}
 # -- Diesel Requirements (Database)
-diesel = { version = "2.2.6", features = ["postgres", "uuid", "chrono", "numeric"] }
-#diesel-derive-enum = {git = "https://github.com/yagince/diesel-derive-enum", version = "2.1.0", features = ["postgres"] }
-#diesel-derive-enum = {version = "2.1.0", features = ["postgres"] } # Cusom Version To Avoid Compiler Error
+diesel = { version = "2.2.6", features = [
+    "postgres",
+    "uuid",
+    "chrono",
+    "numeric",
+    "ipnet-address",
+] }
+diesel-derive-enum = { version = "2.1.0", features = ["postgres"] }
 diesel-async = { version = "0.5.2", features = [
     "postgres",
     "deadpool",

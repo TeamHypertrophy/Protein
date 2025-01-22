@@ -11,8 +11,11 @@ ______          _       _
 
 use uuid::Uuid;
 use diesel::prelude::*;
+use diesel_derive_enum::DbEnum;
 use diesel_async::RunQueryDsl;
 use rocket::serde::{Deserialize, Serialize};
+use chrono::NaiveDateTime;
+
 use crate::{
     db::DatabaseConnection,
     models::keys::APIKey,
@@ -38,7 +41,11 @@ use crate::{
 pub struct User {
     pub id: Uuid,
     pub username: String,
-    pub is_dev: bool,
+    pub password: String,
+    pub password_updated_at: NaiveDateTime,
+    pub created_at: NaiveDateTime,
+    pub role: Role,
+    pub ip_address: String,
 }
 
 impl User {
@@ -84,11 +91,12 @@ impl User {
     pub async fn update(
         user_id: Uuid,
         new_username: String,
+        new_password: String,
         connection: &mut DatabaseConnection,
     ) -> Result<User, ProteinError> {
         diesel::update(users::table)
             .filter(id.eq(user_id))
-            .set((username.eq(new_username),))
+            .set((username.eq(new_username), password.eq(new_password)))
             .get_result::<User>(connection)
             .await
             .map_err(|error| {
@@ -98,13 +106,24 @@ impl User {
     }
 }
 
+#[derive(DbEnum, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[ExistingTypePath = "crate::schema::sql_types::Role"]
+pub enum Role {
+    Developer,
+    Admin,
+    Trainer,
+    User,
+}
+
 // New User Model
 #[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
 #[diesel(table_name = users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct NewUser {
     pub username: String,
-    pub is_dev: bool,
+    pub password: String,
+    pub role: Role,
+    pub ip_address: String,
 }
 
 impl NewUser {
@@ -138,4 +157,5 @@ pub struct Me {
 #[derive(Serialize, Deserialize)]
 pub struct UpdateUser {
     pub username: String,
+    pub password: String,
 }

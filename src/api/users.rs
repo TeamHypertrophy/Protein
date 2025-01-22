@@ -10,6 +10,7 @@ ______          _       _
 */
 
 // Rocket
+use rocket_client_addr::ClientRealAddr;
 use rocket::{
     get, post,
     response::status,
@@ -19,20 +20,22 @@ use rocket::{
     },
     State,
 };
+
 // Protein
 use crate::{
-    auth::Auth,
+    auth::dev::Developer,
+    auth::key::API,
     cache::redis::{Cache, RedisPool},
     db,
     db::DatabasePool,
     models::keys::APIKey,
-    models::user::{CreatedUser, Me, NewUser, UpdateUser, User},
+    models::user::{CreatedUser, Me, NewUser, Role, UpdateUser, User},
     responders::ProteinError,
 };
 
 #[get("/<user_id>", format = "application/json")]
 pub async fn get(
-    _auth: Auth,
+    _auth: API,
     user_id: Uuid,
     pool: &State<DatabasePool>,
     redis: &State<RedisPool>,
@@ -61,7 +64,10 @@ pub async fn get(
 }
 
 #[get("/all", format = "application/json")]
-pub async fn all(_auth: Auth, pool: &State<DatabasePool>) -> Result<Json<Vec<User>>, ProteinError> {
+pub async fn all(
+    _auth: Developer,
+    pool: &State<DatabasePool>,
+) -> Result<Json<Vec<User>>, ProteinError> {
     // Creating Database Connection
     let connection = &mut db::get_connection(pool).await?;
 
@@ -80,7 +86,9 @@ pub async fn create(
     // Create New User Struct
     let new_user = NewUser {
         username: user.username.clone(),
-        is_dev: user.is_dev,
+        password: user.password.clone(),
+        role: user.role.clone(),
+        ip_address: user.ip_address.clone(),
     };
 
     // Create Database Connection
@@ -90,7 +98,8 @@ pub async fn create(
     let result = NewUser::create(connection, new_user).await?;
 
     // Generate API Key
-    let api_key = APIKey::generate(&result, connection).await?;
+    let api_key =
+        APIKey::generate(&result, matches!(result.role, Role::Developer), connection).await?;
 
     // Set New User in Cache
     Cache::set(
@@ -109,7 +118,7 @@ pub async fn create(
 
 #[get("/delete/<user_id>", format = "application/json")]
 pub async fn delete(
-    _auth: Auth,
+    _auth: API,
     user_id: Uuid,
     pool: &State<DatabasePool>,
 ) -> Result<status::Accepted<Value>, ProteinError> {
@@ -128,7 +137,7 @@ pub async fn delete(
 
 #[post("/update/<user_id>", format = "application/json", data = "<user>")]
 pub async fn update(
-    _auth: Auth,
+    _auth: API,
     user_id: Uuid,
     pool: &State<DatabasePool>,
     redis: &State<RedisPool>,
@@ -138,7 +147,13 @@ pub async fn update(
     let connection = &mut db::get_connection(pool).await?;
 
     // Update User
-    let updated_user = User::update(user_id, user.username.clone(), connection).await?;
+    let updated_user = User::update(
+        user_id,
+        user.username.clone(),
+        user.password.clone(),
+        connection,
+    )
+    .await?;
 
     // Update Cache With User
     Cache::set(
@@ -155,7 +170,8 @@ pub async fn update(
 
 #[get("/me/<user_id>", format = "application/json")]
 pub async fn me(
-    _auth: Auth,
+    _auth: API,
+    ip: &ClientRealAddr,
     user_id: Uuid,
     pool: &State<DatabasePool>,
 ) -> Result<Json<Me>, ProteinError> {
@@ -163,6 +179,8 @@ pub async fn me(
     // this function is a huge security flaw
     // If you find user_id == you can run actions as that user
     // Filter this function so that it checks IP Address instead of user_id
+    let ip_address: String = ip.get_ipv4_string().unwrap();
+    println!("IP Address: {}", ip_address);
 
     // Create Database Connection
     let connection = &mut db::get_connection(pool).await?;

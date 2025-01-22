@@ -10,6 +10,7 @@ ______          _       _
 */
 
 use std::path::Path;
+
 use tracing_appender::{
     non_blocking::WorkerGuard,
     rolling::{RollingFileAppender, Rotation},

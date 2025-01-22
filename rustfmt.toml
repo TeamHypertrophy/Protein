@@ -1,5 +1,6 @@
 wrap_comments = true
 reorder_imports = false
 format_code_in_doc_comments = true
-group_imports = "One"
+group_imports = "StdExternalCrate"
 imports_granularity = "Crate"
+imports_indent = "Block"

@@ -9,6 +9,8 @@ ______          _       _
         Made with ❤️
 */
 
+use std::env;
+
 use rocket::{tokio, State};
 use diesel_async::{
     async_connection_wrapper::AsyncConnectionWrapper,
@@ -16,24 +18,24 @@ use diesel_async::{
     pooled_connection::{deadpool, deadpool::Pool, AsyncDieselConnectionManager},
 };
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use crate::responders::ProteinError;
 use dotenvy::dotenv;
-use std::env;
+
+use crate::responders::ProteinError;
 
 pub type DatabaseConnection = deadpool::Object<AsyncPgConnection>;
 pub type DatabasePool = Pool<AsyncPgConnection>;
 
 pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::Error>> {
     // Load .env
-    dotenv().ok();
+    dotenv()?;
 
     // Get Database URL
-    let database_uri: String =
+    let database_url: String =
         env::var("DATABASE_URL").expect("[!] DATABASE_URL Environment Variable Must Be Set");
 
     // Create Manager
     let manager: AsyncDieselConnectionManager<AsyncPgConnection> =
-        AsyncDieselConnectionManager::<AsyncPgConnection>::new(database_uri);
+        AsyncDieselConnectionManager::<AsyncPgConnection>::new(database_url);
 
     // Create Database Pool
     let pool = Pool::builder(manager)

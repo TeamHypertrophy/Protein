@@ -15,6 +15,7 @@ use rocket::{
     State,
 };
 use sysinfo::System;
+
 use crate::build;
 
 #[get("/", format = "application/json")]

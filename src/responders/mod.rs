@@ -9,6 +9,8 @@ ______          _       _
         Made with ❤️
 */
 
+use std::io::Cursor;
+
 use rocket::{
     http::{ContentType, Status},
     request::Request,
@@ -16,7 +18,6 @@ use rocket::{
     serde::json,
 };
 use serde::Serialize;
-use std::io::Cursor;
 
 #[derive(Serialize)]
 pub struct ErrorResponse {

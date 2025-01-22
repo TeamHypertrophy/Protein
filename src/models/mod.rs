@@ -10,4 +10,5 @@ ______          _       _
 */
 
 pub mod keys;
+pub mod profile;
 pub mod user;

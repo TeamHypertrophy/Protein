@@ -9,13 +9,15 @@ ______          _       _
         Made with ❤️
 */
 
+use std::{env, time::Duration};
+
 use rocket::{
     serde::{json, json::Value, Deserialize, Serialize},
     State,
 };
 use fred::prelude::*;
 use dotenvy::dotenv;
-use std::{env, time::Duration};
+
 use crate::{constants::CACHE_EXPIRATION_TIME, responders::ProteinError};
 
 pub type RedisPool = Pool;
