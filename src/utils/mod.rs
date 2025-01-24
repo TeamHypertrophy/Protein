@@ -10,3 +10,4 @@ ______          _       _
 */
 
 pub mod logging;
+pub mod password;

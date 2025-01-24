@@ -29,8 +29,9 @@ use crate::{
     db,
     db::DatabasePool,
     models::keys::APIKey,
-    models::user::{CreatedUser, Me, NewUser, Role, UpdateUser, User},
+    models::user::{LoginUser, NewUser, ProteinUser, Role, UpdateUser, User},
     responders::ProteinError,
+    utils::password,
 };
 
 #[get("/<user_id>", format = "application/json")]
@@ -77,16 +78,18 @@ pub async fn all(
     Ok(Json(users))
 }
 
-#[post("/create", format = "application/json", data = "<user>")]
-pub async fn create(
+#[post("/signup", format = "application/json", data = "<user>")]
+pub async fn signup(
     pool: &State<DatabasePool>,
     redis: &State<RedisPool>,
     user: Json<NewUser>,
-) -> Result<Json<CreatedUser>, ProteinError> {
+) -> Result<Json<ProteinUser>, ProteinError> {
+    let password_hash = password::generate_password(user.password.clone())?;
+
     // Create New User Struct
     let new_user = NewUser {
         username: user.username.clone(),
-        password: user.password.clone(),
+        password: password_hash,
         role: user.role.clone(),
         ip_address: user.ip_address.clone(),
     };
@@ -110,10 +113,65 @@ pub async fn create(
     )
     .await?;
 
-    Ok(Json(CreatedUser {
+    // Set API Key In Cache
+    Cache::set(
+        redis,
+        "api_key",
+        api_key.api_key.to_string(),
+        Cache::serialize(&api_key),
+    )
+    .await?;
+
+    Ok(Json(ProteinUser {
         user: result,
         api_key: api_key.api_key,
     }))
+}
+
+#[post("/login", format = "application/json", data = "<user>")]
+pub async fn login(
+    pool: &State<DatabasePool>,
+    redis: &State<RedisPool>,
+    user: Json<LoginUser>,
+) -> Result<Json<ProteinUser>, ProteinError> {
+    // Create Database Connection
+    let connection = &mut db::get_connection(pool).await?;
+
+    // Find User
+    let result = User::find_by_username(user.username.clone(), connection).await?;
+
+    // Verify Password
+    let password_matches =
+        password::verify_password(result.password.clone(), user.password.clone())?;
+
+    if password_matches {
+        let api_key = APIKey::get(&result, connection).await?;
+
+        // Set User in Cache
+        Cache::set(
+            redis,
+            "user",
+            result.id.to_string(),
+            Cache::serialize(&result),
+        )
+        .await?;
+
+        // Set API Key in Cache
+        Cache::set(
+            redis,
+            "api_key",
+            api_key.api_key.to_string(),
+            Cache::serialize(&api_key),
+        )
+        .await?;
+
+        return Ok(Json(ProteinUser {
+            user: result,
+            api_key: api_key.api_key,
+        }))
+    } else {
+        Err(ProteinError::Authorization("Invalid Password".to_string()))
+    }
 }
 
 #[get("/delete/<user_id>", format = "application/json")]
@@ -168,31 +226,20 @@ pub async fn update(
     Ok(Json(updated_user))
 }
 
-#[get("/me/<user_id>", format = "application/json")]
+#[get("/me", format = "application/json")]
 pub async fn me(
     _auth: API,
     ip: &ClientRealAddr,
-    user_id: Uuid,
     pool: &State<DatabasePool>,
-) -> Result<Json<Me>, ProteinError> {
-    // TODO
-    // this function is a huge security flaw
-    // If you find user_id == you can run actions as that user
-    // Filter this function so that it checks IP Address instead of user_id
+) -> Result<Json<User>, ProteinError> {
+    // Get IP Address
     let ip_address: String = ip.get_ipv4_string().unwrap();
-    println!("IP Address: {}", ip_address);
 
     // Create Database Connection
     let connection = &mut db::get_connection(pool).await?;
 
     // Grab User
-    let user = User::find(user_id, connection).await?;
+    let user = User::find_by_ip(ip_address, connection).await?;
 
-    // Grab API Key
-    let api_key = APIKey::get(&user, connection).await?;
-
-    Ok(Json(Me {
-        user,
-        api_key: api_key.clone(),
-    }))
+    Ok(Json(user))
 }

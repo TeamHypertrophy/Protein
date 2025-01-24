@@ -91,4 +91,11 @@ impl APIKey {
                 ProteinError::Database(error.to_string())
             })
     }
+
+    pub async fn verify_api_key(
+        key: Uuid,
+        mut connection: DatabaseConnection,
+    ) -> Result<bool, ProteinError> {
+        todo!()
+    }
 }

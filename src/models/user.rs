@@ -64,6 +64,36 @@ impl User {
             })
     }
 
+    pub async fn find_by_username(
+        name: String,
+        connection: &mut DatabaseConnection,
+    ) -> Result<User, ProteinError> {
+        users::table
+            .filter(username.eq(name))
+            .select(User::as_select())
+            .first(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn find_by_ip(
+        address: String,
+        connection: &mut DatabaseConnection,
+    ) -> Result<User, ProteinError> {
+        users::table
+            .filter(ip_address.eq(address))
+            .select(User::as_select())
+            .first(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
     pub async fn all(connection: &mut DatabaseConnection) -> Result<Vec<User>, ProteinError> {
         users::table
             .select(User::as_select())
@@ -143,9 +173,15 @@ impl NewUser {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct CreatedUser {
+pub struct ProteinUser {
     pub user: User,
     pub api_key: Uuid,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct LoginUser {
+    pub username: String,
+    pub password: String,
 }
 
 #[derive(Serialize, Deserialize)]

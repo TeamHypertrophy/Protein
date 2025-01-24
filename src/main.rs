@@ -13,6 +13,9 @@ ______          _       _
 #[macro_use]
 extern crate rocket;
 
+// Argon
+extern crate argon2;
+
 // Schema File
 mod schema;
 
@@ -49,7 +52,7 @@ shadow_rs::shadow!(build);
 #[launch]
 
 async fn protein() -> _ {
-    // Setup Logging, PostgreSQL and Redis
+    // Logging
     let (guard, ()) = match utils::logging::setup_logging() {
         Ok((guard, ())) => (guard, ()),
         Err(e) => {
@@ -58,6 +61,7 @@ async fn protein() -> _ {
         }
     };
 
+    // PostgreSQL
     let pool = match db::establish_connection().await {
         Ok(pool) => pool,
         Err(e) => {
@@ -66,6 +70,7 @@ async fn protein() -> _ {
         }
     };
 
+    // Redis
     let redis = match cache::redis::create_redis_pool().await {
         Ok(redis) => redis,
         Err(e) => {
@@ -74,9 +79,10 @@ async fn protein() -> _ {
         }
     };
 
+    // System Information
     let system = sysinfo::System::new_all();
 
-    // Build Rocket Instance
+    // Rocket
     rocket::build()
         .manage(pool)
         .manage(redis)
@@ -106,7 +112,8 @@ async fn protein() -> _ {
             "/v1/users",
             routes![
                 api::users::get,
-                api::users::create,
+                api::users::signup,
+                api::users::login,
                 api::users::update,
                 api::users::delete,
                 api::users::all,
