@@ -81,7 +81,7 @@ impl Cache {
         value: String,
     ) -> Result<(), ProteinError> {
         tracing::info!(
-            "[>] Setting Key In Redis Cache: `{}` With Values: `{}`",
+            "[>] Setting Key In Redis Cache: {} With Values: {}",
             format!("{}:{}", group, key),
             value
         );
