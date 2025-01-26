@@ -9,6 +9,9 @@ ______          _       _
         Made with ❤️
 */
 
+pub mod exercise;
 pub mod keys;
+pub mod nutrition;
 pub mod profile;
 pub mod user;
+pub mod workout;

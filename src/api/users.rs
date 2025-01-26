@@ -168,7 +168,7 @@ pub async fn login(
         return Ok(Json(ProteinUser {
             user: result,
             api_key: api_key.api_key,
-        }))
+        }));
     } else {
         Err(ProteinError::Authorization("Invalid Password".to_string()))
     }

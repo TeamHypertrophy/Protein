@@ -73,5 +73,5 @@ pub enum FitnessGoal {
     MuscleGain,
     Maintenance,
     Endurance,
-    Strength
+    Strength,
 }

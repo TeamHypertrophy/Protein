@@ -48,6 +48,39 @@ pub struct User {
     pub ip_address: String,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct ProteinUser {
+    pub user: User,
+    pub api_key: Uuid,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct LoginUser {
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Me {
+    pub user: User,
+    pub api_key: APIKey,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct UpdateUser {
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(DbEnum, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[ExistingTypePath = "crate::schema::sql_types::Role"]
+pub enum Role {
+    Developer,
+    Admin,
+    Trainer,
+    User,
+}
+
 impl User {
     pub async fn find(
         user_id: Uuid,
@@ -135,16 +168,6 @@ impl User {
             })
     }
 }
-
-#[derive(DbEnum, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[ExistingTypePath = "crate::schema::sql_types::Role"]
-pub enum Role {
-    Developer,
-    Admin,
-    Trainer,
-    User,
-}
-
 // New User Model
 #[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
 #[diesel(table_name = users)]
@@ -170,28 +193,4 @@ impl NewUser {
                 ProteinError::Database(error.to_string())
             })
     }
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct ProteinUser {
-    pub user: User,
-    pub api_key: Uuid,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct LoginUser {
-    pub username: String,
-    pub password: String,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct Me {
-    pub user: User,
-    pub api_key: APIKey,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct UpdateUser {
-    pub username: String,
-    pub password: String,
 }

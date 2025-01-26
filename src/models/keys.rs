@@ -52,6 +52,14 @@ pub struct APIKey {
     pub quota: i32,
 }
 
+#[derive(DbEnum, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[ExistingTypePath = "crate::schema::sql_types::Status"]
+pub enum Status {
+    Active,
+    Revoked,
+    Expired,
+}
+
 impl APIKey {
     pub async fn get(
         user: &User,
@@ -103,12 +111,4 @@ impl APIKey {
     ) -> Result<bool, ProteinError> {
         todo!()
     }
-}
-
-#[derive(DbEnum, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[ExistingTypePath = "crate::schema::sql_types::Status"]
-pub enum Status {
-    Active,
-    Revoked,
-    Expired
 }

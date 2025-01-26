@@ -6,6 +6,12 @@ CREATE TYPE Difficulty AS ENUM (
     'advanced'
 );
 
+CREATE TYPE WorkoutInterval AS ENUM (
+    'daily',
+    'weekly',
+    'monthly'
+);
+
 -- Workouts: Users will be able to create their own workouts
 CREATE TABLE workouts (
     "id" UUID PRIMARY KEY DEFAULT (gen_random_uuid()),
@@ -29,6 +35,7 @@ CREATE TABLE workout_plans (
     "created_at" TIMESTAMP NOT NULL DEFAULT (now()),
     "updated_at" TIMESTAMP NOT NULL DEFAULT (now()),
     "start_time" TIMESTAMP NOT NULL DEFAULT (now() + interval '2 days'),
+    "repeats" WorkoutInterval NOT NULL DEFAULT ('daily'), -- DAYS
     "goal" FitnessGoal NOT NULL DEFAULT ('muscle_gain'),
     "difficulty" Difficulty NOT NULL,
     "is_public" BOOLEAN NOT NULL DEFAULT (FALSE)
@@ -38,7 +45,7 @@ CREATE TABLE workout_plans (
 CREATE TABLE workout_logs (
     "id" SERIAL PRIMARY KEY,
     "user_id" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    "plan_id" UUID NOT NULL REFERENCES workouts(id) ON DELETE CASCADE,
+    "workout_id" UUID NOT NULL REFERENCES workouts(id) ON DELETE CASCADE,
     "date" TIMESTAMP NOT NULL DEFAULT (now()),
     "updated_at" TIMESTAMP NOT NULL DEFAULT (now())
 );

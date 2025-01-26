@@ -40,6 +40,10 @@ pub mod sql_types {
     #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "status"))]
     pub struct Status;
+
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "workoutinterval"))]
+    pub struct Workoutinterval;
 }
 
 diesel::table! {
@@ -101,8 +105,7 @@ diesel::table! {
         sets -> Int4,
         reps -> Int4,
         rest_time -> Int4,
-        #[sql_name = "type"]
-        type_ -> Exercisetype,
+        exercise_type -> Exercisetype,
         image_url -> Text,
         video_url -> Text,
         created_at -> Timestamp,
@@ -215,7 +218,7 @@ diesel::table! {
     workout_logs (id) {
         id -> Int4,
         user_id -> Uuid,
-        plan_id -> Uuid,
+        workout_id -> Uuid,
         date -> Timestamp,
         updated_at -> Timestamp,
     }
@@ -223,6 +226,7 @@ diesel::table! {
 
 diesel::table! {
     use diesel::sql_types::*;
+    use super::sql_types::Workoutinterval;
     use super::sql_types::Fitnessgoal;
     use super::sql_types::Difficulty;
 
@@ -236,6 +240,7 @@ diesel::table! {
         created_at -> Timestamp,
         updated_at -> Timestamp,
         start_time -> Timestamp,
+        repeats -> Workoutinterval,
         goal -> Fitnessgoal,
         difficulty -> Difficulty,
         is_public -> Bool,
@@ -271,7 +276,7 @@ diesel::joinable!(trainer_announcements -> users (trainer_id));
 diesel::joinable!(trainers -> users (trainer_id));
 diesel::joinable!(water_logs -> users (user_id));
 diesel::joinable!(workout_logs -> users (user_id));
-diesel::joinable!(workout_logs -> workouts (plan_id));
+diesel::joinable!(workout_logs -> workouts (workout_id));
 diesel::joinable!(workout_plans -> users (user_id));
 diesel::joinable!(workouts -> users (user_id));
 

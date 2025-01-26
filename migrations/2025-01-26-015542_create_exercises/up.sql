@@ -47,7 +47,7 @@ CREATE TABLE exercises (
     "sets" INT NOT NULL DEFAULT (3),
     "reps" INT NOT NULL DEFAULT (12),
     "rest_time" INT NOT NULL DEFAULT (60),
-    "type" ExerciseType NOT NULL,
+    "exercise_type" ExerciseType NOT NULL,
     "image_url" TEXT NOT NULL DEFAULT (''),
     "video_url" TEXT NOT NULL DEFAULT (''),
     "created_at" TIMESTAMP NOT NULL DEFAULT (now()),

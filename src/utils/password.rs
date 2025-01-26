@@ -18,7 +18,8 @@ use crate::responders::ProteinError;
 pub fn generate_password(password: String) -> Result<String, ProteinError> {
     dotenv().ok();
 
-    let salt: String = env::var("PASSWORD_SALT").expect("[!] PASSWORD_SALT Environment Variable Must Be Set");
+    let salt: String =
+        env::var("PASSWORD_SALT").expect("[!] PASSWORD_SALT Environment Variable Must Be Set");
 
     let config = Config::default();
 
