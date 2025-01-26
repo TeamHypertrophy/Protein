@@ -12,6 +12,7 @@ ______          _       _
 use uuid::Uuid;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
+use diesel_derive_enum::DbEnum;
 use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
@@ -44,7 +45,11 @@ pub struct APIKey {
     pub api_key: Uuid,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
+    pub expires_at: NaiveDateTime,
     pub is_developer_key: bool,
+    pub revoked_reason: String,
+    pub status: Status,
+    pub quota: i32,
 }
 
 impl APIKey {
@@ -98,4 +103,12 @@ impl APIKey {
     ) -> Result<bool, ProteinError> {
         todo!()
     }
+}
+
+#[derive(DbEnum, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[ExistingTypePath = "crate::schema::sql_types::Status"]
+pub enum Status {
+    Active,
+    Revoked,
+    Expired
 }

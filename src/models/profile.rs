@@ -13,16 +13,17 @@ use uuid::Uuid;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use diesel_async::RunQueryDsl;
+use chrono::NaiveDateTime;
 use rocket::serde::{Deserialize, Serialize};
 
 use crate::{
     db::DatabaseConnection,
-    schema::{profile, profile::dsl::*},
+    schema::{profiles, profiles::dsl::*},
 };
 
 // Profile Model
 #[derive(Clone, Debug, PartialEq, Queryable, Selectable, Serialize, Deserialize, Identifiable)]
-#[diesel(table_name = profile)]
+#[diesel(table_name = profiles)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Profile {
     pub id: i32,
@@ -36,6 +37,12 @@ pub struct Profile {
     pub height: f64,
     pub preferred_weight_unit: PreferredWeight,
     pub preferred_height_unit: PreferredHeight,
+    pub public: bool,
+    pub bio: String,
+    pub avatar_url: String,
+    pub fitness_goal: FitnessGoal,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
 
 #[derive(DbEnum, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -57,4 +64,14 @@ pub enum PreferredWeight {
 pub enum PreferredHeight {
     Cm,
     In,
+}
+
+#[derive(DbEnum, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[ExistingTypePath = "crate::schema::sql_types::Fitnessgoal"]
+pub enum FitnessGoal {
+    WeightLoss,
+    MuscleGain,
+    Maintenance,
+    Endurance,
+    Strength
 }
