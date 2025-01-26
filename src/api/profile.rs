@@ -16,6 +16,11 @@ pub async fn get(user_id: String) -> String {
     format!("User Profile: {}", user_id)
 }
 
+#[get("/all", format = "application/json")]
+pub async fn all() -> &'static str {
+    "cool!"
+}
+
 #[post("/create", format = "application/json")]
 pub async fn create() -> String {
     format!("Create Profile ")

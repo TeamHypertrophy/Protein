@@ -121,9 +121,74 @@ async fn protein() -> _ {
             ],
         )
         .mount(
+            "/v1/keys",
+            routes![api::keys::get, api::keys::all, api::keys::update, api::keys::revoke, api::keys::delete],
+        )
+        .mount(
+            "/v1/workouts",
+            routes![
+                api::workouts::get,
+                api::workouts::all,
+                api::workouts::update,
+                api::workouts::create,
+                api::workouts::delete
+            ],
+        )
+        .mount(
+            "/v1/calories",
+            routes![
+                api::calories::get,
+                api::calories::all,
+                api::calories::update,
+                api::calories::create,
+                api::calories::delete
+            ],
+        )
+        .mount(
+            "/v1/protein",
+            routes![
+                api::protein::get,
+                api::protein::all,
+                api::protein::update,
+                api::protein::create,
+                api::protein::delete
+            ],
+        )
+        .mount(
+            "/v1/sleep",
+            routes![
+                api::sleep::get,
+                api::sleep::all,
+                api::sleep::update,
+                api::sleep::create,
+                api::sleep::delete
+            ],
+        )
+        .mount(
+            "/v1/water",
+            routes![
+                api::water::get,
+                api::water::all,
+                api::water::update,
+                api::water::create,
+                api::water::delete
+            ],
+        )
+        .mount(
+            "/v1/exercises",
+            routes![
+                api::exercises::get,
+                api::exercises::all,
+                api::exercises::update,
+                api::exercises::create,
+                api::exercises::delete
+            ],
+        )
+        .mount(
             "/v1/profile",
             routes![
                 api::profile::get,
+                api::profile::all,
                 api::profile::create,
                 api::profile::update,
                 api::profile::delete
