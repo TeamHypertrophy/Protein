@@ -16,6 +16,7 @@ use rocket::{
 };
 
 use crate::{
+    auth::rate_limit::RateLimit,
     cache::redis::{Cache, RedisPool},
     constants::PONG,
     db,
@@ -24,7 +25,7 @@ use crate::{
 };
 
 #[get("/redis", format = "application/json")]
-pub async fn redis(redis: &State<RedisPool>) -> Result<Value, ProteinError> {
+pub async fn redis(_r: RateLimit<'_>, redis: &State<RedisPool>) -> Result<Value, ProteinError> {
     // Run 'ping "PONG"'
     let ping: String = Cache::ping(redis, Some(PONG.to_owned())).await?;
 
@@ -41,7 +42,10 @@ pub async fn redis(redis: &State<RedisPool>) -> Result<Value, ProteinError> {
 }
 
 #[get("/postgres", format = "application/json")]
-pub async fn postgres(pool: &State<DatabasePool>) -> Result<Value, ProteinError> {
+pub async fn postgres(
+    _r: RateLimit<'_>,
+    pool: &State<DatabasePool>,
+) -> Result<Value, ProteinError> {
     // Verify Database Connectivity
     match db::get_connection(pool).await {
         Ok(_) => Ok(json!({

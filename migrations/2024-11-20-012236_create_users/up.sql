@@ -32,7 +32,7 @@ CREATE TYPE FitnessGoal AS ENUM (
 -- Users: Users will be able to create an account
 CREATE TABLE users (
     "id" UUID PRIMARY KEY DEFAULT (gen_random_uuid()),
-    "username" VARCHAR(255) NOT NULL,
+    "username" VARCHAR(255) UNIQUE NOT NULL,
     "password" VARCHAR(255) UNIQUE NOT NULL,
     "password_updated_at" TIMESTAMP NOT NULL DEFAULT (now()),
     "created_at" TIMESTAMP NOT NULL DEFAULT (now()),
@@ -46,7 +46,7 @@ CREATE TABLE profiles (
     "user_id" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     "first_name" VARCHAR(255) NOT NULL,
     "last_name" VARCHAR(255) NOT NULL,
-    "email" VARCHAR(255) NOT NULL,
+    "email" VARCHAR(255) UNIQUE NOT NULL,
     "age" INT NOT NULL,
     "weight" FLOAT NOT NULL DEFAULT ('100.0'), -- lbs
     "height" FLOAT NOT NULL DEFAULT ('150.0'), -- centimeters

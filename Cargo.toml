@@ -10,6 +10,7 @@ build = "build.rs"
 # -- Base API Requirement
 rocket = { version = "0.5.1", features = ["json", "uuid"] }
 rocket-client-addr = {git = "https://github.com/guenhter/rocket-client-addr", version = "*"}
+rocket-governor = {version = "0.2.0-rc.3", features = ["logger", "limit_info"]}
 # -- Diesel Requirements (Database)
 diesel = { version = "2.2.6", features = [
     "postgres",
@@ -29,6 +30,8 @@ diesel_migrations = { version = "2.2.0" }
 serde = { version = "1.0.217", features = ["derive"] }
 uuid = { version = "1.12.1", features = ["fast-rng"] }
 chrono = { version = "0.4.39", features = ["serde"] }
+# -- Validation
+validator = { version = "0.20.0", features = ["derive"] }
 # -- Password Hashing
 rust-argon2 = "2.1"
 # -- .env

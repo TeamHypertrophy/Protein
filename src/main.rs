@@ -56,8 +56,8 @@ async fn protein() -> _ {
     let (guard, ()) = match utils::logging::setup_logging() {
         Ok((guard, ())) => (guard, ()),
         Err(e) => {
-            tracing::error!("[-] Error Setting Up Logging: {:?}", e);
-            panic!("[!] Error Setting Up Logging - Aborting")
+            tracing::error!("[-] ❌ Error Setting Up Logging: {:?}", e);
+            std::process::exit(1)
         }
     };
 
@@ -65,8 +65,8 @@ async fn protein() -> _ {
     let pool = match db::establish_connection().await {
         Ok(pool) => pool,
         Err(e) => {
-            tracing::error!("[-] Error Connecting to Database: {:?}", e);
-            panic!("[!] Error Connecting to Database - Aborting")
+            tracing::error!("[-] ❌ Error Connecting to Database: {:?}", e);
+            std::process::exit(1)
         }
     };
 
@@ -74,8 +74,8 @@ async fn protein() -> _ {
     let redis = match cache::redis::create_redis_pool().await {
         Ok(redis) => redis,
         Err(e) => {
-            tracing::error!("[-] Error Connecting to Redis: {:?}", e);
-            panic!("[!] Error Connecting to Redis - Aborting")
+            tracing::error!("[-] ❌ Error Connecting to Redis: {:?}", e);
+            std::process::exit(1)
         }
     };
 
@@ -115,6 +115,7 @@ async fn protein() -> _ {
                 api::users::signup,
                 api::users::login,
                 api::users::update,
+                api::users::update_password,
                 api::users::delete,
                 api::users::all,
                 api::users::me
@@ -122,7 +123,13 @@ async fn protein() -> _ {
         )
         .mount(
             "/v1/keys",
-            routes![api::keys::get, api::keys::all, api::keys::update, api::keys::revoke, api::keys::delete],
+            routes![
+                api::keys::get,
+                api::keys::all,
+                api::keys::update,
+                api::keys::revoke,
+                api::keys::delete
+            ],
         )
         .mount(
             "/v1/workouts",
@@ -199,7 +206,9 @@ async fn protein() -> _ {
             catchers![
                 errors::default,
                 errors::not_found,
-                errors::internal_server_error
+                errors::internal_server_error,
+                errors::unprocessable_entity,
+                rocket_governor::rocket_governor_catcher
             ],
         )
 }

@@ -11,3 +11,4 @@ ______          _       _
 
 pub mod dev;
 pub mod key;
+pub mod rate_limit;

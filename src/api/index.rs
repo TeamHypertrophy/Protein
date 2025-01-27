@@ -11,7 +11,9 @@ ______          _       _
 
 use rocket::get;
 
+use crate::auth::rate_limit::RateLimit;
+
 #[get("/")]
-pub async fn index() -> &'static str {
+pub async fn index(_r: RateLimit<'_>) -> &'static str {
     "[!] Welcome to Protein, Hypertrophy's Rust API Backend :)"
 }

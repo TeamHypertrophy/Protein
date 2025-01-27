@@ -25,17 +25,20 @@ use rocket::{
 use crate::{
     auth::dev::Developer,
     auth::key::API,
+    auth::rate_limit::RateLimit,
     cache::redis::{Cache, RedisPool},
     db,
     db::DatabasePool,
     models::keys::APIKey,
-    models::user::{LoginUser, NewUser, ProteinUser, Role, UpdateUser, User},
+    models::profile::Profile,
+    models::user::{LoginUser, NewUser, Password, ProteinUser, Role, UpdateUser, User},
     responders::ProteinError,
     utils::password,
 };
 
 #[get("/<user_id>", format = "application/json")]
 pub async fn get(
+    _r: RateLimit<'_>,
     _auth: API,
     user_id: Uuid,
     pool: &State<DatabasePool>,
@@ -66,6 +69,7 @@ pub async fn get(
 
 #[get("/all", format = "application/json")]
 pub async fn all(
+    _r: RateLimit<'_>,
     _auth: Developer,
     pool: &State<DatabasePool>,
 ) -> Result<Json<Vec<User>>, ProteinError> {
@@ -80,10 +84,12 @@ pub async fn all(
 
 #[post("/signup", format = "application/json", data = "<user>")]
 pub async fn signup(
+    _r: RateLimit<'_>,
     pool: &State<DatabasePool>,
     redis: &State<RedisPool>,
     user: Json<NewUser>,
 ) -> Result<Json<ProteinUser>, ProteinError> {
+    // Generate New User Password
     let password_hash = password::generate_password(user.password.clone())?;
 
     // Create New User Struct
@@ -130,6 +136,7 @@ pub async fn signup(
 
 #[post("/login", format = "application/json", data = "<user>")]
 pub async fn login(
+    _r: RateLimit<'_>,
     pool: &State<DatabasePool>,
     redis: &State<RedisPool>,
     user: Json<LoginUser>,
@@ -165,10 +172,10 @@ pub async fn login(
         )
         .await?;
 
-        return Ok(Json(ProteinUser {
+        Ok(Json(ProteinUser {
             user: result,
             api_key: api_key.api_key,
-        }));
+        }))
     } else {
         Err(ProteinError::Authorization("Invalid Password".to_string()))
     }
@@ -176,6 +183,7 @@ pub async fn login(
 
 #[get("/delete/<user_id>", format = "application/json")]
 pub async fn delete(
+    _r: RateLimit<'_>,
     _auth: API,
     user_id: Uuid,
     pool: &State<DatabasePool>,
@@ -195,6 +203,7 @@ pub async fn delete(
 
 #[post("/update/<user_id>", format = "application/json", data = "<user>")]
 pub async fn update(
+    _r: RateLimit<'_>,
     _auth: API,
     user_id: Uuid,
     pool: &State<DatabasePool>,
@@ -205,13 +214,54 @@ pub async fn update(
     let connection = &mut db::get_connection(pool).await?;
 
     // Update User
-    let updated_user = User::update(
-        user_id,
-        user.username.clone(),
-        user.password.clone(),
-        connection,
+    let updated_user = User::update(user_id, user.into_inner(), connection).await?;
+
+    // Update Cache With User
+    Cache::set(
+        redis,
+        "user",
+        user_id.to_string(),
+        Cache::serialize(&updated_user),
     )
     .await?;
+
+    // Return Updated User
+    Ok(Json(updated_user))
+}
+
+#[post(
+    "/update/password/<user_id>",
+    format = "application/json",
+    data = "<data>"
+)]
+pub async fn update_password(
+    _r: RateLimit<'_>,
+    _auth: API,
+    user_id: Uuid,
+    pool: &State<DatabasePool>,
+    redis: &State<RedisPool>,
+    data: Json<Password>,
+) -> Result<Json<User>, ProteinError> {
+    // Create Database Connection
+    let connection = &mut db::get_connection(pool).await?;
+
+    // Grab User
+    let user = User::find(user_id, connection).await?;
+
+    // Verify Old Password
+    let old_password_hash =
+        password::verify_password(user.password.clone(), data.old_password.clone())?;
+
+    // False = Wrong Password
+    if !old_password_hash {
+        return Err(ProteinError::Authorization("Invalid Password".to_string()));
+    }
+
+    // Generate New Password Hash
+    let password_hash = password::generate_password(data.new_password.clone())?;
+
+    // Update Password
+    let updated_user = User::update_password(user_id, password_hash, connection).await?;
 
     // Update Cache With User
     Cache::set(
@@ -228,10 +278,11 @@ pub async fn update(
 
 #[get("/me", format = "application/json")]
 pub async fn me(
+    _r: RateLimit<'_>,
     _auth: API,
     ip: &ClientRealAddr,
     pool: &State<DatabasePool>,
-) -> Result<Json<User>, ProteinError> {
+) -> Result<Json<Profile>, ProteinError> {
     // Get IP Address
     let ip_address: String = ip.get_ipv4_string().unwrap();
 
@@ -241,5 +292,8 @@ pub async fn me(
     // Grab User
     let user = User::find_by_ip(ip_address, connection).await?;
 
-    Ok(Json(user))
+    // Grab Profile
+    let profile = Profile::find(&user, connection).await?;
+
+    Ok(Json(profile))
 }

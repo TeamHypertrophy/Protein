@@ -18,7 +18,7 @@ use chrono::NaiveDateTime;
 
 use crate::{
     db::DatabaseConnection,
-    models::workout::Difficulty,
+    models::{user::User, workout::Difficulty},
     responders::ProteinError,
     schema::{exercise_logs, exercise_logs::dsl::*, exercises, exercises::dsl::*},
 };
@@ -91,9 +91,19 @@ pub enum ExerciseType {
 
 // Exercise Log
 #[derive(
-    Clone, Debug, Eq, PartialEq, Queryable, Selectable, Serialize, Deserialize, Identifiable,
+    Clone,
+    Debug,
+    Eq,
+    PartialEq,
+    Queryable,
+    Selectable,
+    Serialize,
+    Deserialize,
+    Identifiable,
+    Associations,
 )]
 #[diesel(table_name = exercise_logs)]
+#[diesel(belongs_to(User))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct ExerciseLog {
     pub id: i32,

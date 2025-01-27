@@ -50,3 +50,16 @@ pub fn internal_server_error(status: Status, request: &Request) -> Value {
         }
     )
 }
+
+// 422 - Unprocessable Entity
+#[catch(422)]
+pub fn unprocessable_entity(status: Status, request: &Request) -> Value {
+    json!(
+        {
+            "status": status.code,
+            "path": request.uri(),
+            "message": "[!!] Unprocessable Entity",
+            "notes": "The request was well-formed but was unable to be followed due to semantic/parsing errors."
+        }
+    )
+}

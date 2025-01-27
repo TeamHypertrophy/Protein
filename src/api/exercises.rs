@@ -11,27 +11,29 @@ ______          _       _
 
 use rocket::{get, post};
 
+use crate::auth::rate_limit::RateLimit;
+
 #[get("/get/<exercise_id>")]
-pub async fn get(exercise_id: i64) -> &'static str {
+pub async fn get(_r: RateLimit<'_>, exercise_id: i64) -> &'static str {
     "GET"
 }
 
 #[get("/all")]
-pub async fn all() -> &'static str {
+pub async fn all(_r: RateLimit<'_>) -> &'static str {
     "ALL"
 }
 
 #[post("/update/<exercise_id>")]
-pub async fn update(exercise_id: i64) -> &'static str {
+pub async fn update(_r: RateLimit<'_>, exercise_id: i64) -> &'static str {
     "UPDATE"
 }
 
 #[post("/create")]
-pub async fn create() -> &'static str {
+pub async fn create(_r: RateLimit<'_>) -> &'static str {
     "CREATE"
 }
 
 #[post("/delete/<exercise_id>")]
-pub async fn delete(exercise_id: i64) -> &'static str {
+pub async fn delete(_r: RateLimit<'_>, exercise_id: i64) -> &'static str {
     "DELETE"
 }

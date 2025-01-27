@@ -18,7 +18,7 @@ use chrono::NaiveDateTime;
 
 use crate::{
     db::DatabaseConnection,
-    models::profile::FitnessGoal,
+    models::{profile::FitnessGoal, user::User},
     responders::ProteinError,
     schema::{
         workout_logs, workout_logs::dsl::*, workout_plans, workout_plans::dsl::*, workouts,
@@ -27,9 +27,19 @@ use crate::{
 };
 
 #[derive(
-    Clone, Debug, Eq, PartialEq, Queryable, Selectable, Serialize, Deserialize, Identifiable,
+    Clone,
+    Debug,
+    Eq,
+    PartialEq,
+    Queryable,
+    Selectable,
+    Serialize,
+    Deserialize,
+    Identifiable,
+    Associations,
 )]
 #[diesel(table_name = workouts)]
+#[diesel(belongs_to(User))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Workout {
     pub id: Uuid,
@@ -52,9 +62,19 @@ pub enum Difficulty {
 }
 
 #[derive(
-    Clone, Debug, Eq, PartialEq, Queryable, Selectable, Serialize, Deserialize, Identifiable,
+    Clone,
+    Debug,
+    Eq,
+    PartialEq,
+    Queryable,
+    Selectable,
+    Serialize,
+    Deserialize,
+    Identifiable,
+    Associations,
 )]
 #[diesel(table_name = workout_logs)]
+#[diesel(belongs_to(User))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct WorkoutLog {
     pub id: i32,
@@ -65,9 +85,19 @@ pub struct WorkoutLog {
 }
 
 #[derive(
-    Clone, Debug, Eq, PartialEq, Queryable, Selectable, Serialize, Deserialize, Identifiable,
+    Clone,
+    Debug,
+    Eq,
+    PartialEq,
+    Queryable,
+    Selectable,
+    Serialize,
+    Deserialize,
+    Identifiable,
+    Associations,
 )]
 #[diesel(table_name = workout_plans)]
+#[diesel(belongs_to(User))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct WorkoutPlan {
     pub id: Uuid,

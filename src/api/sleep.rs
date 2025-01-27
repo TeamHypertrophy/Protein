@@ -12,27 +12,29 @@ ______          _       _
 use rocket::{get, post};
 use uuid::Uuid;
 
+use crate::auth::rate_limit::RateLimit;
+
 #[get("/get/<user_id>/<log_id>")]
-pub async fn get(user_id: Uuid, log_id: i32) -> &'static str {
+pub async fn get(_r: RateLimit<'_>, user_id: Uuid, log_id: i32) -> &'static str {
     "GET"
 }
 
-#[get("/all")]
-pub async fn all() -> &'static str {
+#[get("/all/<user_id>")]
+pub async fn all(_r: RateLimit<'_>, user_id: Uuid) -> &'static str {
     "ALL"
 }
 
 #[post("/update/<user_id>/<log_id>")]
-pub async fn update(user_id: Uuid, log_id: i32) -> &'static str {
+pub async fn update(_r: RateLimit<'_>, user_id: Uuid, log_id: i32) -> &'static str {
     "UPDATE"
 }
 
-#[post("/create/<user_id>/<log_id>")]
-pub async fn create(user_id: Uuid, log_id: i32) -> &'static str {
+#[post("/create")]
+pub async fn create(_r: RateLimit<'_>) -> &'static str {
     "CREATE"
 }
 
 #[post("/delete/<user_id>/<log_id>")]
-pub async fn delete(user_id: Uuid, log_id: i32) -> &'static str {
+pub async fn delete(_r: RateLimit<'_>, user_id: Uuid, log_id: i32) -> &'static str {
     "DELETE"
 }

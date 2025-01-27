@@ -17,6 +17,7 @@ use chrono::NaiveDateTime;
 
 use crate::{
     db::DatabaseConnection,
+    models::user::User,
     responders::ProteinError,
     schema::{
         calorie_logs, calorie_logs::dsl::*, protein_logs, protein_logs::dsl::*, sleep_logs,
@@ -26,9 +27,19 @@ use crate::{
 
 // Nutrition Calorie Logs
 #[derive(
-    Clone, Debug, Eq, PartialEq, Queryable, Selectable, Serialize, Deserialize, Identifiable,
+    Clone,
+    Debug,
+    Eq,
+    PartialEq,
+    Queryable,
+    Selectable,
+    Serialize,
+    Deserialize,
+    Identifiable,
+    Associations,
 )]
 #[diesel(table_name = calorie_logs)]
+#[diesel(belongs_to(User))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct CalorieLog {
     pub id: i32,
@@ -40,9 +51,19 @@ pub struct CalorieLog {
 
 // Nutrition Protein Logs
 #[derive(
-    Clone, Debug, Eq, PartialEq, Queryable, Selectable, Serialize, Deserialize, Identifiable,
+    Clone,
+    Debug,
+    Eq,
+    PartialEq,
+    Queryable,
+    Selectable,
+    Serialize,
+    Deserialize,
+    Identifiable,
+    Associations,
 )]
 #[diesel(table_name = protein_logs)]
+#[diesel(belongs_to(User))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct ProteinLog {
     id: i32,
@@ -54,9 +75,19 @@ pub struct ProteinLog {
 
 // Nutrition Sleep Logs
 #[derive(
-    Clone, Debug, Eq, PartialEq, Queryable, Selectable, Serialize, Deserialize, Identifiable,
+    Clone,
+    Debug,
+    Eq,
+    PartialEq,
+    Queryable,
+    Selectable,
+    Serialize,
+    Deserialize,
+    Identifiable,
+    Associations,
 )]
 #[diesel(table_name = sleep_logs)]
+#[diesel(belongs_to(User))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct SleepLog {
     id: i32,
@@ -69,9 +100,19 @@ pub struct SleepLog {
 
 // Nutrition Water Logs
 #[derive(
-    Clone, Debug, Eq, PartialEq, Queryable, Selectable, Serialize, Deserialize, Identifiable,
+    Clone,
+    Debug,
+    Eq,
+    PartialEq,
+    Queryable,
+    Selectable,
+    Serialize,
+    Deserialize,
+    Identifiable,
+    Associations,
 )]
 #[diesel(table_name = water_logs)]
+#[diesel(belongs_to(User))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct WaterLog {
     id: i32,

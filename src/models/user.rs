@@ -18,7 +18,6 @@ use chrono::NaiveDateTime;
 
 use crate::{
     db::DatabaseConnection,
-    models::keys::APIKey,
     responders::ProteinError,
     schema::{users, users::dsl::*},
 };
@@ -60,16 +59,19 @@ pub struct LoginUser {
     pub password: String,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct Me {
-    pub user: User,
-    pub api_key: APIKey,
-}
-
+#[derive(AsChangeset)]
+#[diesel(table_name = users)]
 #[derive(Serialize, Deserialize)]
 pub struct UpdateUser {
     pub username: String,
-    pub password: String,
+    pub role: Role,
+    pub ip_address: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Password {
+    pub old_password: String,
+    pub new_password: String,
 }
 
 #[derive(DbEnum, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -153,13 +155,31 @@ impl User {
 
     pub async fn update(
         user_id: Uuid,
-        new_username: String,
+        user: UpdateUser,
+        connection: &mut DatabaseConnection,
+    ) -> Result<User, ProteinError> {
+        diesel::update(users::table)
+            .filter(id.eq(user_id))
+            .set(&user)
+            .get_result::<User>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn update_password(
+        user_id: Uuid,
         new_password: String,
         connection: &mut DatabaseConnection,
     ) -> Result<User, ProteinError> {
         diesel::update(users::table)
             .filter(id.eq(user_id))
-            .set((username.eq(new_username), password.eq(new_password)))
+            .set((
+                password.eq(new_password),
+                password_updated_at.eq(chrono::Utc::now().naive_utc()),
+            ))
             .get_result::<User>(connection)
             .await
             .map_err(|error| {

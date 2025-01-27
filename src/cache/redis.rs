@@ -15,7 +15,7 @@ use rocket::{
     serde::{json, json::Value, Deserialize, Serialize},
     State,
 };
-use fred::prelude::*;
+use fred::{prelude::*, types::config::UnresponsiveConfig};
 use dotenvy::dotenv;
 
 use crate::{constants::CACHE_EXPIRATION_TIME, responders::ProteinError};
@@ -35,12 +35,20 @@ pub async fn create_redis_pool() -> Result<Pool, Error> {
     let pool = Builder::from_config(config)
         .with_connection_config(|config| {
             config.connection_timeout = Duration::from_secs(10);
+            config.max_command_attempts = 5;
+            config.max_redirections = 5;
+
+            config.unresponsive = UnresponsiveConfig {
+                max_timeout: Some(Duration::from_secs(10)),
+                interval: Duration::from_secs(3),
+            };
 
             config.tcp = TcpConfig {
                 nodelay: Some(true),
                 ..Default::default()
             };
         })
+        .set_policy(ReconnectPolicy::new_exponential(0, 100, 30_000, 2))
         .build_pool(5)
         .expect("[!] Failed to Create Redis Pool");
 

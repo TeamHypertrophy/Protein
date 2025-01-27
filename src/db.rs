@@ -20,7 +20,7 @@ use diesel_async::{
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use dotenvy::dotenv;
 
-use crate::responders::ProteinError;
+use crate::{constants::POSTGRES_POOL_SIZE, responders::ProteinError};
 
 pub type DatabaseConnection = deadpool::Object<AsyncPgConnection>;
 pub type DatabasePool = Pool<AsyncPgConnection>;
@@ -39,7 +39,7 @@ pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::
 
     // Create Database Pool
     let pool = Pool::builder(manager)
-        .max_size(10)
+        .max_size(POSTGRES_POOL_SIZE)
         .build()
         .expect("[!] Could Not Create Database Pool");
 

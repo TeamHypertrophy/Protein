@@ -63,10 +63,9 @@ impl<'r> FromRequest<'r> for API {
         };
 
         // Check if the api key belongs to the user through ?user_id=uuid
-        // Check if the api key quota has been hit (send rate limit)
-        // rate limiting: save requests in redis, check if the user has hit the limit
-        // if the user has hit the limit, return a 429 status code
-        // if the user has not hit the limit, increment the counter and continue
+        // Check if the api key quota has been hit (send rate limit) (probably move to
+        // redis for this due to high volume) Chec if the api key status ==
+        // active, if not, return unauthorized
         if let Ok(key) = APIKey::find_by_key(api_key, connection).await {
             if key.api_key.to_string() == api_key.to_string() {
                 return Outcome::Success(API);
