@@ -21,7 +21,7 @@ use rocket::{
 use validator::Validate;
 
 use crate::{
-    auth::rate_limit::RateLimit,
+    auth::{dev::Developer, rate_limit::RateLimit},
     cache::redis::RedisPool,
     db,
     db::DatabasePool,
@@ -53,6 +53,7 @@ pub async fn get(
 #[get("/all", format = "application/json")]
 pub async fn all(
     _r: RateLimit<'_>,
+    _auth: Developer,
     pool: &State<DatabasePool>,
 ) -> Result<Json<Vec<Profile>>, ProteinError> {
     // Creating Database Connection

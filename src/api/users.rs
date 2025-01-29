@@ -36,7 +36,7 @@ use crate::{
     utils::password,
 };
 
-#[get("/<user_id>", format = "application/json")]
+#[get("/?<user_id>", format = "application/json")]
 pub async fn get(
     _r: RateLimit<'_>,
     _auth: API,
@@ -181,7 +181,7 @@ pub async fn login(
     }
 }
 
-#[get("/delete/<user_id>", format = "application/json")]
+#[get("/delete?<user_id>", format = "application/json")]
 pub async fn delete(
     _r: RateLimit<'_>,
     _auth: API,
@@ -201,7 +201,7 @@ pub async fn delete(
     })))
 }
 
-#[post("/update/<user_id>", format = "application/json", data = "<user>")]
+#[post("/update?<user_id>", format = "application/json", data = "<user>")]
 pub async fn update(
     _r: RateLimit<'_>,
     _auth: API,
@@ -230,7 +230,7 @@ pub async fn update(
 }
 
 #[post(
-    "/update/password/<user_id>",
+    "/update/password?<user_id>",
     format = "application/json",
     data = "<data>"
 )]
@@ -279,7 +279,6 @@ pub async fn update_password(
 #[get("/me", format = "application/json")]
 pub async fn me(
     _r: RateLimit<'_>,
-    _auth: API,
     ip: &ClientRealAddr,
     pool: &State<DatabasePool>,
 ) -> Result<Json<Profile>, ProteinError> {

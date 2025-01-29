@@ -42,6 +42,36 @@ impl<'r> FromRequest<'r> for API {
             }
         };
 
+        let query = match request.uri().query() {
+            Some(query) => query,
+            None => {
+                return Outcome::Error((
+                    Status::BadRequest,
+                    ProteinError::Validation("Cannot Find Query!".to_string()),
+                ))
+            }
+        };
+
+        let value = match query.strip_prefix("user_id=") {
+            Some(value) => value.as_str(),
+            None => {
+                return Outcome::Error((
+                    Status::BadRequest,
+                    ProteinError::Validation("Cannot Find User ID!".to_string()),
+                ))
+            }
+        };
+
+        let user_id = match Uuid::parse_str(value) {
+            Ok(uuid) => uuid,
+            Err(_) => {
+                return Outcome::Error((
+                    Status::BadRequest,
+                    ProteinError::Validation("Invalid User ID".to_string()),
+                ))
+            }
+        };
+
         let pool = match request.rocket().state::<db::DatabasePool>() {
             Some(pool) => pool,
             _ => {
@@ -62,24 +92,16 @@ impl<'r> FromRequest<'r> for API {
             }
         };
 
-        // Check if the api key belongs to the user through ?user_id=uuid
-        // Check if the api key quota has been hit (send rate limit) (probably move to
-        // redis for this due to high volume) Chec if the api key status ==
-        // active, if not, return unauthorized
-        if let Ok(key) = APIKey::find_by_key(api_key, connection).await {
-            if key.api_key.to_string() == api_key.to_string() {
+        match APIKey::verify(user_id, api_key, connection).await {
+            Ok(_verified) => {
                 return Outcome::Success(API);
-            } else {
-                Outcome::Error((
-                    Status::Unauthorized,
-                    ProteinError::Authorization("API Key Does Not Match!".to_string()),
-                ))
             }
-        } else {
-            return Outcome::Error((
-                Status::Unauthorized,
-                ProteinError::Authorization("API Key Does Not Match!".to_string()),
-            ));
-        }
+            Err(_) => {
+                return Outcome::Error((
+                    Status::Unauthorized,
+                    ProteinError::Database("API Key Verification Failed".to_string()),
+                ));
+            }
+        };
     }
 }

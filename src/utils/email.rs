@@ -9,7 +9,4 @@ ______          _       _
         Made with ❤️
 */
 
-pub mod email;
-pub mod jobs;
-pub mod logging;
-pub mod password;
+// Build Email System and Functionality

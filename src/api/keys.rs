@@ -9,32 +9,109 @@ ______          _       _
         Made with ❤️
 */
 
-use rocket::{get, post};
-use uuid::Uuid;
+use rocket::{
+    get, post,
+    response::status,
+    serde::{
+        json::{json, Json, Value},
+        uuid::Uuid,
+    },
+    State,
+};
 
-use crate::auth::rate_limit::RateLimit;
+use crate::{
+    auth::{dev::Developer, key::API, rate_limit::RateLimit},
+    cache::redis::RedisPool,
+    db,
+    db::DatabasePool,
+    models::keys::{APIKey, RevokeKey, UpdateAPIKey},
+    responders::ProteinError,
+};
 
-#[get("/get/<api_key>")]
-pub async fn get(_r: RateLimit<'_>, api_key: Uuid) -> &'static str {
-    "GET"
+#[get("/get/<api_key>", format = "application/json")]
+pub async fn get(
+    _r: RateLimit<'_>,
+    _auth: Developer,
+    pool: &State<DatabasePool>,
+    api_key: Uuid,
+) -> Result<Json<APIKey>, ProteinError> {
+    let connection = &mut db::get_connection(pool).await?;
+
+    let api_key = APIKey::find(api_key, connection).await?;
+
+    Ok(Json(api_key))
 }
 
-#[get("/all")]
-pub async fn all(_r: RateLimit<'_>) -> &'static str {
-    "ALL"
+#[get("/all", format = "application/json")]
+pub async fn all(
+    _r: RateLimit<'_>,
+    _auth: Developer,
+    pool: &State<DatabasePool>,
+) -> Result<Json<Vec<APIKey>>, ProteinError> {
+    let connection = &mut db::get_connection(pool).await?;
+
+    let api_keys = APIKey::all(connection).await?;
+
+    Ok(Json(api_keys))
 }
 
-#[post("/update/<api_key>")]
-pub async fn update(_r: RateLimit<'_>, api_key: Uuid) -> &'static str {
-    "UPDATE"
+#[get("/all/<user_id>", format = "application/json")]
+pub async fn user_all(
+    _r: RateLimit<'_>,
+    _auth: Developer,
+    pool: &State<DatabasePool>,
+    user_id: Uuid,
+) -> Result<Json<Vec<APIKey>>, ProteinError> {
+    let connection = &mut db::get_connection(pool).await?;
+
+    let user_keys = APIKey::user_all(user_id, connection).await?;
+
+    Ok(Json(user_keys))
 }
 
-#[post("/revoke/<api_key>")]
-pub async fn revoke(_r: RateLimit<'_>, api_key: Uuid) -> &'static str {
-    "REVOKE"
+#[post("/update/<api_key>", format = "application/json", data = "<key>")]
+pub async fn update(
+    _r: RateLimit<'_>,
+    _auth: Developer,
+    pool: &State<DatabasePool>,
+    api_key: Uuid,
+    key: Json<UpdateAPIKey>,
+) -> Result<Json<APIKey>, ProteinError> {
+    let connection = &mut db::get_connection(pool).await?;
+
+    let result = APIKey::update(api_key, key.into_inner(), connection).await?;
+
+    Ok(Json(result))
 }
 
 #[post("/delete/<api_key>")]
-pub async fn delete(_r: RateLimit<'_>, api_key: Uuid) -> &'static str {
-    "DELETE"
+pub async fn delete(
+    _r: RateLimit<'_>,
+    _auth: Developer,
+    pool: &State<DatabasePool>,
+    api_key: Uuid,
+) -> Result<status::Accepted<Value>, ProteinError> {
+    let connection = &mut db::get_connection(pool).await?;
+
+    APIKey::delete(api_key, connection).await?;
+
+    Ok(status::Accepted(json!({
+        "message": "API Key Revoked",
+        "api_key": api_key
+    })))
+}
+
+#[post("/revoke/<api_key>", format = "application/json", data = "<reason>")]
+pub async fn revoke(
+    _r: RateLimit<'_>,
+    _auth: Developer,
+    pool: &State<DatabasePool>,
+    api_key: Uuid,
+    reason: Json<RevokeKey>,
+) -> Result<Json<APIKey>, ProteinError> {
+    let connection = &mut db::get_connection(pool).await?;
+
+    let result = APIKey::revoke(api_key, reason.into_inner(), connection).await?;
+
+    Ok(Json(result))
 }

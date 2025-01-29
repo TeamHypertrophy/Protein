@@ -63,8 +63,9 @@ impl<'r> FromRequest<'r> for Developer {
         };
 
         if let Ok(key) = APIKey::find_by_key(api_key, connection).await {
+            // Very Similiar to the API Key Validation
+            // so here, we're going to check that the api key belongs to a "developer" user!
             if key.api_key.to_string() == api_key.to_string() && key.is_developer_key {
-                // so here, we're going to check that the api key belongs to a "developer" user!
                 return Outcome::Success(Developer);
             } else {
                 Outcome::Error((

@@ -9,14 +9,15 @@ ______          _       _
         Made with ❤️
 */
 
-use uuid::Uuid;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use diesel_derive_enum::DbEnum;
 use rocket::serde::{Deserialize, Serialize};
+use uuid::Uuid;
 use chrono::NaiveDateTime;
 
 use crate::{
+    constants::API_QUOTA_LIMIT,
     db::DatabaseConnection,
     models::user::User,
     responders::ProteinError,
@@ -60,6 +61,22 @@ pub enum Status {
     Expired,
 }
 
+#[derive(AsChangeset, Serialize, Deserialize, Debug, Clone)]
+#[diesel(table_name = api_keys)]
+pub struct UpdateAPIKey {
+    pub updated_at: Option<NaiveDateTime>,
+    pub expires_at: Option<NaiveDateTime>,
+    pub is_developer_key: Option<bool>,
+    pub revoked_reason: Option<String>,
+    pub status: Option<Status>,
+    pub quota: Option<i32>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RevokeKey {
+    pub revoked_reason: String,
+}
+
 impl APIKey {
     pub async fn get(
         user: &User,
@@ -68,6 +85,51 @@ impl APIKey {
         APIKey::belonging_to(user)
             .select(APIKey::as_select())
             .first(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn all(connection: &mut DatabaseConnection) -> Result<Vec<APIKey>, ProteinError> {
+        api_keys::table
+            .select(APIKey::as_select())
+            .load(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn user_all(
+        user: Uuid,
+        connection: &mut DatabaseConnection,
+    ) -> Result<Vec<APIKey>, ProteinError> {
+        api_keys::table
+            .filter(user_id.eq(user))
+            .select(APIKey::as_select())
+            .load(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn revoke(
+        key: Uuid,
+        data: RevokeKey,
+        connection: &mut DatabaseConnection,
+    ) -> Result<APIKey, ProteinError> {
+        diesel::update(api_keys::table)
+            .filter(api_key.eq(key))
+            .set((
+                revoked_reason.eq(data.revoked_reason),
+                status.eq(Status::Revoked),
+            ))
+            .get_result(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
@@ -90,6 +152,71 @@ impl APIKey {
             })
     }
 
+    pub async fn update(
+        key: Uuid,
+        update: UpdateAPIKey,
+        connection: &mut DatabaseConnection,
+    ) -> Result<APIKey, ProteinError> {
+        diesel::update(api_keys::table)
+            .filter(api_key.eq(key))
+            .set(&update)
+            .get_result::<APIKey>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn increment(
+        key: Uuid,
+        original: i32,
+        connection: &mut DatabaseConnection,
+    ) -> Result<(), ProteinError> {
+        diesel::update(api_keys::table)
+            .filter(api_key.eq(key))
+            .set((
+                updated_at.eq(chrono::Utc::now().naive_utc()),
+                quota.eq(original + 1),
+            ))
+            .execute(connection)
+            .await
+            .map(|_| ())
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn delete(
+        key: Uuid,
+        connection: &mut DatabaseConnection,
+    ) -> Result<usize, ProteinError> {
+        diesel::delete(api_keys::table)
+            .filter(api_key.eq(key))
+            .execute(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn find(
+        key: Uuid,
+        connection: &mut DatabaseConnection,
+    ) -> Result<APIKey, ProteinError> {
+        api_keys::table
+            .filter(api_key.eq(key))
+            .select(APIKey::as_select())
+            .first(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
     pub async fn find_by_key(
         key: Uuid,
         mut connection: DatabaseConnection,
@@ -105,10 +232,50 @@ impl APIKey {
             })
     }
 
-    pub async fn verify_api_key(
+    pub async fn verify(
+        user: Uuid,
         key: Uuid,
         mut connection: DatabaseConnection,
     ) -> Result<bool, ProteinError> {
-        todo!()
+        // First, Find User
+        let user: User = User::find(user, &mut connection).await?;
+
+        // Next, Grab API Key Belonging to that User
+        let verified: APIKey = APIKey::get(&user, &mut connection).await?;
+
+        // Extra Validation: Quota Check
+        if verified.quota >= API_QUOTA_LIMIT {
+            return Err(ProteinError::Authorization(
+                "API Key Quota Limit Reached!".to_string(),
+            ));
+        }
+
+        // Extra Validation: Status Check
+        if verified.status != Status::Active {
+            return Err(ProteinError::Authorization(
+                "API Key is Revoked OR Expired!".to_string(),
+            ));
+        }
+
+        // Extra Validation: Expiry Check
+        let now: i64 = chrono::Utc::now().naive_utc().and_utc().timestamp();
+        let expired: i64 = verified.expires_at.and_utc().timestamp();
+
+        if now > expired {
+            return Err(ProteinError::Authorization(
+                "API Key is Expired!".to_string(),
+            ));
+        }
+
+        // Most importantly, Compare API_KEY Header to Actual API Key
+        if verified.api_key == key {
+            APIKey::increment(key, verified.quota, &mut connection).await?;
+
+            return Ok(true);
+        } else {
+            return Err(ProteinError::Authorization(
+                "API Key Does Not Match!".to_string(),
+            ));
+        }
     }
 }

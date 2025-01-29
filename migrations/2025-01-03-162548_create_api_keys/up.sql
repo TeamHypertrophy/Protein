@@ -16,5 +16,5 @@ CREATE TABLE api_keys (
     "is_developer_key" BOOLEAN NOT NULL DEFAULT (FALSE),
     "revoked_reason" TEXT NOT NULL DEFAULT (''),
     "status" Status NOT NULL DEFAULT ('active'),
-    "quota" INT NOT NULL DEFAULT (1000)
+    "quota" INT NOT NULL DEFAULT (0)
 );

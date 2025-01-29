@@ -13,7 +13,8 @@ ______          _       _
 #[macro_use]
 extern crate rocket;
 
-// Argon
+// Vendor Dependencies
+use sysinfo::System;
 extern crate argon2;
 
 // Schema File
@@ -80,7 +81,7 @@ async fn protein() -> _ {
     };
 
     // System Information
-    let system = sysinfo::System::new_all();
+    let system: System = System::new_all();
 
     // Rocket
     rocket::build()
@@ -127,7 +128,6 @@ async fn protein() -> _ {
                 api::keys::get,
                 api::keys::all,
                 api::keys::update,
-                api::keys::revoke,
                 api::keys::delete
             ],
         )
