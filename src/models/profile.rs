@@ -106,6 +106,21 @@ impl Profile {
             })
     }
 
+    pub async fn find_by_email(
+        address: String,
+        connection: &mut DatabaseConnection,
+    ) -> Result<Profile, ProteinError> {
+        profiles::table
+            .filter(profiles::email.eq(address))
+            .select(Profile::as_select())
+            .first(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
     pub async fn all(connection: &mut DatabaseConnection) -> Result<Vec<Profile>, ProteinError> {
         profiles::table
             .select(Profile::as_select())
@@ -198,4 +213,9 @@ impl NewProfile {
                 ProteinError::Database(error.to_string())
             })
     }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ForgotPassword {
+    pub email: String,
 }

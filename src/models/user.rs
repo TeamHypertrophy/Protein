@@ -171,7 +171,7 @@ impl User {
 
     pub async fn update_password(
         user_id: Uuid,
-        new_password: String,
+        new_password: &String,
         connection: &mut DatabaseConnection,
     ) -> Result<User, ProteinError> {
         diesel::update(users::table)

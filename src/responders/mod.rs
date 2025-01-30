@@ -40,6 +40,8 @@ pub enum ProteinError {
     Validation(String),
 
     Database(String),
+
+    Email(String),
 }
 
 impl ProteinError {
@@ -51,6 +53,7 @@ impl ProteinError {
             ProteinError::Authorization(_) => Status::Unauthorized,
             ProteinError::NotFound(_) => Status::NotFound,
             ProteinError::Validation(_) => Status::BadRequest,
+            ProteinError::Email(_) => Status::InternalServerError,
             _ => Status::BadRequest,
         }
     }
@@ -74,6 +77,7 @@ impl<'r> Responder<'r, 'static> for ProteinError {
             ProteinError::Authorization(error) => error,
             ProteinError::Validation(error) => error,
             ProteinError::Database(error) => error,
+            ProteinError::Email(error) => error,
         };
 
         let response = json::to_string(&ErrorResponse {

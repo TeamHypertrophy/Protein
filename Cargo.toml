@@ -32,7 +32,8 @@ uuid = { version = "1.12.1", features = ["fast-rng"] }
 chrono = { version = "0.4.39", features = ["serde"] }
 # -- Validation
 validator = { version = "0.20.0", features = ["derive"] }
-# -- Password Hashing
+# -- Passwords
+passwords = "3.1.16"
 rust-argon2 = "2.1"
 # -- .env
 dotenvy = "0.15"
@@ -47,6 +48,8 @@ shadow-rs = { version = "0.38.0", features = ["metadata"] }
 sysinfo = "0.33.1"
 ## -- Sentry
 rocket-sentry = "0.18.0"
+## -- Emailing
+lettre = { version = "0.11", features = ["tokio1", "tokio1-native-tls", "tracing", "serde"]}
 
 [build-dependencies]
 shadow-rs = { version = "0.38.0", features = ["metadata"] }

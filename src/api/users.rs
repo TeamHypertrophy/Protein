@@ -30,9 +30,11 @@ use crate::{
     db,
     db::DatabasePool,
     models::keys::APIKey,
-    models::profile::Profile,
+    models::profile::{ForgotPassword, Profile},
     models::user::{LoginUser, NewUser, Password, ProteinUser, Role, UpdateUser, User},
     responders::ProteinError,
+    utils::email,
+    utils::email::Mailer,
     utils::password,
 };
 
@@ -90,7 +92,7 @@ pub async fn signup(
     user: Json<NewUser>,
 ) -> Result<Json<ProteinUser>, ProteinError> {
     // Generate New User Password
-    let password_hash = password::generate_password(user.password.clone())?;
+    let password_hash = password::generate_hashed_password(user.password.clone())?;
 
     // Create New User Struct
     let new_user = NewUser {
@@ -258,10 +260,10 @@ pub async fn update_password(
     }
 
     // Generate New Password Hash
-    let password_hash = password::generate_password(data.new_password.clone())?;
+    let password_hash = password::generate_hashed_password(data.new_password.clone())?;
 
     // Update Password
-    let updated_user = User::update_password(user_id, password_hash, connection).await?;
+    let updated_user = User::update_password(user_id, &password_hash, connection).await?;
 
     // Update Cache With User
     Cache::set(
@@ -274,6 +276,43 @@ pub async fn update_password(
 
     // Return Updated User
     Ok(Json(updated_user))
+}
+
+#[post("/email/forgot-password", format = "application/json", data = "<data>")]
+pub async fn forgot_password_email(
+    _r: RateLimit<'_>,
+    mailer: &State<Mailer>,
+    pool: &State<DatabasePool>,
+    ip: &ClientRealAddr,
+    data: Json<ForgotPassword>,
+) -> Result<status::Accepted<Value>, ProteinError> {
+    // Grab Database Connection
+    let connection = &mut db::get_connection(pool).await?;
+
+    // Get Current IP Address
+    let ip_address: String = ip.get_ipv4_string().unwrap();
+
+    // Get User Profile
+    let profile = Profile::find_by_email(data.email.clone(), connection).await?;
+
+    // Generate Plain Text Password
+    let new_password = password::generate_password()?;
+
+    // Hash Generated Password
+    let hashed_password = password::generate_hashed_password(new_password.clone())?;
+
+    // Update User Password With New Hashed Data
+    User::update_password(profile.user_id, &hashed_password, connection).await?;
+
+    // Send Email To User
+    email::send_email(mailer, &profile, "[Security] Your Password Has Been Reset", format!("Hello {}!, \nYou Have Requested An Password Reset, So I have Generated A Secure Password For You:\nNew Password: {}\n\n\nIf You Did NOT Request This, Please Ignore This Email\nRequest IP Address: {}", profile.first_name, new_password, ip_address)).await?;
+
+    // API Response
+    Ok(status::Accepted(json!({
+        "message": "Forgot Password Email Sent!",
+        "user_id": profile.user_id,
+        "profile_id": profile.id
+    })))
 }
 
 #[get("/me", format = "application/json")]

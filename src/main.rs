@@ -80,6 +80,15 @@ async fn protein() -> _ {
         }
     };
 
+    // Email
+    let email = match utils::email::setup_email().await {
+        Ok(email) => email,
+        Err(e) => {
+            tracing::error!("[-] ❌ Error Setting Up Email System: {:?}", e);
+            std::process::exit(1)
+        }
+    };
+
     // System Information
     let system: System = System::new_all();
 
@@ -87,6 +96,7 @@ async fn protein() -> _ {
     rocket::build()
         .manage(pool)
         .manage(redis)
+        .manage(email)
         .manage(system)
         .attach(fairings::cors::Cors)
         .attach(fairings::logging::Logging)
@@ -117,6 +127,7 @@ async fn protein() -> _ {
                 api::users::login,
                 api::users::update,
                 api::users::update_password,
+                api::users::forgot_password_email,
                 api::users::delete,
                 api::users::all,
                 api::users::me
