@@ -186,7 +186,7 @@ pub async fn login(
 #[get("/delete?<user_id>", format = "application/json")]
 pub async fn delete(
     _r: RateLimit<'_>,
-    _auth: API,
+    _auth: Developer,
     user_id: Uuid,
     pool: &State<DatabasePool>,
 ) -> Result<status::Accepted<Value>, ProteinError> {

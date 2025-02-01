@@ -21,7 +21,7 @@ use rocket::{
 use validator::Validate;
 
 use crate::{
-    auth::{dev::Developer, rate_limit::RateLimit},
+    auth::{dev::Developer, key::API, rate_limit::RateLimit},
     cache::redis::RedisPool,
     db,
     db::DatabasePool,
@@ -86,9 +86,10 @@ pub async fn create(
     Ok(Json(result))
 }
 
-#[post("/update/<user_id>", format = "application/json", data = "<profile>")]
+#[post("/update?user_id", format = "application/json", data = "<profile>")]
 pub async fn update(
     _r: RateLimit<'_>,
+    _auth: API,
     user_id: Uuid,
     pool: &State<DatabasePool>,
     profile: Json<UpdateProfile>,
@@ -108,6 +109,7 @@ pub async fn update(
 #[get("/delete/<user_id>", format = "application/json")]
 pub async fn delete(
     _r: RateLimit<'_>,
+    _auth: Developer,
     user_id: Uuid,
     pool: &State<DatabasePool>,
 ) -> Result<status::Accepted<Value>, ProteinError> {

@@ -38,7 +38,7 @@ pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::
         AsyncDieselConnectionManager::<AsyncPgConnection>::new(database_url);
 
     // Create Database Pool
-    let pool = Pool::builder(manager)
+    let pool: DatabasePool = Pool::builder(manager)
         .max_size(POSTGRES_POOL_SIZE)
         .build()
         .expect("[!] Could Not Create Database Pool");
@@ -47,7 +47,7 @@ pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::
     pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
     // Get Database Connection
-    let connection = pool.clone().get().await?;
+    let connection: DatabaseConnection = pool.clone().get().await?;
 
     // Run Migrations
     let mut wrapper: AsyncConnectionWrapper<DatabaseConnection> =

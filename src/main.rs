@@ -51,7 +51,7 @@ shadow_rs::shadow!(build);
 
 // Launch Rocket Instance
 #[launch]
-
+#[tokio::main]
 async fn protein() -> _ {
     // Logging
     let (guard, ()) = match utils::logging::setup_logging() {
@@ -157,6 +157,7 @@ async fn protein() -> _ {
             routes![
                 api::calories::get,
                 api::calories::all,
+                api::calories::user_all,
                 api::calories::update,
                 api::calories::create,
                 api::calories::delete
@@ -167,6 +168,7 @@ async fn protein() -> _ {
             routes![
                 api::protein::get,
                 api::protein::all,
+                api::protein::user_all,
                 api::protein::update,
                 api::protein::create,
                 api::protein::delete
@@ -177,6 +179,7 @@ async fn protein() -> _ {
             routes![
                 api::sleep::get,
                 api::sleep::all,
+                api::sleep::user_all,
                 api::sleep::update,
                 api::sleep::create,
                 api::sleep::delete
@@ -187,6 +190,7 @@ async fn protein() -> _ {
             routes![
                 api::water::get,
                 api::water::all,
+                api::water::user_all,
                 api::water::update,
                 api::water::create,
                 api::water::delete

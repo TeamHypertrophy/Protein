@@ -67,7 +67,7 @@ impl std::fmt::Display for ProteinError {
 
 impl<'r> Responder<'r, 'static> for ProteinError {
     fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
-        let status_code = self.get_http_status();
+        let status_code: Status = self.get_http_status();
 
         let message = match self {
             ProteinError::Internal(error) => error,

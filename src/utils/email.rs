@@ -31,17 +31,18 @@ pub async fn setup_email() -> Result<AsyncSmtpTransport<Tokio1Executor>, Box<dyn
     dotenv().ok();
 
     // Get SMTP Credentials
-    let username =
+    let username: String =
         env::var("SMTP_USERNAME").expect("[!] SMTP_USERNAME Environment Variable Must Be Set");
-    let password =
+    let password: String =
         env::var("SMTP_PASSWORD").expect("[!] SMTP_PASSWORD Environment Variable Must Be Set");
-    let server = env::var("SMTP_SERVER").expect("[!] SMTP_SERVER Environment Variable Must Be Set");
+    let server: String =
+        env::var("SMTP_SERVER").expect("[!] SMTP_SERVER Environment Variable Must Be Set");
 
     // Create Credentials
-    let credentials = Credentials::new(username, password);
+    let credentials: Credentials = Credentials::new(username, password);
 
     // Create Mailer
-    let mailer = AsyncSmtpTransport::<Tokio1Executor>::relay(server.as_str())
+    let mailer: Mailer = AsyncSmtpTransport::<Tokio1Executor>::relay(server.as_str())
         .unwrap()
         .credentials(credentials)
         .build();
@@ -60,12 +61,13 @@ pub async fn send_email(
     dotenv().ok();
 
     // Get SMTP Credentials
-    let user = env::var("SMTP_USER").expect("[!] SMTP_USER Environment Variable Must Be Set");
-    let username =
+    let user: String =
+        env::var("SMTP_USER").expect("[!] SMTP_USER Environment Variable Must Be Set");
+    let username: String =
         env::var("SMTP_USERNAME").expect("[!] SMTP_USERNAME Environment Variable Must Be Set");
 
     // Get Full Name
-    let full_name = format!("{} {}", profile.first_name, profile.last_name);
+    let full_name: String = format!("{} {}", profile.first_name, profile.last_name);
 
     // Create Mailboxes
     let from: Mailbox = format!("{} <{}>", user, username)
@@ -77,7 +79,7 @@ pub async fn send_email(
         .map_err(|error| ProteinError::Email(format!("Error Parsing To Address: {:?}", error)))?;
 
     // Create Email
-    let email = Message::builder()
+    let email: Message = Message::builder()
         .to(to)
         .from(from)
         .subject(subject)

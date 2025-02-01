@@ -9,9 +9,12 @@ ______          _       _
         Made with ❤️
 */
 
+pub mod calorie;
 pub mod exercise;
 pub mod keys;
-pub mod nutrition;
 pub mod profile;
+pub mod protein;
+pub mod sleep;
 pub mod user;
+pub mod water;
 pub mod workout;

@@ -22,7 +22,7 @@ pub fn setup_logging() -> Result<(WorkerGuard, ()), Box<dyn std::error::Error>> 
     let path = Path::new("./logs/");
 
     // This Creates a Log File that Rotates Daily
-    let appender = RollingFileAppender::builder()
+    let appender: RollingFileAppender = RollingFileAppender::builder()
         .rotation(Rotation::DAILY)
         .filename_suffix("[Protein].log")
         .build(path)

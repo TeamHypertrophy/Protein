@@ -61,6 +61,7 @@ pub struct LoginUser {
 
 #[derive(AsChangeset)]
 #[diesel(table_name = users)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 #[derive(Serialize, Deserialize)]
 pub struct UpdateUser {
     pub username: String,

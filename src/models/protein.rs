@@ -1,0 +1,161 @@
+/*
+______          _       _
+| ___ \        | |     (_)
+| |_/ / __ ___ | |_ ___ _ _ __
+|  __/ '__/ _ \| __/ _ \ | '_ \
+| |  | | | (_) | ||  __/ | | | |
+\_|  |_|  \___/ \__\___|_|_| |_|
+
+        Made with ❤️
+*/
+
+use uuid::Uuid;
+use diesel::prelude::*;
+use diesel_async::RunQueryDsl;
+use rocket::serde::{Deserialize, Serialize};
+use chrono::NaiveDateTime;
+
+use crate::{
+    db::DatabaseConnection,
+    models::user::User,
+    responders::ProteinError,
+    schema::{protein_logs, protein_logs::dsl::*},
+};
+
+// Nutrition Protein Logs
+#[derive(
+    Clone,
+    Debug,
+    Eq,
+    PartialEq,
+    Queryable,
+    Selectable,
+    Serialize,
+    Deserialize,
+    Identifiable,
+    Associations,
+)]
+#[diesel(table_name = protein_logs)]
+#[diesel(belongs_to(User))]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct ProteinLog {
+    id: i32,
+    user_id: Uuid,
+    date: NaiveDateTime,
+    amount: i32,
+    updated_at: NaiveDateTime,
+}
+
+impl ProteinLog {
+    pub async fn find(
+        user: Uuid,
+        log_id: i32,
+        connection: &mut DatabaseConnection,
+    ) -> Result<ProteinLog, ProteinError> {
+        protein_logs::table
+            .filter(user_id.eq(user))
+            .filter(id.eq(log_id))
+            .select(ProteinLog::as_select())
+            .first(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn all(connection: &mut DatabaseConnection) -> Result<Vec<ProteinLog>, ProteinError> {
+        protein_logs::table
+            .select(ProteinLog::as_select())
+            .load(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn user_all(
+        user: Uuid,
+        connection: &mut DatabaseConnection,
+    ) -> Result<Vec<ProteinLog>, ProteinError> {
+        protein_logs::table
+            .filter(user_id.eq(user))
+            .select(ProteinLog::as_select())
+            .load(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn update(
+        user: Uuid,
+        log_id: i32,
+        log: UpdateProteinLog,
+        connection: &mut DatabaseConnection,
+    ) -> Result<ProteinLog, ProteinError> {
+        diesel::update(protein_logs::table)
+            .filter(user_id.eq(user))
+            .filter(id.eq(log_id))
+            .set(&log)
+            .get_result::<ProteinLog>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn delete(
+        user: Uuid,
+        log_id: i32,
+        connection: &mut DatabaseConnection,
+    ) -> Result<usize, ProteinError> {
+        diesel::delete(protein_logs::table)
+            .filter(user_id.eq(user))
+            .filter(id.eq(log_id))
+            .execute(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+}
+
+#[derive(AsChangeset)]
+#[diesel(table_name = protein_logs)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateProteinLog {
+    pub amount: Option<i32>,
+    pub date: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
+}
+
+#[derive(AsChangeset)]
+#[diesel(table_name = protein_logs)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+#[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
+pub struct NewProteinLog {
+    pub user_id: Uuid,
+    pub amount: i32,
+}
+
+impl NewProteinLog {
+    pub async fn create(
+        log: NewProteinLog,
+        connection: &mut DatabaseConnection,
+    ) -> Result<ProteinLog, ProteinError> {
+        diesel::insert_into(protein_logs::table)
+            .values(&log)
+            .get_result::<ProteinLog>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+}

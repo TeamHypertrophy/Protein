@@ -12,7 +12,7 @@ rocket = { version = "0.5.1", features = ["json", "uuid"] }
 rocket-client-addr = {git = "https://github.com/guenhter/rocket-client-addr", version = "*"}
 rocket-governor = {version = "0.2.0-rc.3", features = ["logger", "limit_info"]}
 # -- Diesel Requirements (Database)
-diesel = { version = "2.2.6", features = [
+diesel = { version = "2.2.7", features = [
     "postgres",
     "uuid",
     "chrono",
@@ -26,6 +26,8 @@ diesel-async = { version = "0.5.2", features = [
     "async-connection-wrapper",
 ] }
 diesel_migrations = { version = "2.2.0" }
+# -- Async
+tokio = { version = "1.43.0", features = ["full"] }
 # -- Serialization
 serde = { version = "1.0.217", features = ["derive"] }
 uuid = { version = "1.12.1", features = ["fast-rng"] }

@@ -165,6 +165,7 @@ impl Profile {
 
 #[derive(AsChangeset)]
 #[diesel(table_name = profiles)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct UpdateProfile {
     pub first_name: String,

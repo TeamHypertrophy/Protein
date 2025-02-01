@@ -63,6 +63,7 @@ pub enum Status {
 
 #[derive(AsChangeset, Serialize, Deserialize, Debug, Clone)]
 #[diesel(table_name = api_keys)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct UpdateAPIKey {
     pub updated_at: Option<NaiveDateTime>,
     pub expires_at: Option<NaiveDateTime>,
