@@ -2,12 +2,14 @@ name: protein
 
 services:
   db:
-    container_name: hypertrophy-database
+    container_name: storage
     image: postgres:17.2-bookworm
     environment:
-      POSTGRES_USER: ghoul
-      POSTGRES_DB: mei
+      POSTGRES_USER: postgres
+      PGUSER: postgres
+      POSTGRES_DB: stamina
       POSTGRES_PASSWORD: password
+    user: postgres
     volumes:
       - pgdata:/var/lib/postgresql/
     healthcheck:
@@ -15,10 +17,14 @@ services:
       interval: 1m30s
       timeout: 30s
       retries: 5
+    ports:
+      - "5432:5432"
     restart: unless-stopped
+    profiles:
+      - server
 
   api:
-    container_name: hypertrophy-api
+    container_name: api
     build:
       context: .
       dockerfile: Dockerfile
@@ -30,13 +36,15 @@ services:
         condition: service_healthy
         restart: true
     env_file:
-      - .env.docker
+      - docker.env
     ports:
       - "8000:8000"
     restart: unless-stopped
+    profiles:
+      - server
 
   redis:
-    container_name: hypertrophy-redis
+    container_name: redis
     image: "redis:7-alpine"
     restart: unless-stopped
     ports:
@@ -48,7 +56,54 @@ services:
       interval: 1m30s
       timeout: 30s
       retries: 5
+    profiles:
+      - server
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    volumes:
+      - ./uptime-kuma-data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 3001:3001
+    restart: always
+    profiles:
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yaml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - 9090:9090
+    restart: unless-stopped
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    profiles:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+    profiles:
+      - monitoring
 
 volumes:
   pgdata: {}
   redis_data: {}
+  prometheus_data: {}
+  grafana_data: {}

@@ -22,7 +22,6 @@ use validator::Validate;
 
 use crate::{
     auth::{dev::Developer, key::API, rate_limit::RateLimit},
-    cache::redis::RedisPool,
     db,
     db::DatabasePool,
     models::{
@@ -86,7 +85,7 @@ pub async fn create(
     Ok(Json(result))
 }
 
-#[post("/update?user_id", format = "application/json", data = "<profile>")]
+#[post("/update?<user_id>", format = "application/json", data = "<profile>")]
 pub async fn update(
     _r: RateLimit<'_>,
     _auth: API,

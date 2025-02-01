@@ -92,12 +92,16 @@ async fn protein() -> _ {
     // System Information
     let system: System = System::new_all();
 
+    // Prometheus
+    let prometheus = rocket_prometheus::PrometheusMetrics::new();
+
     // Rocket
     rocket::build()
         .manage(pool)
         .manage(redis)
         .manage(email)
         .manage(system)
+        .attach(prometheus.clone())
         .attach(fairings::cors::Cors)
         .attach(fairings::logging::Logging)
         .attach(rocket_sentry::RocketSentry::fairing())
@@ -106,6 +110,10 @@ async fn protein() -> _ {
             |_| Box::pin(async move { drop(guard) }),
         ))
         .mount("/", routes![api::index::index])
+        .mount(
+            "/metrics",
+            prometheus
+        )
         .mount(
             "/health",
             routes![api::health::redis, api::health::postgres],

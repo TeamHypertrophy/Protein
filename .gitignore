@@ -1,3 +1,5 @@
 /target
 .env
+docker.env
 logs
+uptime-kuma-data

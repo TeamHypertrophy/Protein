@@ -20,8 +20,7 @@ use rocket::{
 };
 
 use crate::{
-    auth::{dev::Developer, key::API, rate_limit::RateLimit},
-    cache::redis::RedisPool,
+    auth::{dev::Developer, rate_limit::RateLimit},
     db,
     db::DatabasePool,
     models::keys::{APIKey, RevokeKey, UpdateAPIKey},

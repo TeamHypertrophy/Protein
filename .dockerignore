@@ -3,13 +3,12 @@
 /.github
 /.vscode
 /scripts
+/uptime-kuma-data
 .env.example
 .gitattributes
+.gitignore
 .markdownlint.json
 .pre-commit-config.yaml
-bacon.toml
-AUTHORS.md
-CHANGELOG.md
-CODE_OF_CONDUCT.md
 protein.bat
 README.md
+rustfmt.toml
