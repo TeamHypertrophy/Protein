@@ -11,6 +11,4 @@ ______          _       _
 
 // use tokio-cron-scheduler to schedule jobs
 // Current Jobs:
-// 1. Send email to users with password reset link (forgot password
-//    implementation)
-// 2. Check If An API Key Expired and Renew It (verify if quota => 0)
+// 1. Check If An API Key Expired and Renew It (verify if quota => 0)

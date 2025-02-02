@@ -295,17 +295,14 @@ pub async fn forgot_password_email(
     // Get User Profile
     let profile = Profile::find_by_email(data.email.clone(), connection).await?;
 
-    // Generate Plain Text Password
-    let new_password = password::generate_password()?;
-
     // Hash Generated Password
-    let hashed_password = password::generate_hashed_password(new_password.clone())?;
+    let hashed_password = password::generate_hashed_password(data.password.clone())?;
 
     // Update User Password With New Hashed Data
     User::update_password(profile.user_id, &hashed_password, connection).await?;
 
     // Send Email To User
-    email::send_email(mailer, &profile, "[Security] Your Password Has Been Reset", format!("Hello {}!, \nYou Have Requested An Password Reset, So I have Generated A Secure Password For You:\nNew Password: {}\n\n\nIf You Did NOT Request This, Please Ignore This Email\nRequest IP Address: {}", profile.first_name, new_password, ip_address)).await?;
+    email::send_email(mailer, &profile, "[Security] Your Password Has Been Reset", format!("Hello {}! \n\nThis Email Serves As Confirmation That Your Password Has Been Successfully Reset.\n\nNew Password: {}\n\n\nIf You Did NOT Request This, Please Ignore This Email\nRequest IP Address: {}", profile.first_name, data.password, ip_address)).await?;
 
     // API Response
     Ok(status::Accepted(json!({

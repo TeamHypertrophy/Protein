@@ -218,5 +218,6 @@ impl NewProfile {
 
 #[derive(Serialize, Deserialize)]
 pub struct ForgotPassword {
+    pub password: String,
     pub email: String,
 }

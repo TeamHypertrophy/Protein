@@ -10,30 +10,11 @@ ______          _       _
 */
 use std::env;
 
-use passwords::PasswordGenerator;
 use argon2::{self, Config};
 use dotenvy::dotenv;
 
 use crate::responders::ProteinError;
 
-pub fn generate_password() -> Result<String, ProteinError> {
-    // Load Password Generator
-    let generator = PasswordGenerator {
-        length: 15,
-        numbers: true,
-        lowercase_letters: true,
-        uppercase_letters: true,
-        symbols: false,
-        spaces: false,
-        exclude_similar_characters: true,
-        strict: true,
-    };
-
-    // Generate Password
-    generator
-        .generate_one()
-        .map_err(|error| ProteinError::Internal(error.to_string()))
-}
 
 pub fn generate_hashed_password(password: String) -> Result<String, ProteinError> {
     // Load Environment Variables
