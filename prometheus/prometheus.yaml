@@ -28,6 +28,6 @@ scrape_configs:
 
   - job_name: "protein"
     static_configs:
-      - targets: ["localhost:8000"]
+      - targets: ["api:8000"]
         labels:
           group: 'production'

@@ -18,7 +18,7 @@ FROM debian:bookworm-slim
 
 WORKDIR /protein
 
-RUN apt-get update -y && apt-get upgrade -y && apt-get install -y --no-install-recommends libssl-dev libpq-dev
+RUN apt-get update -y && apt-get upgrade -y && apt-get install -y --no-install-recommends libssl-dev libpq-dev libssl3 ca-certificates
 COPY --from=build /protein/docker.env ./.env
 COPY --from=build /protein/Rocket.toml ./
 COPY --from=build /protein/target/release/protein ./protein
