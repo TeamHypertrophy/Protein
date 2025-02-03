@@ -2343,9 +2343,9 @@ dependencies = [
 
 [[package]]
 name = "rocket-governor"
-version = "0.2.0-rc.3"
+version = "0.2.0-rc.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f43a4a44318a9318e50850faab27a27a1c0afee3edc77434471a0e40995ec206"
+checksum = "57cccf12e198100d5d49ce797ffcf0d7f064960624f42307851010521fe53611"
 dependencies = [
  "governor",
  "lazy_static",
