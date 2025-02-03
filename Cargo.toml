@@ -10,7 +10,7 @@ build = "build.rs"
 # -- Base API Requirement
 rocket = { version = "0.5.1", features = ["json", "uuid"] }
 rocket-client-addr = {git = "https://github.com/guenhter/rocket-client-addr", version = "*"}
-rocket-governor = {version = "0.2.0-rc.3", features = ["logger", "limit_info"]}
+rocket-governor = {version = "0.2.0-rc.4", features = ["logger", "limit_info"]}
 rocket_prometheus = "0.10.1"
 # -- Diesel Requirements (Database)
 diesel = { version = "2.2.7", features = [
