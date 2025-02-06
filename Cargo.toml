@@ -31,7 +31,7 @@ diesel_migrations = { version = "2.2.0" }
 tokio = { version = "1.43.0", features = ["full"] }
 # -- Serialization
 serde = { version = "1.0.217", features = ["derive"] }
-uuid = { version = "1.12.1", features = ["fast-rng"] }
+uuid = { version = "1.13.1", features = ["fast-rng"] }
 chrono = { version = "0.4.39", features = ["serde"] }
 # -- Validation
 validator = { version = "0.20.0", features = ["derive"] }
