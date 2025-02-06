@@ -18,7 +18,7 @@ use rocket::{
 use uuid::Uuid;
 
 use crate::{
-    auth::{dev::Developer, key::API, rate_limit::RateLimit},
+    auth::{key::API, rate_limit::RateLimit},
     db,
     db::DatabasePool,
     models::protein::{NewProteinLog, ProteinLog, UpdateProteinLog},
@@ -43,7 +43,7 @@ pub async fn get(
 #[get("/all", format = "application/json")]
 pub async fn all(
     _r: RateLimit<'_>,
-    _auth: Developer,
+    _auth: API,
     pool: &State<DatabasePool>,
 ) -> Result<Json<Vec<ProteinLog>>, ProteinError> {
     let connection = &mut db::get_connection(pool).await?;

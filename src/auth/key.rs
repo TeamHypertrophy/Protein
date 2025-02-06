@@ -15,7 +15,7 @@ use rocket::{
 };
 use uuid::Uuid;
 
-use crate::{db, models::keys::APIKey, responders::ProteinError};
+use crate::{constants::MASTER_API_KEY, db, models::keys::APIKey, responders::ProteinError};
 
 pub struct API;
 
@@ -42,36 +42,6 @@ impl<'r> FromRequest<'r> for API {
             }
         };
 
-        let query = match request.uri().query() {
-            Some(query) => query,
-            None => {
-                return Outcome::Error((
-                    Status::BadRequest,
-                    ProteinError::Validation("Cannot Find Query!".to_string()),
-                ))
-            }
-        };
-
-        let value = match query.strip_prefix("user_id=") {
-            Some(value) => value.as_str(),
-            None => {
-                return Outcome::Error((
-                    Status::BadRequest,
-                    ProteinError::Validation("Cannot Find User ID!".to_string()),
-                ))
-            }
-        };
-
-        let user_id = match Uuid::parse_str(value) {
-            Ok(uuid) => uuid,
-            Err(_) => {
-                return Outcome::Error((
-                    Status::BadRequest,
-                    ProteinError::Validation("Invalid User ID".to_string()),
-                ))
-            }
-        };
-
         let pool = match request.rocket().state::<db::DatabasePool>() {
             Some(pool) => pool,
             _ => {
@@ -92,16 +62,52 @@ impl<'r> FromRequest<'r> for API {
             }
         };
 
-        match APIKey::verify(user_id, api_key, connection).await {
-            Ok(_verified) => {
-                return Outcome::Success(API);
-            }
+        let user_id = request
+            .uri()
+            .query()
+            .and_then(|q| q.as_str().strip_prefix("user_id="))
+            .and_then(|id| Uuid::parse_str(id).ok());
+
+        if let Some(uid) = user_id {
+            match APIKey::verify(uid, api_key, connection).await {
+                Ok(_verified) => {
+                    return Outcome::Success(API);
+                }
+                Err(_) => {
+                    return Outcome::Error((
+                        Status::Unauthorized,
+                        ProteinError::Database("API Key Verification Failed".to_string()),
+                    ));
+                }
+            };
+        }
+
+        let master = match Uuid::parse_str(MASTER_API_KEY) {
+            Ok(master) => master,
             Err(_) => {
                 return Outcome::Error((
-                    Status::Unauthorized,
-                    ProteinError::Database("API Key Verification Failed".to_string()),
-                ));
+                    Status::InternalServerError,
+                    ProteinError::Database("Failed to Parse Master API Key, Please Set A Correct UUID Value In `constants.rs`".to_string()),
+                ))
             }
         };
+
+        if let Ok(key) = APIKey::find_by_key(api_key, connection).await {
+            if key.is_developer_key {
+                return Outcome::Success(API);
+            } else {
+                Outcome::Error((
+                    Status::Unauthorized,
+                    ProteinError::Authorization("API Key Does Not Match!".to_string()),
+                ))
+            }
+        } else if api_key == master {
+            return Outcome::Success(API);
+        } else {
+            return Outcome::Error((
+                Status::Unauthorized,
+                ProteinError::Authorization("Unauthorized API Key!".to_string()),
+            ));
+        }
     }
 }

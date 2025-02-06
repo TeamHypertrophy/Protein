@@ -5,8 +5,10 @@ cli_colors = false
 address = "127.0.0.1"
 port = 8000
 log_level = "normal"
+cli_colors = true
 
 [release]
 address = "0.0.0.0"
 port = 8000
 log_level = "normal"
+cli_colors = false

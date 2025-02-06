@@ -23,7 +23,6 @@ use rocket::{
 
 // Protein
 use crate::{
-    auth::dev::Developer,
     auth::key::API,
     auth::rate_limit::RateLimit,
     cache::redis::{Cache, RedisPool},
@@ -72,7 +71,7 @@ pub async fn get(
 #[get("/all", format = "application/json")]
 pub async fn all(
     _r: RateLimit<'_>,
-    _auth: Developer,
+    _auth: API,
     pool: &State<DatabasePool>,
 ) -> Result<Json<Vec<User>>, ProteinError> {
     // Creating Database Connection
@@ -179,14 +178,16 @@ pub async fn login(
             api_key: api_key.api_key,
         }))
     } else {
-        Err(ProteinError::Authorization("Invalid Password".to_string()))
+        Err(ProteinError::Authorization(
+            "Invalid Username or Password".to_string(),
+        ))
     }
 }
 
 #[get("/delete?<user_id>", format = "application/json")]
 pub async fn delete(
     _r: RateLimit<'_>,
-    _auth: Developer,
+    _auth: API,
     user_id: Uuid,
     pool: &State<DatabasePool>,
 ) -> Result<status::Accepted<Value>, ProteinError> {

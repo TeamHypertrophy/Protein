@@ -64,9 +64,9 @@ pub struct LoginUser {
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[derive(Serialize, Deserialize)]
 pub struct UpdateUser {
-    pub username: String,
-    pub role: Role,
-    pub ip_address: String,
+    pub username: Option<String>,
+    pub role: Option<Role>,
+    pub ip_address: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]

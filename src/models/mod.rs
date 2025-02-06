@@ -12,6 +12,7 @@ ______          _       _
 pub mod calorie;
 pub mod exercise;
 pub mod keys;
+pub mod logs;
 pub mod profile;
 pub mod protein;
 pub mod sleep;

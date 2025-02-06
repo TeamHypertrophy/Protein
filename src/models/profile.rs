@@ -168,22 +168,22 @@ impl Profile {
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct UpdateProfile {
-    pub first_name: String,
-    pub last_name: String,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
     #[validate(email)]
-    pub email: String,
+    pub email: Option<String>,
     #[validate(range(min = 13, max = 100))]
-    pub age: i32,
-    pub weight: f64,
-    pub height: f64,
-    pub gender: Gender,
-    pub preferred_weight_unit: PreferredWeight,
-    pub preferred_height_unit: PreferredHeight,
-    pub public: bool,
-    pub bio: String,
-    pub avatar_url: String,
-    pub fitness_goal: FitnessGoal,
-    pub updated_at: NaiveDateTime,
+    pub age: Option<i32>,
+    pub weight: Option<f64>,
+    pub height: Option<f64>,
+    pub gender: Option<Gender>,
+    pub preferred_weight_unit: Option<PreferredWeight>,
+    pub preferred_height_unit: Option<PreferredHeight>,
+    pub public: Option<bool>,
+    pub bio: Option<String>,
+    pub avatar_url: Option<String>,
+    pub fitness_goal: Option<FitnessGoal>,
+    pub updated_at: Option<NaiveDateTime>,
 }
 
 #[derive(Debug, Clone, Insertable, Serialize, Deserialize, Validate)]

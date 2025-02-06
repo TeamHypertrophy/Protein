@@ -15,7 +15,6 @@ use dotenvy::dotenv;
 
 use crate::responders::ProteinError;
 
-
 pub fn generate_hashed_password(password: String) -> Result<String, ProteinError> {
     // Load Environment Variables
     dotenv().ok();

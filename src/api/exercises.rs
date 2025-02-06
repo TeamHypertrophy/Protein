@@ -9,31 +9,101 @@ ______          _       _
         Made with ❤️
 */
 
-use rocket::{get, post};
+use rocket::{
+    get, post,
+    response::status,
+    serde::json::{json, Json, Value},
+    State,
+};
+use validator::Validate;
 
-use crate::auth::rate_limit::RateLimit;
+use crate::{
+    auth::{key::API, rate_limit::RateLimit},
+    db,
+    db::{DatabaseConnection, DatabasePool},
+    models::exercise::{Exercise, NewExercise, UpdateExercise},
+    responders::ProteinError,
+};
 
-#[get("/get/<exercise_id>")]
-pub async fn get(_r: RateLimit<'_>, exercise_id: i64) -> &'static str {
-    "GET"
+#[get("/get/<exercise_id>", format = "application/json")]
+pub async fn get(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DatabasePool>,
+    exercise_id: i64,
+) -> Result<Json<Exercise>, ProteinError> {
+    let connection = &mut db::get_connection(pool).await?;
+
+    let exercise = Exercise::find(exercise_id, connection).await?;
+
+    Ok(Json(exercise))
 }
 
-#[get("/all")]
-pub async fn all(_r: RateLimit<'_>) -> &'static str {
-    "ALL"
+#[get("/all", format = "application/json")]
+pub async fn all(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DatabasePool>,
+) -> Result<Json<Vec<Exercise>>, ProteinError> {
+    let connection = &mut db::get_connection(pool).await?;
+
+    let exercises = Exercise::all(connection).await?;
+
+    Ok(Json(exercises))
 }
 
-#[post("/update/<exercise_id>")]
-pub async fn update(_r: RateLimit<'_>, exercise_id: i64) -> &'static str {
-    "UPDATE"
+#[post("/update/<exercise_id>", format = "application/json", data = "<data>")]
+pub async fn update(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DatabasePool>,
+    exercise_id: i64,
+    data: Json<UpdateExercise>,
+) -> Result<Json<Exercise>, ProteinError> {
+    let connection = &mut db::get_connection(pool).await?;
+
+    match data.clone().into_inner().validate() {
+        Ok(_) => (),
+        Err(error) => return Err(ProteinError::Validation(error.to_string())),
+    }
+
+    let exercise = Exercise::update(exercise_id, data.into_inner(), connection).await?;
+
+    Ok(Json(exercise))
 }
 
-#[post("/create")]
-pub async fn create(_r: RateLimit<'_>) -> &'static str {
-    "CREATE"
+#[post("/create", format = "application/json", data = "<data>")]
+pub async fn create(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DatabasePool>,
+    data: Json<NewExercise>,
+) -> Result<Json<Exercise>, ProteinError> {
+    let connection = &mut db::get_connection(pool).await?;
+
+    match data.clone().into_inner().validate() {
+        Ok(_) => (),
+        Err(error) => return Err(ProteinError::Validation(error.to_string())),
+    }
+
+    let exercise = NewExercise::create(connection, data.into_inner()).await?;
+
+    Ok(Json(exercise))
 }
 
 #[post("/delete/<exercise_id>")]
-pub async fn delete(_r: RateLimit<'_>, exercise_id: i64) -> &'static str {
-    "DELETE"
+pub async fn delete(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DatabasePool>,
+    exercise_id: i64,
+) -> Result<status::Accepted<Value>, ProteinError> {
+    let connection = &mut db::get_connection(pool).await?;
+
+    Exercise::delete(exercise_id, connection).await?;
+
+    Ok(status::Accepted(json!({
+        "message": "Exercise Deleted Successfully",
+        "exercise_id": exercise_id,
+    })))
 }

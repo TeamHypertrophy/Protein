@@ -11,6 +11,7 @@ ______          _       _
 
 use uuid::Uuid;
 use diesel::prelude::*;
+use validator::Validate;
 use diesel_async::RunQueryDsl;
 use diesel_derive_enum::DbEnum;
 use rocket::serde::{Deserialize, Serialize};
@@ -20,7 +21,7 @@ use crate::{
     db::DatabaseConnection,
     models::{user::User, workout::Difficulty},
     responders::ProteinError,
-    schema::{exercise_logs, exercise_logs::dsl::*, exercises, exercises::dsl::*},
+    schema::{exercises, exercises::dsl::id as dsl_id},
 };
 
 // Exercise Model
@@ -45,6 +46,122 @@ pub struct Exercise {
     pub video_url: String,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
+}
+
+impl Exercise {
+    pub async fn find(
+        exercise_id: i64,
+        connection: &mut DatabaseConnection,
+    ) -> Result<Exercise, ProteinError> {
+        exercises::table
+            .find(exercise_id)
+            .select(Exercise::as_select())
+            .first(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn all(connection: &mut DatabaseConnection) -> Result<Vec<Exercise>, ProteinError> {
+        exercises::table
+            .select(Exercise::as_select())
+            .load(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn delete(
+        exercise: i64,
+        connection: &mut DatabaseConnection,
+    ) -> Result<usize, ProteinError> {
+        diesel::delete(exercises::table)
+            .filter(dsl_id.eq(exercise))
+            .execute(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn update(
+        exercise: i64,
+        data: UpdateExercise,
+        connection: &mut DatabaseConnection,
+    ) -> Result<Exercise, ProteinError> {
+        diesel::update(exercises::table)
+            .filter(dsl_id.eq(exercise))
+            .set(&data)
+            .get_result::<Exercise>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+}
+
+#[derive(AsChangeset)]
+#[diesel(table_name = exercises)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+#[derive(Serialize, Deserialize, Clone, Validate)]
+pub struct UpdateExercise {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub instructions: Option<String>,
+    pub equipment: Option<Equipment>,
+    pub difficulty: Option<Difficulty>,
+    pub muscle_group: Option<MuscleGroup>,
+    pub sets: Option<i32>,
+    pub reps: Option<i32>,
+    pub rest_time: Option<i32>,
+    pub exercise_type: Option<ExerciseType>,
+    #[validate(url)]
+    pub image_url: Option<String>,
+    #[validate(url)]
+    pub video_url: Option<String>,
+    pub updated_at: Option<NaiveDateTime>,
+}
+
+#[derive(Debug, Clone, Insertable, Serialize, Deserialize, Validate)]
+#[diesel(table_name = exercises)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct NewExercise {
+    pub name: String,
+    pub description: String,
+    pub instructions: String,
+    pub equipment: Equipment,
+    pub difficulty: Difficulty,
+    pub muscle_group: MuscleGroup,
+    pub sets: i32,
+    pub reps: i32,
+    pub rest_time: i32,
+    pub exercise_type: ExerciseType,
+    #[validate(url)]
+    pub image_url: String,
+    #[validate(url)]
+    pub video_url: String,
+}
+
+impl NewExercise {
+    pub async fn create(
+        connection: &mut DatabaseConnection,
+        exercise: NewExercise,
+    ) -> Result<Exercise, ProteinError> {
+        diesel::insert_into(exercises::table)
+            .values(&exercise)
+            .get_result(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
 }
 
 #[derive(DbEnum, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -87,30 +204,4 @@ pub enum ExerciseType {
     Flexibility,
     Plyometric,
     Bodyweight,
-}
-
-// Exercise Log
-#[derive(
-    Clone,
-    Debug,
-    Eq,
-    PartialEq,
-    Queryable,
-    Selectable,
-    Serialize,
-    Deserialize,
-    Identifiable,
-    Associations,
-)]
-#[diesel(table_name = exercise_logs)]
-#[diesel(belongs_to(User))]
-#[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct ExerciseLog {
-    pub id: i32,
-    pub user_id: Uuid,
-    pub exercise_id: i64,
-    pub sets_completed: i32,
-    pub reps_completed: i32,
-    pub date: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
 }

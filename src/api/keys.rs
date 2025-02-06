@@ -20,7 +20,7 @@ use rocket::{
 };
 
 use crate::{
-    auth::{dev::Developer, rate_limit::RateLimit},
+    auth::{key::API, rate_limit::RateLimit},
     db,
     db::DatabasePool,
     models::keys::{APIKey, RevokeKey, UpdateAPIKey},
@@ -30,7 +30,7 @@ use crate::{
 #[get("/get/<api_key>", format = "application/json")]
 pub async fn get(
     _r: RateLimit<'_>,
-    _auth: Developer,
+    _auth: API,
     pool: &State<DatabasePool>,
     api_key: Uuid,
 ) -> Result<Json<APIKey>, ProteinError> {
@@ -44,7 +44,7 @@ pub async fn get(
 #[get("/all", format = "application/json")]
 pub async fn all(
     _r: RateLimit<'_>,
-    _auth: Developer,
+    _auth: API,
     pool: &State<DatabasePool>,
 ) -> Result<Json<Vec<APIKey>>, ProteinError> {
     let connection = &mut db::get_connection(pool).await?;
@@ -57,7 +57,7 @@ pub async fn all(
 #[get("/all/<user_id>", format = "application/json")]
 pub async fn user_all(
     _r: RateLimit<'_>,
-    _auth: Developer,
+    _auth: API,
     pool: &State<DatabasePool>,
     user_id: Uuid,
 ) -> Result<Json<Vec<APIKey>>, ProteinError> {
@@ -71,7 +71,7 @@ pub async fn user_all(
 #[post("/update/<api_key>", format = "application/json", data = "<key>")]
 pub async fn update(
     _r: RateLimit<'_>,
-    _auth: Developer,
+    _auth: API,
     pool: &State<DatabasePool>,
     api_key: Uuid,
     key: Json<UpdateAPIKey>,
@@ -86,7 +86,7 @@ pub async fn update(
 #[post("/delete/<api_key>")]
 pub async fn delete(
     _r: RateLimit<'_>,
-    _auth: Developer,
+    _auth: API,
     pool: &State<DatabasePool>,
     api_key: Uuid,
 ) -> Result<status::Accepted<Value>, ProteinError> {
@@ -103,7 +103,7 @@ pub async fn delete(
 #[post("/revoke/<api_key>", format = "application/json", data = "<reason>")]
 pub async fn revoke(
     _r: RateLimit<'_>,
-    _auth: Developer,
+    _auth: API,
     pool: &State<DatabasePool>,
     api_key: Uuid,
     reason: Json<RevokeKey>,

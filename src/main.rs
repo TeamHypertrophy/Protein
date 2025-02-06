@@ -110,10 +110,7 @@ async fn protein() -> _ {
             |_| Box::pin(async move { drop(guard) }),
         ))
         .mount("/", routes![api::index::index])
-        .mount(
-            "/metrics",
-            prometheus
-        )
+        .mount("/metrics", prometheus)
         .mount(
             "/health",
             routes![api::health::redis, api::health::postgres],
@@ -222,6 +219,23 @@ async fn protein() -> _ {
                 api::profile::create,
                 api::profile::update,
                 api::profile::delete
+            ],
+        )
+        .mount(
+            "/v1/logs",
+            routes![
+                api::logs::exercise_get,
+                api::logs::exercise_all,
+                api::logs::exercise_user_all,
+                api::logs::exercise_update,
+                api::logs::exercise_create,
+                api::logs::exercise_delete,
+                api::logs::workout_get,
+                api::logs::workout_all,
+                api::logs::workout_user_all,
+                api::logs::workout_update,
+                api::logs::workout_create,
+                api::logs::workout_delete
             ],
         )
         .register(

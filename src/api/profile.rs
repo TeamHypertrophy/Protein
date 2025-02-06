@@ -21,7 +21,7 @@ use rocket::{
 use validator::Validate;
 
 use crate::{
-    auth::{dev::Developer, key::API, rate_limit::RateLimit},
+    auth::{key::API, rate_limit::RateLimit},
     db,
     db::DatabasePool,
     models::{
@@ -52,7 +52,7 @@ pub async fn get(
 #[get("/all", format = "application/json")]
 pub async fn all(
     _r: RateLimit<'_>,
-    _auth: Developer,
+    _auth: API,
     pool: &State<DatabasePool>,
 ) -> Result<Json<Vec<Profile>>, ProteinError> {
     // Creating Database Connection
@@ -108,7 +108,7 @@ pub async fn update(
 #[get("/delete/<user_id>", format = "application/json")]
 pub async fn delete(
     _r: RateLimit<'_>,
-    _auth: Developer,
+    _auth: API,
     user_id: Uuid,
     pool: &State<DatabasePool>,
 ) -> Result<status::Accepted<Value>, ProteinError> {

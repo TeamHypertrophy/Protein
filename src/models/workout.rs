@@ -73,29 +73,6 @@ pub enum Difficulty {
     Identifiable,
     Associations,
 )]
-#[diesel(table_name = workout_logs)]
-#[diesel(belongs_to(User))]
-#[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct WorkoutLog {
-    pub id: i32,
-    pub user_id: Uuid,
-    pub workout_id: Uuid,
-    pub date: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
-}
-
-#[derive(
-    Clone,
-    Debug,
-    Eq,
-    PartialEq,
-    Queryable,
-    Selectable,
-    Serialize,
-    Deserialize,
-    Identifiable,
-    Associations,
-)]
 #[diesel(table_name = workout_plans)]
 #[diesel(belongs_to(User))]
 #[diesel(check_for_backend(diesel::pg::Pg))]

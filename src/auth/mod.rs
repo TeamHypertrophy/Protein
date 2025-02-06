@@ -9,6 +9,5 @@ ______          _       _
         Made with ❤️
 */
 
-pub mod dev;
 pub mod key;
 pub mod rate_limit;
