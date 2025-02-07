@@ -2,11 +2,9 @@ contact_links:
   - name: 📚 Documentation
     url: https://soon.com
     about: Before Making An Issue, Make Sure To Check The Documentation
-
   - name: 📚 Developer Documentation
     url: https://github.com/TeamHypertrophy/Protein/blob/dev/.github/CONTRIBUTING.md
     about: Make Sure To Check The Developer Documentation If This Issue Is Focused On Code
-
   - name: 🤔 Support Question
     url: https://discord.com/users/433026067050266634
     about: Ask Me Questions On Discord

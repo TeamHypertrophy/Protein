@@ -1,15 +1,36 @@
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
-    -   id: check-case-conflict
-    -   id: check-merge-conflict
-    -   id: check-symlinks
-    -   id: check-yaml
-    -   id: check-json
-    -   id: check-toml
-    -   id: detect-private-key
-    -   id: check-illegal-windows-names
-    -   id: end-of-file-fixer
-    -   id: mixed-line-ending
-    -   id: trailing-whitespace
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: detect-private-key
+      - id: check-illegal-windows-names
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: trailing-whitespace
+
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.15.0
+    hooks:
+      - id: yamlfmt
+
+  - repo: https://github.com/crate-ci/typos
+    rev: typos-dict-v0.12.4
+    hooks:
+      - id: typos
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.23.3
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0
+    hooks:
+      - id: fmt
+      - id: cargo-check

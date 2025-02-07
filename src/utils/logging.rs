@@ -30,7 +30,7 @@ pub fn setup_logging() -> Result<(WorkerGuard, ()), Box<dyn std::error::Error>> 
 
     let (non_blocking_appender, guard) = tracing_appender::non_blocking(appender);
 
-    // Seperate Layers for File and Terminal Logging
+    // Separate Layers for File and Terminal Logging
     let file_layer = fmt::layer()
         .with_writer(non_blocking_appender)
         .with_ansi(false)
