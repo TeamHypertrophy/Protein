@@ -24,11 +24,15 @@ This is `Protein`, the Rust API that is used to Serve `Hypertrophy`, A Fully Fea
 
 ### Docker 🐳
 
-Building with docker is *so* simple! Just Run:
+Building with docker is *so* simple!
 
-```sh
-$ docker compose up -d --build
-```
+1. Create an `docker.env` file and follow `.env.example` to full out the variables.
+
+2. Run `docker compose`:
+
+    ```sh
+    $ docker compose up -d --build
+    ```
 
 ### Local 👷
 
@@ -85,21 +89,6 @@ $ docker compose up -d --build
 
 > Most Roadmap Features are written in my own private [`obsidian`](https://obsidian.md/) notes :p
 
-## Contributing 👥
-
-> Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-Before Creating Pull Requests, Ensure That Code Is Run Through:
-
-- `cargo fmt`
-- `cargo clippy`
-- `pre-commit`
-
-1. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-2. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-3. Push to the Branch (`git push origin feature/AmazingFeature`)
-4. Open a Pull Request
-
 ## Folders 🗃️
 
 `├──`[`.cargo`](https://github.com/TeamHypertrophy/Protein/tree/dev/.cargo) — Cargo Configuration<br>
@@ -108,26 +97,3 @@ Before Creating Pull Requests, Ensure That Code Is Run Through:
 `├──`[`migrations`](https://github.com/TeamHypertrophy/Protein/tree/dev/migrations) — Database Migrations<br>
 `├──`[`scripts`](https://github.com/TeamHypertrophy/Protein/tree/dev/scripts) — Utility Scripts<br>
 `├──`[`src`](https://github.com/TeamHypertrophy/Protein/tree/dev/src) — Source Code<br>
-
-## Routes 🌐
-
-`health`
-
-- `/redis`
-- `/postgres`
-
-`system`
-
-- `/`
-- `/rust`
-- `/package`
-- `/git`
-
-`users`
-
-- `v1/<user_id>`
-- `v1/all`
-- `v1/create`
-- `v1/delete/<user_id>`
-- `v1/update/<user_id>`
-- `v1/me`
