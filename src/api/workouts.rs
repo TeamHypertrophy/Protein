@@ -9,32 +9,117 @@ ______          _       _
         Made with ❤️
 */
 
-use rocket::{get, post};
+use rocket::{
+    get, post,
+    response::status,
+    serde::json::{json, Json, Value},
+    State,
+};
 use uuid::Uuid;
 
-use crate::auth::rate_limit::RateLimit;
+use crate::{
+    auth::{key::API, rate_limit::RateLimit},
+    db,
+    db::DatabasePool,
+    models::{
+        user::User,
+        workout::{NewWorkout, UpdateWorkout, Workout},
+    },
+    responders::ProteinError,
+};
 
-#[get("/get/<user_id>/<workout_id>")]
-pub async fn get(_r: RateLimit<'_>, user_id: Uuid, workout_id: Uuid) -> String {
-    format!("GET: {}", workout_id)
+#[get("/get/<workout_id>?<user_id>", format = "application/json")]
+pub async fn get(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DatabasePool>,
+    user_id: Uuid,
+    workout_id: Uuid,
+) -> Result<Json<Workout>, ProteinError> {
+    let connection = &mut db::get_connection(pool).await?;
+
+    let user = User::find(user_id, connection).await?;
+
+    let workout = Workout::find(&user, workout_id, connection).await?;
+
+    Ok(Json(workout))
 }
 
-#[get("/all/<user_id>")]
-pub async fn all(_r: RateLimit<'_>, user_id: Uuid) -> &'static str {
-    "ALL"
+#[get("/all", format = "application/json")]
+pub async fn all(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DatabasePool>,
+) -> Result<Json<Vec<Workout>>, ProteinError> {
+    let connection = &mut db::get_connection(pool).await?;
+
+    let workouts = Workout::all(connection).await?;
+
+    Ok(Json(workouts))
 }
 
-#[post("/update/<user_id>/<workout_id>")]
-pub async fn update(_r: RateLimit<'_>, user_id: Uuid, workout_id: Uuid) -> String {
-    format!("UPDATE: {}", workout_id)
+#[get("/user/all?<user_id>", format = "application/json")]
+pub async fn user_all(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DatabasePool>,
+    user_id: Uuid,
+) -> Result<Json<Vec<Workout>>, ProteinError> {
+    let connection = &mut db::get_connection(pool).await?;
+
+    let workouts = Workout::user_all(user_id, connection).await?;
+
+    Ok(Json(workouts))
 }
 
-#[post("/create")]
-pub async fn create(_r: RateLimit<'_>) -> &'static str {
-    "CREATE"
+#[post(
+    "/update/<workout_id>?<user_id>",
+    format = "application/json",
+    data = "<data>"
+)]
+pub async fn update(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DatabasePool>,
+    user_id: Uuid,
+    workout_id: Uuid,
+    data: Json<UpdateWorkout>,
+) -> Result<Json<Workout>, ProteinError> {
+    let connection = &mut db::get_connection(pool).await?;
+
+    let workout = Workout::update(user_id, workout_id, data.into_inner(), connection).await?;
+
+    Ok(Json(workout))
 }
 
-#[post("/delete/<user_id>/<workout_id>")]
-pub async fn delete(_r: RateLimit<'_>, user_id: Uuid, workout_id: Uuid) -> String {
-    format!("DELETE: {}", workout_id)
+#[post("/create?<user_id>", format = "application/json", data = "<data>")]
+pub async fn create(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DatabasePool>,
+    user_id: Uuid,
+    data: Json<NewWorkout>,
+) -> Result<Json<Workout>, ProteinError> {
+    let connection = &mut db::get_connection(pool).await?;
+
+    let workout = NewWorkout::create(data.into_inner(), connection).await?;
+
+    Ok(Json(workout))
+}
+
+#[post("/delete/<workout_id>?<user_id>", format = "application/json")]
+pub async fn delete(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DatabasePool>,
+    user_id: Uuid,
+    workout_id: Uuid,
+) -> Result<status::Accepted<Value>, ProteinError> {
+    let connection = &mut db::get_connection(pool).await?;
+
+    Workout::delete(user_id, workout_id, connection).await?;
+
+    Ok(status::Accepted(json!({
+        "message": "Log Deleted Successfully",
+    })))
 }

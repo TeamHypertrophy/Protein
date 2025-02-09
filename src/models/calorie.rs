@@ -93,13 +93,13 @@ impl CalorieLog {
     pub async fn update(
         user: Uuid,
         log_id: i32,
-        log: UpdateCalorieLog,
+        data: UpdateCalorieLog,
         connection: &mut DatabaseConnection,
     ) -> Result<CalorieLog, ProteinError> {
         diesel::update(calorie_logs::table)
             .filter(user_id.eq(user))
             .filter(id.eq(log_id))
-            .set(&log)
+            .set(&data)
             .get_result::<CalorieLog>(connection)
             .await
             .map_err(|error| {

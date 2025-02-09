@@ -87,9 +87,11 @@ pub async fn update(
     Ok(Json(result))
 }
 
-#[post("/create", format = "application/json", data = "<log>")]
+#[post("/create?<user_id>", format = "application/json", data = "<log>")]
 pub async fn create(
     _r: RateLimit<'_>,
+    _auth: API,
+    user_id: Uuid,
     pool: &State<DatabasePool>,
     log: Json<NewCalorieLog>,
 ) -> Result<Json<CalorieLog>, ProteinError> {
@@ -100,7 +102,7 @@ pub async fn create(
     Ok(Json(result))
 }
 
-#[post("/delete/<log_id>?<user_id>")]
+#[post("/delete/<log_id>?<user_id>", format = "application/json")]
 pub async fn delete(
     _r: RateLimit<'_>,
     _auth: API,

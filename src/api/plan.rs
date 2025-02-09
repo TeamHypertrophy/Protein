@@ -21,23 +21,28 @@ use crate::{
     auth::{key::API, rate_limit::RateLimit},
     db,
     db::DatabasePool,
-    models::water::{NewWaterLog, UpdateWaterLog, WaterLog},
+    models::{
+        plan::{NewWorkoutPlan, UpdateWorkoutPlan, WorkoutPlan},
+        user::User,
+    },
     responders::ProteinError,
 };
 
-#[get("/get/<log_id>?<user_id>", format = "application/json")]
+#[get("/get/<plan_id>?<user_id>", format = "application/json")]
 pub async fn get(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
     user_id: Uuid,
-    log_id: i32,
-) -> Result<Json<WaterLog>, ProteinError> {
+    plan_id: Uuid,
+) -> Result<Json<WorkoutPlan>, ProteinError> {
     let connection = &mut db::get_connection(pool).await?;
 
-    let log = WaterLog::find(user_id, log_id, connection).await?;
+    let user = User::find(user_id, connection).await?;
 
-    Ok(Json(log))
+    let plan = WorkoutPlan::find(&user, plan_id, connection).await?;
+
+    Ok(Json(plan))
 }
 
 #[get("/all", format = "application/json")]
@@ -45,12 +50,12 @@ pub async fn all(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
-) -> Result<Json<Vec<WaterLog>>, ProteinError> {
+) -> Result<Json<Vec<WorkoutPlan>>, ProteinError> {
     let connection = &mut db::get_connection(pool).await?;
 
-    let logs = WaterLog::all(connection).await?;
+    let plans = WorkoutPlan::all(connection).await?;
 
-    Ok(Json(logs))
+    Ok(Json(plans))
 }
 
 #[get("/user/all?<user_id>", format = "application/json")]
@@ -59,60 +64,60 @@ pub async fn user_all(
     _auth: API,
     pool: &State<DatabasePool>,
     user_id: Uuid,
-) -> Result<Json<Vec<WaterLog>>, ProteinError> {
+) -> Result<Json<Vec<WorkoutPlan>>, ProteinError> {
     let connection = &mut db::get_connection(pool).await?;
 
-    let logs = WaterLog::user_all(user_id, connection).await?;
+    let plans = WorkoutPlan::user_all(user_id, connection).await?;
 
-    Ok(Json(logs))
+    Ok(Json(plans))
 }
 
 #[post(
-    "/update/<log_id>?<user_id>",
+    "/update/<plan_id>?<user_id>",
     format = "application/json",
-    data = "<log>"
+    data = "<data>"
 )]
 pub async fn update(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
     user_id: Uuid,
-    log_id: i32,
-    log: Json<UpdateWaterLog>,
-) -> Result<Json<WaterLog>, ProteinError> {
+    plan_id: Uuid,
+    data: Json<UpdateWorkoutPlan>,
+) -> Result<Json<WorkoutPlan>, ProteinError> {
     let connection = &mut db::get_connection(pool).await?;
 
-    let result = WaterLog::update(user_id, log_id, log.into_inner(), connection).await?;
+    let plan = WorkoutPlan::update(user_id, plan_id, data.into_inner(), connection).await?;
 
-    Ok(Json(result))
+    Ok(Json(plan))
 }
 
-#[post("/create?<user_id>", format = "application/json", data = "<log>")]
+#[post("/create?<user_id>", format = "application/json", data = "<data>")]
 pub async fn create(
     _r: RateLimit<'_>,
     _auth: API,
-    user_id: Uuid,
     pool: &State<DatabasePool>,
-    log: Json<NewWaterLog>,
-) -> Result<Json<WaterLog>, ProteinError> {
+    user_id: Uuid,
+    data: Json<NewWorkoutPlan>,
+) -> Result<Json<WorkoutPlan>, ProteinError> {
     let connection = &mut db::get_connection(pool).await?;
 
-    let result = NewWaterLog::create(log.into_inner(), connection).await?;
+    let plan = NewWorkoutPlan::create(data.into_inner(), connection).await?;
 
-    Ok(Json(result))
+    Ok(Json(plan))
 }
 
-#[post("/delete/<log_id>?<user_id>", format = "application/json")]
+#[post("/delete/<plan_id>?<user_id>", format = "application/json")]
 pub async fn delete(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
     user_id: Uuid,
-    log_id: i32,
+    plan_id: Uuid,
 ) -> Result<status::Accepted<Value>, ProteinError> {
     let connection = &mut db::get_connection(pool).await?;
 
-    WaterLog::delete(user_id, log_id, connection).await?;
+    WorkoutPlan::delete(user_id, plan_id, connection).await?;
 
     Ok(status::Accepted(json!({
         "message": "Log Deleted Successfully",

@@ -16,10 +16,13 @@ use rocket::{
 };
 use sysinfo::System;
 
-use crate::{auth::rate_limit::RateLimit, build};
+use crate::{
+    auth::{key::API, rate_limit::RateLimit},
+    build,
+};
 
 #[get("/", format = "application/json")]
-pub async fn system(_r: RateLimit<'_>, sys: &State<System>) -> Value {
+pub async fn system(_r: RateLimit<'_>, _auth: API, sys: &State<System>) -> Value {
     json!({
         "KERNEL_VERSION": System::kernel_version(),
         "OS_VERSION": System::long_os_version(),
@@ -31,7 +34,7 @@ pub async fn system(_r: RateLimit<'_>, sys: &State<System>) -> Value {
 }
 
 #[get("/rust", format = "application/json")]
-pub async fn rust(_r: RateLimit<'_>) -> Value {
+pub async fn rust(_r: RateLimit<'_>, _auth: API) -> Value {
     json!({
         "RUST_VERSION": build::RUST_VERSION,
         "RUST_CHANNEL": build::RUST_CHANNEL,
@@ -40,7 +43,7 @@ pub async fn rust(_r: RateLimit<'_>) -> Value {
 }
 
 #[get("/package", format = "application/json")]
-pub async fn package(_r: RateLimit<'_>) -> Value {
+pub async fn package(_r: RateLimit<'_>, _auth: API) -> Value {
     json!({
         "BUILD_OS": build::BUILD_OS,
         "PROJECT_NAME": build::PROJECT_NAME,
@@ -52,7 +55,7 @@ pub async fn package(_r: RateLimit<'_>) -> Value {
 }
 
 #[get("/git", format = "application/json")]
-pub async fn git(_r: RateLimit<'_>) -> Value {
+pub async fn git(_r: RateLimit<'_>, _auth: API) -> Value {
     json!({
         "GIT_BRANCH": shadow_rs::branch(),
         "GIT_TAG": shadow_rs::tag(),

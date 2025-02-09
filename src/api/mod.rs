@@ -15,6 +15,7 @@ pub mod health;
 pub mod index;
 pub mod keys;
 pub mod logs;
+pub mod plan;
 pub mod profile;
 pub mod protein;
 pub mod sleep;

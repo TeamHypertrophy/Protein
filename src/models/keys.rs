@@ -19,7 +19,7 @@ use chrono::NaiveDateTime;
 use crate::{
     constants::API_QUOTA_LIMIT,
     db::DatabaseConnection,
-    models::user::User,
+    models::user::{Role, User},
     responders::ProteinError,
     schema::{api_keys, api_keys::dsl::*},
 };
@@ -155,12 +155,12 @@ impl APIKey {
 
     pub async fn update(
         key: Uuid,
-        update: UpdateAPIKey,
+        data: UpdateAPIKey,
         connection: &mut DatabaseConnection,
     ) -> Result<APIKey, ProteinError> {
         diesel::update(api_keys::table)
             .filter(api_key.eq(key))
-            .set(&update)
+            .set(&data)
             .get_result::<APIKey>(connection)
             .await
             .map_err(|error| {
@@ -241,7 +241,7 @@ impl APIKey {
         // First, Find User
         let user: User = User::find(user, &mut connection).await?;
 
-        // Next, Grab API Key Belonging to that User
+        // Next, Grab API Key
         let verified: APIKey = APIKey::get(&user, &mut connection).await?;
 
         // Extra Validation: Quota Check
@@ -268,8 +268,9 @@ impl APIKey {
             ));
         }
 
-        // Most importantly, Compare API_KEY Header to Actual API Key
-        if verified.api_key == key {
+        // Most importantly, Compare API_KEY Header to Actual API Key, As well as
+        // checking for developer key/admin
+        if (verified.api_key == key && verified.user_id == user.id) || verified.is_developer_key {
             APIKey::increment(key, verified.quota, &mut connection).await?;
 
             return Ok(true);

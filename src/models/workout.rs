@@ -18,13 +18,21 @@ use chrono::NaiveDateTime;
 
 use crate::{
     db::DatabaseConnection,
-    models::{profile::FitnessGoal, user::User},
+    models::user::User,
     responders::ProteinError,
     schema::{
-        workout_logs, workout_logs::dsl::*, workout_plans, workout_plans::dsl::*, workouts,
-        workouts::dsl::*,
+        workouts,
+        workouts::dsl::{id as dsl_id, user_id as dsl_user_id},
     },
 };
+
+#[derive(DbEnum, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[ExistingTypePath = "crate::schema::sql_types::Difficulty"]
+pub enum Difficulty {
+    Beginner,
+    Intermediate,
+    Advanced,
+}
 
 #[derive(
     Clone,
@@ -53,48 +61,122 @@ pub struct Workout {
     pub exercises: Vec<Option<i64>>,
 }
 
-#[derive(DbEnum, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[ExistingTypePath = "crate::schema::sql_types::Difficulty"]
-pub enum Difficulty {
-    Beginner,
-    Intermediate,
-    Advanced,
+impl Workout {
+    pub async fn find(
+        user: &User,
+        workout_id: Uuid,
+        connection: &mut DatabaseConnection,
+    ) -> Result<Workout, ProteinError> {
+        Workout::belonging_to(user)
+            .select(Workout::as_select())
+            .filter(dsl_id.eq(workout_id))
+            .first(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn all(connection: &mut DatabaseConnection) -> Result<Vec<Workout>, ProteinError> {
+        workouts::table
+            .select(Workout::as_select())
+            .load(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn user_all(
+        user: Uuid,
+        connection: &mut DatabaseConnection,
+    ) -> Result<Vec<Workout>, ProteinError> {
+        workouts::table
+            .filter(dsl_user_id.eq(user))
+            .select(Workout::as_select())
+            .load(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn update(
+        user: Uuid,
+        workout_id: Uuid,
+        data: UpdateWorkout,
+        connection: &mut DatabaseConnection,
+    ) -> Result<Workout, ProteinError> {
+        diesel::update(workouts::table)
+            .filter(dsl_user_id.eq(user))
+            .filter(dsl_id.eq(workout_id))
+            .set(&data)
+            .get_result::<Workout>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn delete(
+        user: Uuid,
+        workout_id: Uuid,
+        connection: &mut DatabaseConnection,
+    ) -> Result<usize, ProteinError> {
+        diesel::delete(workouts::table)
+            .filter(dsl_user_id.eq(user))
+            .filter(dsl_id.eq(workout_id))
+            .execute(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
 }
 
-#[derive(
-    Clone,
-    Debug,
-    Eq,
-    PartialEq,
-    Queryable,
-    Selectable,
-    Serialize,
-    Deserialize,
-    Identifiable,
-    Associations,
-)]
-#[diesel(table_name = workout_plans)]
-#[diesel(belongs_to(User))]
+#[derive(AsChangeset)]
+#[diesel(table_name = workouts)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct WorkoutPlan {
-    pub id: Uuid,
-    pub user_id: Uuid,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateWorkout {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub duration: Option<i32>,
+    pub difficulty: Option<Difficulty>,
+    pub exercises: Option<Vec<Option<i64>>>,
+    pub updated_at: Option<NaiveDateTime>,
+}
+
+#[derive(AsChangeset)]
+#[diesel(table_name = workouts)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+#[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
+pub struct NewWorkout {
     pub name: String,
     pub description: String,
-    pub workouts: Vec<Option<Uuid>>,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
-    pub start_time: NaiveDateTime,
-    pub repeats: WorkoutInterval,
-    pub goal: FitnessGoal,
+    pub duration: i32,
     pub difficulty: Difficulty,
-    pub is_public: bool,
+    pub user_id: Uuid,
+    pub exercises: Vec<Option<i64>>,
 }
 
-#[derive(DbEnum, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[ExistingTypePath = "crate::schema::sql_types::Workoutinterval"]
-pub enum WorkoutInterval {
-    Daily,
-    Weekly,
-    Monthly,
+impl NewWorkout {
+    pub async fn create(
+        data: NewWorkout,
+        connection: &mut DatabaseConnection,
+    ) -> Result<Workout, ProteinError> {
+        diesel::insert_into(workouts::table)
+            .values(&data)
+            .get_result::<Workout>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
 }

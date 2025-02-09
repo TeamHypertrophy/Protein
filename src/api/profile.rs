@@ -64,9 +64,11 @@ pub async fn all(
     Ok(Json(profiles))
 }
 
-#[post("/create", format = "application/json", data = "<profile>")]
+#[post("/create?<user_id>", format = "application/json", data = "<profile>")]
 pub async fn create(
     _r: RateLimit<'_>,
+    _auth: API,
+    user_id: Uuid,
     pool: &State<DatabasePool>,
     profile: Json<NewProfile>,
 ) -> Result<Json<Profile>, ProteinError> {

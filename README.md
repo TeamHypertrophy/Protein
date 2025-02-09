@@ -34,6 +34,8 @@ Building with docker is *so* simple!
     $ docker compose up -d --build
     ```
 
+3. When `Uptime Kuma` and `Prometheus` are running, You will need to [Create An API Key](https://github.com/louislam/uptime-kuma/wiki/API-Keys#authenticating-using-an-api-key) and enter it in `prometheus/uptime_kuma.pwd`, allowing them to communicate with each other.
+
 ### Local 👷
 
 1. Install All Prerequisites

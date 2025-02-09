@@ -11,18 +11,29 @@ ______          _       _
 
 use uuid::Uuid;
 use diesel::prelude::*;
+use diesel_derive_enum::DbEnum;
 use diesel_async::RunQueryDsl;
 use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
 use crate::{
     db::DatabaseConnection,
-    models::user::User,
+    models::{profile::FitnessGoal, user::User, workout::Difficulty},
     responders::ProteinError,
-    schema::{sleep_logs, sleep_logs::dsl::*},
+    schema::{
+        workout_plans,
+        workout_plans::dsl::{id as dsl_id, user_id as dsl_user_id},
+    },
 };
 
-// Nutrition Sleep Logs
+#[derive(DbEnum, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[ExistingTypePath = "crate::schema::sql_types::Workoutinterval"]
+pub enum WorkoutInterval {
+    Daily,
+    Weekly,
+    Monthly,
+}
+
 #[derive(
     Clone,
     Debug,
@@ -35,28 +46,33 @@ use crate::{
     Identifiable,
     Associations,
 )]
-#[diesel(table_name = sleep_logs)]
+#[diesel(table_name = workout_plans)]
 #[diesel(belongs_to(User))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct SleepLog {
-    id: i32,
-    user_id: Uuid,
-    beginning: NaiveDateTime,
-    end: NaiveDateTime,
-    amount: i32,
-    updated_at: NaiveDateTime,
+pub struct WorkoutPlan {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub name: String,
+    pub description: String,
+    pub workouts: Vec<Option<Uuid>>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+    pub start_time: NaiveDateTime,
+    pub repeats: WorkoutInterval,
+    pub goal: FitnessGoal,
+    pub difficulty: Difficulty,
+    pub is_public: bool,
 }
 
-impl SleepLog {
+impl WorkoutPlan {
     pub async fn find(
-        user: Uuid,
-        log_id: i32,
+        user: &User,
+        workout_id: Uuid,
         connection: &mut DatabaseConnection,
-    ) -> Result<SleepLog, ProteinError> {
-        sleep_logs::table
-            .filter(user_id.eq(user))
-            .filter(id.eq(log_id))
-            .select(SleepLog::as_select())
+    ) -> Result<WorkoutPlan, ProteinError> {
+        WorkoutPlan::belonging_to(user)
+            .select(WorkoutPlan::as_select())
+            .filter(dsl_id.eq(workout_id))
             .first(connection)
             .await
             .map_err(|error| {
@@ -65,9 +81,11 @@ impl SleepLog {
             })
     }
 
-    pub async fn all(connection: &mut DatabaseConnection) -> Result<Vec<SleepLog>, ProteinError> {
-        sleep_logs::table
-            .select(SleepLog::as_select())
+    pub async fn all(
+        connection: &mut DatabaseConnection,
+    ) -> Result<Vec<WorkoutPlan>, ProteinError> {
+        workout_plans::table
+            .select(WorkoutPlan::as_select())
             .load(connection)
             .await
             .map_err(|error| {
@@ -79,10 +97,10 @@ impl SleepLog {
     pub async fn user_all(
         user: Uuid,
         connection: &mut DatabaseConnection,
-    ) -> Result<Vec<SleepLog>, ProteinError> {
-        sleep_logs::table
-            .filter(user_id.eq(user))
-            .select(SleepLog::as_select())
+    ) -> Result<Vec<WorkoutPlan>, ProteinError> {
+        workout_plans::table
+            .filter(dsl_user_id.eq(user))
+            .select(WorkoutPlan::as_select())
             .load(connection)
             .await
             .map_err(|error| {
@@ -93,15 +111,15 @@ impl SleepLog {
 
     pub async fn update(
         user: Uuid,
-        log_id: i32,
-        data: UpdateSleepLog,
+        plan_id: Uuid,
+        data: UpdateWorkoutPlan,
         connection: &mut DatabaseConnection,
-    ) -> Result<SleepLog, ProteinError> {
-        diesel::update(sleep_logs::table)
-            .filter(user_id.eq(user))
-            .filter(id.eq(log_id))
+    ) -> Result<WorkoutPlan, ProteinError> {
+        diesel::update(workout_plans::table)
+            .filter(dsl_user_id.eq(user))
+            .filter(dsl_id.eq(plan_id))
             .set(&data)
-            .get_result::<SleepLog>(connection)
+            .get_result::<WorkoutPlan>(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
@@ -111,12 +129,12 @@ impl SleepLog {
 
     pub async fn delete(
         user: Uuid,
-        log_id: i32,
+        plan_id: Uuid,
         connection: &mut DatabaseConnection,
     ) -> Result<usize, ProteinError> {
-        diesel::delete(sleep_logs::table)
-            .filter(user_id.eq(user))
-            .filter(id.eq(log_id))
+        diesel::delete(workout_plans::table)
+            .filter(dsl_user_id.eq(user))
+            .filter(dsl_id.eq(plan_id))
             .execute(connection)
             .await
             .map_err(|error| {
@@ -127,35 +145,45 @@ impl SleepLog {
 }
 
 #[derive(AsChangeset)]
-#[diesel(table_name = sleep_logs)]
+#[diesel(table_name = workout_plans)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct UpdateSleepLog {
-    pub beginning: Option<NaiveDateTime>,
-    pub end: Option<NaiveDateTime>,
-    pub amount: Option<i32>,
+pub struct UpdateWorkoutPlan {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub workouts: Option<Vec<Option<Uuid>>>,
     pub updated_at: Option<NaiveDateTime>,
+    pub start_time: Option<NaiveDateTime>,
+    pub repeats: Option<WorkoutInterval>,
+    pub goal: Option<FitnessGoal>,
+    pub difficulty: Option<Difficulty>,
+    pub is_public: Option<bool>,
 }
 
 #[derive(AsChangeset)]
-#[diesel(table_name = sleep_logs)]
+#[diesel(table_name = workout_plans)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
-pub struct NewSleepLog {
+pub struct NewWorkoutPlan {
     pub user_id: Uuid,
-    pub beginning: NaiveDateTime,
-    pub end: NaiveDateTime,
-    pub amount: i32,
+    pub name: String,
+    pub description: String,
+    pub workouts: Vec<Option<Uuid>>,
+    pub start_time: NaiveDateTime,
+    pub repeats: WorkoutInterval,
+    pub goal: FitnessGoal,
+    pub difficulty: Difficulty,
+    pub is_public: bool,
 }
 
-impl NewSleepLog {
+impl NewWorkoutPlan {
     pub async fn create(
-        log: NewSleepLog,
+        data: NewWorkoutPlan,
         connection: &mut DatabaseConnection,
-    ) -> Result<SleepLog, ProteinError> {
-        diesel::insert_into(sleep_logs::table)
-            .values(&log)
-            .get_result::<SleepLog>(connection)
+    ) -> Result<WorkoutPlan, ProteinError> {
+        diesel::insert_into(workout_plans::table)
+            .values(&data)
+            .get_result::<WorkoutPlan>(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);

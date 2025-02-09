@@ -93,13 +93,13 @@ impl WaterLog {
     pub async fn update(
         user: Uuid,
         log_id: i32,
-        log: UpdateWaterLog,
+        data: UpdateWaterLog,
         connection: &mut DatabaseConnection,
     ) -> Result<WaterLog, ProteinError> {
         diesel::update(water_logs::table)
             .filter(user_id.eq(user))
             .filter(id.eq(log_id))
-            .set(&log)
+            .set(&data)
             .get_result::<WaterLog>(connection)
             .await
             .map_err(|error| {

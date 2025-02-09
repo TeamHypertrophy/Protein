@@ -91,7 +91,7 @@ pub async fn create(
     Ok(Json(exercise))
 }
 
-#[post("/delete/<exercise_id>")]
+#[post("/delete/<exercise_id>", format = "application/json")]
 pub async fn delete(
     _r: RateLimit<'_>,
     _auth: API,

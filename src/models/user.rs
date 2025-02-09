@@ -156,12 +156,12 @@ impl User {
 
     pub async fn update(
         user_id: Uuid,
-        user: UpdateUser,
+        data: UpdateUser,
         connection: &mut DatabaseConnection,
     ) -> Result<User, ProteinError> {
         diesel::update(users::table)
             .filter(id.eq(user_id))
-            .set(&user)
+            .set(&data)
             .get_result::<User>(connection)
             .await
             .map_err(|error| {

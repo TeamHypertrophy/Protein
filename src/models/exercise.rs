@@ -9,7 +9,6 @@ ______          _       _
         Made with ❤️
 */
 
-use uuid::Uuid;
 use diesel::prelude::*;
 use validator::Validate;
 use diesel_async::RunQueryDsl;
@@ -19,7 +18,7 @@ use chrono::NaiveDateTime;
 
 use crate::{
     db::DatabaseConnection,
-    models::{user::User, workout::Difficulty},
+    models::workout::Difficulty,
     responders::ProteinError,
     schema::{exercises, exercises::dsl::id as dsl_id},
 };

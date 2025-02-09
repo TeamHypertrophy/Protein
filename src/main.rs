@@ -152,9 +152,21 @@ async fn protein() -> _ {
             routes![
                 api::workouts::get,
                 api::workouts::all,
+                api::workouts::user_all,
                 api::workouts::update,
                 api::workouts::create,
                 api::workouts::delete
+            ],
+        )
+        .mount(
+            "/v1/workout/plans",
+            routes![
+                api::plan::get,
+                api::plan::all,
+                api::plan::user_all,
+                api::plan::update,
+                api::plan::create,
+                api::plan::delete
             ],
         )
         .mount(

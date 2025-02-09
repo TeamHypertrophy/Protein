@@ -100,7 +100,7 @@ pub async fn create(
     Ok(Json(result))
 }
 
-#[post("/delete/<log_id>?<user_id>")]
+#[post("/delete/<log_id>?<user_id>", format = "application/json")]
 pub async fn delete(
     _r: RateLimit<'_>,
     _auth: API,

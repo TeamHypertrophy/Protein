@@ -83,7 +83,7 @@ pub async fn update(
     Ok(Json(result))
 }
 
-#[post("/delete/<api_key>")]
+#[post("/delete/<api_key>", format = "application/json")]
 pub async fn delete(
     _r: RateLimit<'_>,
     _auth: API,

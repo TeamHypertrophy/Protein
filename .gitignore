@@ -3,3 +3,4 @@
 docker.env
 logs
 uptime-kuma-data
+uptime_kuma.pwd
