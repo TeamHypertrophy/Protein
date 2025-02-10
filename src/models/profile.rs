@@ -202,11 +202,11 @@ pub struct NewProfile {
 
 impl NewProfile {
     pub async fn create(
-        profile: NewProfile,
+        data: NewProfile,
         connection: &mut DatabaseConnection,
     ) -> Result<Profile, ProteinError> {
         diesel::insert_into(profiles::table)
-            .values(&profile)
+            .values(&data)
             .get_result::<Profile>(connection)
             .await
             .map_err(|error| {

@@ -203,10 +203,10 @@ pub struct NewUser {
 impl NewUser {
     pub async fn create(
         connection: &mut DatabaseConnection,
-        user: NewUser,
+        data: NewUser,
     ) -> Result<User, ProteinError> {
         diesel::insert_into(users::table)
-            .values(&user)
+            .values(&data)
             .get_result::<User>(connection)
             .await
             .map_err(|error| {

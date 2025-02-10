@@ -146,11 +146,11 @@ pub struct NewProteinLog {
 
 impl NewProteinLog {
     pub async fn create(
-        log: NewProteinLog,
+        data: NewProteinLog,
         connection: &mut DatabaseConnection,
     ) -> Result<ProteinLog, ProteinError> {
         diesel::insert_into(protein_logs::table)
-            .values(&log)
+            .values(&data)
             .get_result::<ProteinLog>(connection)
             .await
             .map_err(|error| {

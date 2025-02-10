@@ -150,10 +150,10 @@ pub struct NewExercise {
 impl NewExercise {
     pub async fn create(
         connection: &mut DatabaseConnection,
-        exercise: NewExercise,
+        data: NewExercise,
     ) -> Result<Exercise, ProteinError> {
         diesel::insert_into(exercises::table)
-            .values(&exercise)
+            .values(&data)
             .get_result(connection)
             .await
             .map_err(|error| {
