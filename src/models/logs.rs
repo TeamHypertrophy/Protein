@@ -17,12 +17,9 @@ use chrono::NaiveDateTime;
 
 use crate::{
     db::DatabaseConnection,
-    models::{user::User, workout::Difficulty},
+    models::user::User,
     responders::ProteinError,
-    schema::{
-        exercise_logs, exercise_logs::dsl::id as exercise_dsl_id, workout_logs,
-        workout_logs::dsl::id as workout_dsl_id,
-    },
+    schema::{exercise_logs, exercise_logs::dsl::id as exercise_dsl_id, workout_logs},
 };
 
 // Exercise Log

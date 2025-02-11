@@ -11,7 +11,6 @@ ______          _       _
 
 use uuid::Uuid;
 use diesel::prelude::*;
-use diesel_derive_enum::DbEnum;
 use diesel_async::RunQueryDsl;
 use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;

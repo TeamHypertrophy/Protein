@@ -34,6 +34,9 @@ pub fn setup_logging() -> Result<(WorkerGuard, ()), Box<dyn std::error::Error>> 
     let file_layer = fmt::layer()
         .with_writer(non_blocking_appender)
         .with_ansi(false)
+        .with_file(true)
+        .with_thread_ids(true)
+        .with_thread_names(true)
         .with_span_events(FmtSpan::CLOSE);
 
     let terminal_layer = fmt::layer()

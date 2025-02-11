@@ -20,7 +20,7 @@ use validator::Validate;
 use crate::{
     auth::{key::API, rate_limit::RateLimit},
     db,
-    db::{DatabaseConnection, DatabasePool},
+    db::DatabasePool,
     models::exercise::{Exercise, NewExercise, UpdateExercise},
     responders::ProteinError,
 };

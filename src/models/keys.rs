@@ -19,7 +19,7 @@ use chrono::NaiveDateTime;
 use crate::{
     constants::API_QUOTA_LIMIT,
     db::DatabaseConnection,
-    models::user::{Role, User},
+    models::user::User,
     responders::ProteinError,
     schema::{api_keys, api_keys::dsl::*},
 };
