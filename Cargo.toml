@@ -46,7 +46,7 @@ tracing-appender = "0.2.3"
 # -- Redis
 fred = { version = "10.0.4", features = ["serde-json", "i-keys"] }
 ## -- Shadow and SysInfo
-shadow-rs = { version = "0.38.0", features = ["metadata"] }
+shadow-rs = { version = "0.38.1", features = ["metadata"] }
 sysinfo = "0.33.1"
 ## -- Sentry
 rocket-sentry = "0.18.0"
@@ -54,4 +54,4 @@ rocket-sentry = "0.18.0"
 lettre = { version = "0.11", features = ["tokio1", "tokio1-native-tls", "tracing", "serde"]}
 
 [build-dependencies]
-shadow-rs = { version = "0.38.0", features = ["metadata"] }
+shadow-rs = { version = "0.38.1", features = ["metadata"] }
