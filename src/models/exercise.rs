@@ -25,7 +25,16 @@ use crate::{
 
 // Exercise Model
 #[derive(
-    Clone, Debug, Eq, PartialEq, Queryable, Selectable, Serialize, Deserialize, Identifiable,
+    Clone,
+    Debug,
+    Eq,
+    PartialEq,
+    Queryable,
+    Selectable,
+    Serialize,
+    Deserialize,
+    Identifiable,
+    Insertable,
 )]
 #[diesel(table_name = exercises)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
@@ -103,6 +112,20 @@ impl Exercise {
                 ProteinError::Database(error.to_string())
             })
     }
+
+    pub async fn create(
+        connection: &mut DatabaseConnection,
+        data: NewExercise,
+    ) -> Result<Exercise, ProteinError> {
+        diesel::insert_into(exercises::table)
+            .values(&data)
+            .get_result(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
 }
 
 #[derive(AsChangeset)]
@@ -145,22 +168,6 @@ pub struct NewExercise {
     pub image_url: String,
     #[validate(url)]
     pub video_url: String,
-}
-
-impl NewExercise {
-    pub async fn create(
-        connection: &mut DatabaseConnection,
-        data: NewExercise,
-    ) -> Result<Exercise, ProteinError> {
-        diesel::insert_into(exercises::table)
-            .values(&data)
-            .get_result(connection)
-            .await
-            .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
-            })
-    }
 }
 
 #[derive(DbEnum, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]

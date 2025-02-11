@@ -9,7 +9,7 @@ ______          _       _
         Made with ❤️
 */
 
-pub const CACHE_EXPIRATION_TIME: i64 = 1800; // 30 minutes
+pub const CACHE_EXPIRATION_TIME: i64 = 900; // 15 minutes
 pub const RATE_LIMIT_PER: u32 = 30u32; // 30 requests per minnute
 pub const POSTGRES_POOL_SIZE: usize = 10; // 10 Concurrent Postgres Connections
 pub const API_QUOTA_LIMIT: i32 = 3000; // 5000 Requests per API Key

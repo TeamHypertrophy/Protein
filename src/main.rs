@@ -170,6 +170,22 @@ async fn protein() -> _ {
             ],
         )
         .mount(
+            "/v1/trainers",
+            routes![
+                api::trainer::get,
+                api::trainer::all,
+                api::trainer::update,
+                api::trainer::create,
+                api::trainer::delete,
+                api::trainer::get_announcement,
+                api::trainer::all_announcements,
+                api::trainer::all_trainer_announcements,
+                api::trainer::update_announcement,
+                api::trainer::create_announcement,
+                api::trainer::delete_announcement
+            ],
+        )
+        .mount(
             "/v1/calories",
             routes![
                 api::calories::get,

@@ -33,6 +33,7 @@ use crate::{
     Serialize,
     Deserialize,
     Identifiable,
+    Insertable,
     Associations,
 )]
 #[diesel(table_name = sleep_logs)]
@@ -124,6 +125,20 @@ impl SleepLog {
                 ProteinError::Database(error.to_string())
             })
     }
+
+    pub async fn create(
+        data: NewSleepLog,
+        connection: &mut DatabaseConnection,
+    ) -> Result<SleepLog, ProteinError> {
+        diesel::insert_into(sleep_logs::table)
+            .values(&data)
+            .get_result::<SleepLog>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
 }
 
 #[derive(AsChangeset)]
@@ -146,20 +161,4 @@ pub struct NewSleepLog {
     pub beginning: NaiveDateTime,
     pub end: NaiveDateTime,
     pub amount: i32,
-}
-
-impl NewSleepLog {
-    pub async fn create(
-        data: NewSleepLog,
-        connection: &mut DatabaseConnection,
-    ) -> Result<SleepLog, ProteinError> {
-        diesel::insert_into(sleep_logs::table)
-            .values(&data)
-            .get_result::<SleepLog>(connection)
-            .await
-            .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
-            })
-    }
 }

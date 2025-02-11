@@ -33,6 +33,7 @@ use crate::{
     Serialize,
     Deserialize,
     Identifiable,
+    Insertable,
     Associations,
 )]
 #[diesel(table_name = calorie_logs)]
@@ -123,6 +124,20 @@ impl CalorieLog {
                 ProteinError::Database(error.to_string())
             })
     }
+
+    pub async fn create(
+        data: NewCalorieLog,
+        connection: &mut DatabaseConnection,
+    ) -> Result<CalorieLog, ProteinError> {
+        diesel::insert_into(calorie_logs::table)
+            .values(&data)
+            .get_result::<CalorieLog>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
 }
 
 #[derive(AsChangeset)]
@@ -142,20 +157,4 @@ pub struct UpdateCalorieLog {
 pub struct NewCalorieLog {
     pub user_id: Uuid,
     pub amount: i32,
-}
-
-impl NewCalorieLog {
-    pub async fn create(
-        data: NewCalorieLog,
-        connection: &mut DatabaseConnection,
-    ) -> Result<CalorieLog, ProteinError> {
-        diesel::insert_into(calorie_logs::table)
-            .values(&data)
-            .get_result::<CalorieLog>(connection)
-            .await
-            .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
-            })
-    }
 }

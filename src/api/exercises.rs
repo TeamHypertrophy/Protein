@@ -86,7 +86,7 @@ pub async fn create(
         Err(error) => return Err(ProteinError::Validation(error.to_string())),
     }
 
-    let exercise = NewExercise::create(connection, data.into_inner()).await?;
+    let exercise = Exercise::create(connection, data.into_inner()).await?;
 
     Ok(Json(exercise))
 }

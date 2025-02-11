@@ -97,7 +97,7 @@ pub async fn create(
 ) -> Result<Json<WaterLog>, ProteinError> {
     let connection = &mut db::get_connection(pool).await?;
 
-    let result = NewWaterLog::create(log.into_inner(), connection).await?;
+    let result = WaterLog::create(log.into_inner(), connection).await?;
 
     Ok(Json(result))
 }

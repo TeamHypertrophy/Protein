@@ -105,7 +105,7 @@ pub async fn exercise_create(
 ) -> Result<Json<ExerciseLog>, ProteinError> {
     let connection = &mut db::get_connection(pool).await?;
 
-    let log = NewExerciseLog::create(data.into_inner(), connection).await?;
+    let log = ExerciseLog::create(data.into_inner(), connection).await?;
 
     Ok(Json(log))
 }
@@ -208,7 +208,7 @@ pub async fn workout_create(
 ) -> Result<Json<WorkoutLog>, ProteinError> {
     let connection = &mut db::get_connection(pool).await?;
 
-    let log = NewWorkoutLog::create(data.into_inner(), connection).await?;
+    let log = WorkoutLog::create(data.into_inner(), connection).await?;
 
     Ok(Json(log))
 }

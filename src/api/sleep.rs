@@ -96,7 +96,7 @@ pub async fn create(
 ) -> Result<Json<SleepLog>, ProteinError> {
     let connection = &mut db::get_connection(pool).await?;
 
-    let result = NewSleepLog::create(log.into_inner(), connection).await?;
+    let result = SleepLog::create(log.into_inner(), connection).await?;
 
     Ok(Json(result))
 }

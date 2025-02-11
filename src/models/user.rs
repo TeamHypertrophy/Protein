@@ -170,6 +170,20 @@ impl User {
             })
     }
 
+    pub async fn create(
+        connection: &mut DatabaseConnection,
+        data: NewUser,
+    ) -> Result<User, ProteinError> {
+        diesel::insert_into(users::table)
+            .values(&data)
+            .get_result::<User>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
     pub async fn update_password(
         user_id: Uuid,
         new_password: &String,
@@ -198,20 +212,4 @@ pub struct NewUser {
     pub password: String,
     pub role: Role,
     pub ip_address: String,
-}
-
-impl NewUser {
-    pub async fn create(
-        connection: &mut DatabaseConnection,
-        data: NewUser,
-    ) -> Result<User, ProteinError> {
-        diesel::insert_into(users::table)
-            .values(&data)
-            .get_result::<User>(connection)
-            .await
-            .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
-            })
-    }
 }

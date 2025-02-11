@@ -44,6 +44,7 @@ pub enum Difficulty {
     Serialize,
     Deserialize,
     Identifiable,
+    Insertable,
     Associations,
 )]
 #[diesel(table_name = workouts)]
@@ -137,6 +138,20 @@ impl Workout {
                 ProteinError::Database(error.to_string())
             })
     }
+
+    pub async fn create(
+        data: NewWorkout,
+        connection: &mut DatabaseConnection,
+    ) -> Result<Workout, ProteinError> {
+        diesel::insert_into(workouts::table)
+            .values(&data)
+            .get_result::<Workout>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
 }
 
 #[derive(AsChangeset)]
@@ -163,20 +178,4 @@ pub struct NewWorkout {
     pub difficulty: Difficulty,
     pub user_id: Uuid,
     pub exercises: Vec<Option<i64>>,
-}
-
-impl NewWorkout {
-    pub async fn create(
-        data: NewWorkout,
-        connection: &mut DatabaseConnection,
-    ) -> Result<Workout, ProteinError> {
-        diesel::insert_into(workouts::table)
-            .values(&data)
-            .get_result::<Workout>(connection)
-            .await
-            .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
-            })
-    }
 }

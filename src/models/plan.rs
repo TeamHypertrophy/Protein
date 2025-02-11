@@ -44,6 +44,7 @@ pub enum WorkoutInterval {
     Serialize,
     Deserialize,
     Identifiable,
+    Insertable,
     Associations,
 )]
 #[diesel(table_name = workout_plans)]
@@ -142,6 +143,20 @@ impl WorkoutPlan {
                 ProteinError::Database(error.to_string())
             })
     }
+
+    pub async fn create(
+        data: NewWorkoutPlan,
+        connection: &mut DatabaseConnection,
+    ) -> Result<WorkoutPlan, ProteinError> {
+        diesel::insert_into(workout_plans::table)
+            .values(&data)
+            .get_result::<WorkoutPlan>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
 }
 
 #[derive(AsChangeset)]
@@ -174,20 +189,4 @@ pub struct NewWorkoutPlan {
     pub goal: FitnessGoal,
     pub difficulty: Difficulty,
     pub is_public: bool,
-}
-
-impl NewWorkoutPlan {
-    pub async fn create(
-        data: NewWorkoutPlan,
-        connection: &mut DatabaseConnection,
-    ) -> Result<WorkoutPlan, ProteinError> {
-        diesel::insert_into(workout_plans::table)
-            .values(&data)
-            .get_result::<WorkoutPlan>(connection)
-            .await
-            .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
-            })
-    }
 }

@@ -11,21 +11,17 @@ ______          _       _
 
 use uuid::Uuid;
 use diesel::prelude::*;
+use diesel_derive_enum::DbEnum;
 use diesel_async::RunQueryDsl;
 use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
 use crate::{
     db::DatabaseConnection,
-    models::{user::User, workout::Difficulty},
     responders::ProteinError,
-    schema::{
-        exercise_logs, exercise_logs::dsl::id as exercise_dsl_id, workout_logs,
-        workout_logs::dsl::id as workout_dsl_id,
-    },
+    schema::{trainer_announcements, trainers},
 };
 
-// Exercise Log
 #[derive(
     Clone,
     Debug,
@@ -37,31 +33,137 @@ use crate::{
     Deserialize,
     Identifiable,
     Insertable,
-    Associations,
 )]
-#[diesel(table_name = exercise_logs)]
-#[diesel(belongs_to(User))]
+#[diesel(table_name = trainers)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct ExerciseLog {
-    pub id: i32,
-    pub user_id: Uuid,
-    pub exercise_id: i64,
-    pub sets_completed: i32,
-    pub reps_completed: i32,
-    pub date: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
+pub struct Trainer {
+    id: i32,
+    trainer_id: Uuid,
+    clients: Vec<Option<Uuid>>,
+    updated_at: NaiveDateTime,
 }
 
-impl ExerciseLog {
+impl Trainer {
     pub async fn find(
-        user: Uuid,
-        log_id: i32,
+        trainer_id: Uuid,
         connection: &mut DatabaseConnection,
-    ) -> Result<ExerciseLog, ProteinError> {
-        exercise_logs::table
-            .filter(exercise_logs::dsl::user_id.eq(user))
-            .filter(exercise_dsl_id.eq(log_id))
-            .select(ExerciseLog::as_select())
+    ) -> Result<Trainer, ProteinError> {
+        trainers::table
+            .filter(trainers::dsl::trainer_id.eq(trainer_id))
+            .first(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn all(connection: &mut DatabaseConnection) -> Result<Vec<Trainer>, ProteinError> {
+        trainers::table
+            .select(Trainer::as_select())
+            .load(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn update(
+        trainer_id: Uuid,
+        data: UpdateTrainer,
+        connection: &mut DatabaseConnection,
+    ) -> Result<Trainer, ProteinError> {
+        diesel::update(trainers::table)
+            .filter(trainers::dsl::trainer_id.eq(trainer_id))
+            .set(&data)
+            .get_result::<Trainer>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn create(
+        data: NewTrainer,
+        connection: &mut DatabaseConnection,
+    ) -> Result<Trainer, ProteinError> {
+        diesel::insert_into(trainers::table)
+            .values(&data)
+            .get_result::<Trainer>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn delete(
+        trainer: Uuid,
+        connection: &mut DatabaseConnection,
+    ) -> Result<usize, ProteinError> {
+        diesel::delete(trainers::table)
+            .filter(trainers::dsl::trainer_id.eq(trainer))
+            .execute(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+}
+
+#[derive(AsChangeset)]
+#[diesel(table_name = trainers)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateTrainer {
+    pub clients: Option<Vec<Option<Uuid>>>,
+    pub updated_at: Option<NaiveDateTime>,
+}
+
+#[derive(AsChangeset)]
+#[diesel(table_name = trainers)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+#[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
+pub struct NewTrainer {
+    pub trainer_id: Uuid,
+    pub clients: Vec<Option<Uuid>>,
+}
+
+#[derive(
+    Clone,
+    Debug,
+    Eq,
+    PartialEq,
+    Queryable,
+    Selectable,
+    Serialize,
+    Deserialize,
+    Identifiable,
+    Insertable,
+)]
+#[diesel(table_name = trainer_announcements)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct TrainerAnnouncement {
+    id: i32,
+    trainer_id: Uuid,
+    title: String,
+    content: String,
+    created_at: NaiveDateTime,
+    updated_at: NaiveDateTime,
+}
+
+impl TrainerAnnouncement {
+    pub async fn find(
+        trainer_id: Uuid,
+        announcement_id: i32,
+        connection: &mut DatabaseConnection,
+    ) -> Result<TrainerAnnouncement, ProteinError> {
+        trainer_announcements::table
+            .filter(trainer_announcements::dsl::trainer_id.eq(trainer_id))
+            .filter(trainer_announcements::dsl::id.eq(announcement_id))
             .first(connection)
             .await
             .map_err(|error| {
@@ -72,9 +174,9 @@ impl ExerciseLog {
 
     pub async fn all(
         connection: &mut DatabaseConnection,
-    ) -> Result<Vec<ExerciseLog>, ProteinError> {
-        exercise_logs::table
-            .select(ExerciseLog::as_select())
+    ) -> Result<Vec<TrainerAnnouncement>, ProteinError> {
+        trainer_announcements::table
+            .select(TrainerAnnouncement::as_select())
             .load(connection)
             .await
             .map_err(|error| {
@@ -83,152 +185,13 @@ impl ExerciseLog {
             })
     }
 
-    pub async fn user_all(
-        user: Uuid,
+    pub async fn trainer_all(
+        trainer_id: Uuid,
         connection: &mut DatabaseConnection,
-    ) -> Result<Vec<ExerciseLog>, ProteinError> {
-        exercise_logs::table
-            .filter(exercise_logs::dsl::user_id.eq(user))
-            .select(ExerciseLog::as_select())
-            .load(connection)
-            .await
-            .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
-            })
-    }
-
-    pub async fn update(
-        user: Uuid,
-        log_id: i32,
-        data: UpdateExerciseLog,
-        connection: &mut DatabaseConnection,
-    ) -> Result<ExerciseLog, ProteinError> {
-        diesel::update(exercise_logs::table)
-            .filter(exercise_logs::dsl::user_id.eq(user))
-            .filter(exercise_dsl_id.eq(log_id))
-            .set(&data)
-            .get_result(connection)
-            .await
-            .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
-            })
-    }
-
-    pub async fn delete(
-        user: Uuid,
-        log_id: i32,
-        connection: &mut DatabaseConnection,
-    ) -> Result<usize, ProteinError> {
-        diesel::delete(exercise_logs::table)
-            .filter(exercise_logs::dsl::user_id.eq(user))
-            .filter(exercise_dsl_id.eq(log_id))
-            .execute(connection)
-            .await
-            .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
-            })
-    }
-
-    pub async fn create(
-        data: NewExerciseLog,
-        connection: &mut DatabaseConnection,
-    ) -> Result<ExerciseLog, ProteinError> {
-        diesel::insert_into(exercise_logs::table)
-            .values(&data)
-            .get_result::<ExerciseLog>(connection)
-            .await
-            .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
-            })
-    }
-}
-
-#[derive(AsChangeset)]
-#[diesel(table_name = exercise_logs)]
-#[diesel(check_for_backend(diesel::pg::Pg))]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct UpdateExerciseLog {
-    pub sets_completed: Option<i32>,
-    pub reps_completed: Option<i32>,
-    pub updated_at: Option<NaiveDateTime>,
-}
-
-#[derive(AsChangeset)]
-#[diesel(table_name = exercise_logs)]
-#[diesel(check_for_backend(diesel::pg::Pg))]
-#[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
-pub struct NewExerciseLog {
-    pub user_id: Uuid,
-    pub exercise_id: i64,
-    pub sets_completed: i32,
-    pub reps_completed: i32,
-    pub updated_at: NaiveDateTime,
-}
-
-#[derive(
-    Clone,
-    Debug,
-    Eq,
-    PartialEq,
-    Queryable,
-    Selectable,
-    Serialize,
-    Deserialize,
-    Identifiable,
-    Insertable,
-    Associations,
-)]
-#[diesel(table_name = workout_logs)]
-#[diesel(belongs_to(User))]
-#[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct WorkoutLog {
-    pub id: i32,
-    pub user_id: Uuid,
-    pub workout_id: Uuid,
-    pub date: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
-}
-
-impl WorkoutLog {
-    pub async fn find(
-        user: Uuid,
-        log_id: Uuid,
-        connection: &mut DatabaseConnection,
-    ) -> Result<WorkoutLog, ProteinError> {
-        workout_logs::table
-            .filter(workout_logs::dsl::user_id.eq(user))
-            .filter(workout_logs::dsl::workout_id.eq(log_id))
-            .select(WorkoutLog::as_select())
-            .first(connection)
-            .await
-            .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
-            })
-    }
-
-    pub async fn all(connection: &mut DatabaseConnection) -> Result<Vec<WorkoutLog>, ProteinError> {
-        workout_logs::table
-            .select(WorkoutLog::as_select())
-            .load(connection)
-            .await
-            .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
-            })
-    }
-
-    pub async fn user_all(
-        user: Uuid,
-        connection: &mut DatabaseConnection,
-    ) -> Result<Vec<WorkoutLog>, ProteinError> {
-        workout_logs::table
-            .filter(workout_logs::dsl::user_id.eq(user))
-            .select(WorkoutLog::as_select())
+    ) -> Result<Vec<TrainerAnnouncement>, ProteinError> {
+        trainer_announcements::table
+            .filter(trainer_announcements::dsl::trainer_id.eq(trainer_id))
+            .select(TrainerAnnouncement::as_select())
             .load(connection)
             .await
             .map_err(|error| {
@@ -238,16 +201,16 @@ impl WorkoutLog {
     }
 
     pub async fn update(
-        user: Uuid,
-        log_id: Uuid,
-        data: UpdateWorkoutLog,
+        trainer_id: Uuid,
+        announcement_id: i32,
+        data: UpdateTrainerAnnouncement,
         connection: &mut DatabaseConnection,
-    ) -> Result<WorkoutLog, ProteinError> {
-        diesel::update(workout_logs::table)
-            .filter(workout_logs::dsl::user_id.eq(user))
-            .filter(workout_logs::dsl::workout_id.eq(log_id))
+    ) -> Result<TrainerAnnouncement, ProteinError> {
+        diesel::update(trainer_announcements::table)
+            .filter(trainer_announcements::dsl::trainer_id.eq(trainer_id))
+            .filter(trainer_announcements::dsl::id.eq(announcement_id))
             .set(&data)
-            .get_result(connection)
+            .get_result::<TrainerAnnouncement>(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
@@ -256,13 +219,13 @@ impl WorkoutLog {
     }
 
     pub async fn delete(
-        user: Uuid,
-        log_id: Uuid,
+        trainer: Uuid,
+        announcement_id: i32,
         connection: &mut DatabaseConnection,
     ) -> Result<usize, ProteinError> {
-        diesel::delete(workout_logs::table)
-            .filter(workout_logs::dsl::user_id.eq(user))
-            .filter(workout_logs::dsl::workout_id.eq(log_id))
+        diesel::delete(trainer_announcements::table)
+            .filter(trainer_announcements::dsl::trainer_id.eq(trainer))
+            .filter(trainer_announcements::dsl::id.eq(announcement_id))
             .execute(connection)
             .await
             .map_err(|error| {
@@ -272,12 +235,12 @@ impl WorkoutLog {
     }
 
     pub async fn create(
-        data: NewWorkoutLog,
+        data: NewTrainerAnnouncement,
         connection: &mut DatabaseConnection,
-    ) -> Result<WorkoutLog, ProteinError> {
-        diesel::insert_into(workout_logs::table)
+    ) -> Result<TrainerAnnouncement, ProteinError> {
+        diesel::insert_into(trainer_announcements::table)
             .values(&data)
-            .get_result::<WorkoutLog>(connection)
+            .get_result::<TrainerAnnouncement>(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
@@ -287,19 +250,21 @@ impl WorkoutLog {
 }
 
 #[derive(AsChangeset)]
-#[diesel(table_name = workout_logs)]
+#[diesel(table_name = trainer_announcements)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct UpdateWorkoutLog {
-    pub date: Option<NaiveDateTime>,
+pub struct UpdateTrainerAnnouncement {
+    pub title: Option<String>,
+    pub content: Option<String>,
     pub updated_at: Option<NaiveDateTime>,
 }
 
 #[derive(AsChangeset)]
-#[diesel(table_name = workout_logs)]
+#[diesel(table_name = trainer_announcements)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
-pub struct NewWorkoutLog {
-    pub user_id: Uuid,
-    pub workout_id: Uuid,
+pub struct NewTrainerAnnouncement {
+    pub trainer_id: Uuid,
+    pub title: String,
+    pub content: String,
 }

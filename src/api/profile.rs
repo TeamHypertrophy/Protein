@@ -82,7 +82,7 @@ pub async fn create(
     }
 
     // Create New Profile
-    let result = NewProfile::create(profile.into_inner(), connection).await?;
+    let result = Profile::create(profile.into_inner(), connection).await?;
 
     Ok(Json(result))
 }

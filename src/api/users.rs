@@ -105,7 +105,7 @@ pub async fn signup(
     let connection = &mut db::get_connection(pool).await?;
 
     // Create User and Grab Result
-    let result = NewUser::create(connection, new_user).await?;
+    let result = User::create(connection, new_user).await?;
 
     // Generate API Key
     let api_key =

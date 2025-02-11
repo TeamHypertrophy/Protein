@@ -102,7 +102,7 @@ pub async fn create(
 ) -> Result<Json<WorkoutPlan>, ProteinError> {
     let connection = &mut db::get_connection(pool).await?;
 
-    let plan = NewWorkoutPlan::create(data.into_inner(), connection).await?;
+    let plan = WorkoutPlan::create(data.into_inner(), connection).await?;
 
     Ok(Json(plan))
 }
@@ -120,6 +120,6 @@ pub async fn delete(
     WorkoutPlan::delete(user_id, plan_id, connection).await?;
 
     Ok(status::Accepted(json!({
-        "message": "Log Deleted Successfully",
+        "message": "Workout Plan Deleted Successfully",
     })))
 }

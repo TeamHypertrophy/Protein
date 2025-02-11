@@ -97,7 +97,7 @@ pub async fn create(
 ) -> Result<Json<CalorieLog>, ProteinError> {
     let connection = &mut db::get_connection(pool).await?;
 
-    let result = NewCalorieLog::create(log.into_inner(), connection).await?;
+    let result = CalorieLog::create(log.into_inner(), connection).await?;
 
     Ok(Json(result))
 }

@@ -35,6 +35,7 @@ use crate::{
     Serialize,
     Deserialize,
     Identifiable,
+    Insertable,
     Associations,
 )]
 #[diesel(table_name = profiles)]
@@ -161,6 +162,20 @@ impl Profile {
                 ProteinError::Database(error.to_string())
             })
     }
+
+    pub async fn create(
+        data: NewProfile,
+        connection: &mut DatabaseConnection,
+    ) -> Result<Profile, ProteinError> {
+        diesel::insert_into(profiles::table)
+            .values(&data)
+            .get_result::<Profile>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
 }
 
 #[derive(AsChangeset)]
@@ -198,22 +213,6 @@ pub struct NewProfile {
     #[validate(range(min = 13, max = 100))]
     pub age: i32,
     pub gender: Gender,
-}
-
-impl NewProfile {
-    pub async fn create(
-        data: NewProfile,
-        connection: &mut DatabaseConnection,
-    ) -> Result<Profile, ProteinError> {
-        diesel::insert_into(profiles::table)
-            .values(&data)
-            .get_result::<Profile>(connection)
-            .await
-            .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
-            })
-    }
 }
 
 #[derive(Serialize, Deserialize)]

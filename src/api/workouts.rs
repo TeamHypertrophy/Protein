@@ -102,7 +102,7 @@ pub async fn create(
 ) -> Result<Json<Workout>, ProteinError> {
     let connection = &mut db::get_connection(pool).await?;
 
-    let workout = NewWorkout::create(data.into_inner(), connection).await?;
+    let workout = Workout::create(data.into_inner(), connection).await?;
 
     Ok(Json(workout))
 }
