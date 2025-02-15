@@ -15,6 +15,7 @@ extern crate rocket;
 
 // Vendor Dependencies
 use sysinfo::System;
+use tokio_cron_scheduler::{Job, JobScheduler};
 extern crate argon2;
 
 // Schema File
@@ -53,9 +54,23 @@ shadow_rs::shadow!(build);
 #[launch]
 #[tokio::main]
 async fn protein() -> _ {
+    // Load Environment Variables
+    match dotenvy::from_filename(".env") {
+        Ok(_) => {
+            tracing::info!("[+] ✅ Environment Variables Loaded!");
+        }
+        Err(e) => {
+            tracing::error!("[-] ❌ Error Loading Environment Variables: {:?}", e);
+            std::process::exit(1)
+        }
+    }
+
     // Logging
     let (guard, ()) = match utils::logging::setup_logging() {
-        Ok((guard, ())) => (guard, ()),
+        Ok((guard, ())) => {
+            tracing::info!("[+] ✅ Logging System Initialized!");
+            (guard, ())
+        }
         Err(e) => {
             tracing::error!("[-] ❌ Error Setting Up Logging: {:?}", e);
             std::process::exit(1)
@@ -64,7 +79,10 @@ async fn protein() -> _ {
 
     // PostgreSQL
     let pool = match db::establish_connection().await {
-        Ok(pool) => pool,
+        Ok(pool) => {
+            tracing::info!("[+] ✅ Database Connection Established!");
+            pool
+        }
         Err(e) => {
             tracing::error!("[-] ❌ Error Connecting to Database: {:?}", e);
             std::process::exit(1)
@@ -73,7 +91,10 @@ async fn protein() -> _ {
 
     // Redis
     let redis = match cache::redis::create_redis_pool().await {
-        Ok(redis) => redis,
+        Ok(redis) => {
+            tracing::info!("[+] ✅ Redis Connection Established!");
+            redis
+        }
         Err(e) => {
             tracing::error!("[-] ❌ Error Connecting to Redis: {:?}", e);
             std::process::exit(1)
@@ -82,12 +103,72 @@ async fn protein() -> _ {
 
     // Email
     let email = match utils::email::setup_email().await {
-        Ok(email) => email,
+        Ok(email) => {
+            tracing::info!("[+] ✅ Email System Initialized!");
+            email
+        }
         Err(e) => {
             tracing::error!("[-] ❌ Error Setting Up Email System: {:?}", e);
             std::process::exit(1)
         }
     };
+
+    // Job Scheduler
+    let scheduler = match JobScheduler::new().await {
+        Ok(mut scheduler) => {
+            tracing::info!("[+] ✅ Job Scheduler Initialized!");
+
+            scheduler.shutdown_on_ctrl_c();
+
+            scheduler.set_shutdown_handler(Box::new(|| {
+                Box::pin(async move {
+                    tracing::info!("[-] ❌ Job Scheduler Shutting Down!");
+                })
+            }));
+
+            let cloned = pool.clone();
+
+            let mut job = match Job::new_async("1/2 * * * * *", move |uuid, mut l| {
+                Box::pin({
+                    let val = cloned.clone();
+                    async move {
+                        println!("hello");
+                        utils::jobs::verify_api_keys(&val).await.unwrap();
+                    }
+                })
+            }) {
+                Ok(job) => {
+                    tracing::info!("[Scheduler] ✅ Job Created!");
+                    job
+                }
+                Err(e) => {
+                    tracing::error!("[Scheduler] ❌ Error Creating Job: {:?}", e);
+                    std::process::exit(1)
+                }
+            };
+
+            match scheduler.add(job).await {
+                Ok(_) => tracing::info!("[Scheduler] ✅ Job Added To Scheduler!"),
+                Err(e) => {
+                    tracing::error!("[Scheduler] ❌ Error Adding Job To Scheduler: {:?}", e);
+                    std::process::exit(1)
+                }
+            }
+            scheduler
+        }
+        Err(e) => {
+            tracing::error!("[-] ❌ Error Setting Up Job Scheduler: {:?}", e);
+            std::process::exit(1)
+        }
+    };
+
+    match scheduler.start().await {
+        Ok(_) => tracing::info!("[Scheduler] ✅ Job Scheduler Started!"),
+        Err(e) => {
+            tracing::error!("[Scheduler] ❌ Error Starting Job Scheduler: {:?}", e);
+            std::process::exit(1)
+        }
+    }
 
     // System Information
     let system: System = System::new_all();
@@ -101,6 +182,7 @@ async fn protein() -> _ {
         .manage(redis)
         .manage(email)
         .manage(system)
+        .manage(scheduler)
         .attach(prometheus.clone())
         .attach(fairings::cors::Cors)
         .attach(fairings::logging::Logging)

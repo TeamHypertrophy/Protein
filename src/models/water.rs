@@ -19,7 +19,7 @@ use crate::{
     db::DatabaseConnection,
     models::user::User,
     responders::ProteinError,
-    schema::{water_logs, water_logs::dsl::*},
+    schema::{water_logs, water_logs::dsl::{user_id, log_id}},
 };
 
 // Nutrition Water Logs
@@ -36,11 +36,12 @@ use crate::{
     Insertable,
     Associations,
 )]
+#[diesel(primary_key(log_id))]
 #[diesel(table_name = water_logs)]
 #[diesel(belongs_to(User))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct WaterLog {
-    id: i32,
+    log_id: i32,
     user_id: Uuid,
     date: NaiveDateTime,
     amount: i32,
@@ -50,12 +51,12 @@ pub struct WaterLog {
 impl WaterLog {
     pub async fn find(
         user: Uuid,
-        log_id: i32,
+        id: i32,
         connection: &mut DatabaseConnection,
     ) -> Result<WaterLog, ProteinError> {
         water_logs::table
             .filter(user_id.eq(user))
-            .filter(id.eq(log_id))
+            .filter(log_id.eq(id))
             .select(WaterLog::as_select())
             .first(connection)
             .await
@@ -93,13 +94,13 @@ impl WaterLog {
 
     pub async fn update(
         user: Uuid,
-        log_id: i32,
+        id: i32,
         data: UpdateWaterLog,
         connection: &mut DatabaseConnection,
     ) -> Result<WaterLog, ProteinError> {
         diesel::update(water_logs::table)
             .filter(user_id.eq(user))
-            .filter(id.eq(log_id))
+            .filter(log_id.eq(id))
             .set(&data)
             .get_result::<WaterLog>(connection)
             .await
@@ -111,12 +112,12 @@ impl WaterLog {
 
     pub async fn delete(
         user: Uuid,
-        log_id: i32,
+        id: i32,
         connection: &mut DatabaseConnection,
     ) -> Result<usize, ProteinError> {
         diesel::delete(water_logs::table)
             .filter(user_id.eq(user))
-            .filter(id.eq(log_id))
+            .filter(log_id.eq(id))
             .execute(connection)
             .await
             .map_err(|error| {
@@ -147,7 +148,6 @@ impl WaterLog {
 pub struct UpdateWaterLog {
     pub amount: Option<i32>,
     pub date: Option<NaiveDateTime>,
-    pub updated_at: Option<NaiveDateTime>,
 }
 
 #[derive(AsChangeset)]

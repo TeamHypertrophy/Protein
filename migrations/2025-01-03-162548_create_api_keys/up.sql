@@ -7,8 +7,8 @@ CREATE TYPE Status AS ENUM (
 
 -- API Keys: Main Source of Authentication
 CREATE TABLE api_keys (
-    "id" SERIAL PRIMARY KEY,
-    "user_id" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    "key_id" SERIAL PRIMARY KEY,
+    "user_id" UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     "api_key" UUID NOT NULL UNIQUE DEFAULT (gen_random_uuid()),
     "created_at" TIMESTAMP NOT NULL DEFAULT (now()),
     "updated_at" TIMESTAMP NOT NULL DEFAULT (now()),
@@ -18,3 +18,6 @@ CREATE TABLE api_keys (
     "status" Status NOT NULL DEFAULT ('active'),
     "quota" INT NOT NULL DEFAULT (0)
 );
+
+CREATE TRIGGER update_timestamp BEFORE UPDATE ON api_keys
+FOR EACH ROW EXECUTE PROCEDURE modify_updated_at();

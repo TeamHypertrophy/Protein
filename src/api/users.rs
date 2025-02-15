@@ -97,7 +97,6 @@ pub async fn signup(
     let new_user = NewUser {
         username: user.username.clone(),
         password: password_hash,
-        role: user.role.clone(),
         ip_address: user.ip_address.clone(),
     };
 
@@ -115,7 +114,7 @@ pub async fn signup(
     Cache::set(
         redis,
         "user",
-        result.id.to_string(),
+        result.user_id.to_string(),
         Cache::serialize(&result),
     )
     .await?;
@@ -159,7 +158,7 @@ pub async fn login(
         Cache::set(
             redis,
             "user",
-            result.id.to_string(),
+            result.user_id.to_string(),
             Cache::serialize(&result),
         )
         .await?;
@@ -309,7 +308,7 @@ pub async fn forgot_password_email(
     Ok(status::Accepted(json!({
         "message": "Forgot Password Email Sent!",
         "user_id": profile.user_id,
-        "profile_id": profile.id
+        "profile_id": profile.profile_id
     })))
 }
 

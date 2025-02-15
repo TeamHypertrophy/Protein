@@ -8,20 +8,15 @@ ______          _       _
 
         Made with ❤️
 */
-use std::env;
 
 use argon2::{self, Config};
-use dotenvy::dotenv;
 
 use crate::responders::ProteinError;
 
 pub fn generate_hashed_password(password: String) -> Result<String, ProteinError> {
-    // Load Environment Variables
-    dotenv().ok();
-
     // Get Password Salt
     let salt: String =
-        env::var("PASSWORD_SALT").expect("[!] PASSWORD_SALT Environment Variable Must Be Set");
+        std::env::var("PASSWORD_SALT").expect("[!] PASSWORD_SALT Environment Variable Must Be Set");
 
     // Create Argon2 Config
     let config = Config::default();

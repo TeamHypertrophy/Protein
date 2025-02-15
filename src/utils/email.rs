@@ -9,12 +9,7 @@ ______          _       _
     Made with ❤️
 */
 
-// Build Email System and Functionality
-
-use std::env;
-
 use rocket::State;
-use dotenvy::dotenv;
 use lettre::{
     message::Mailbox,
     transport::smtp::{authentication::Credentials, response::Response},
@@ -27,16 +22,13 @@ pub type Mailer = AsyncSmtpTransport<Tokio1Executor>;
 
 pub async fn setup_email() -> Result<AsyncSmtpTransport<Tokio1Executor>, Box<dyn std::error::Error>>
 {
-    // Load Environment Variables
-    dotenv().ok();
-
     // Get SMTP Credentials
     let username: String =
-        env::var("SMTP_USERNAME").expect("[!] SMTP_USERNAME Environment Variable Must Be Set");
+        std::env::var("SMTP_USERNAME").expect("[!] SMTP_USERNAME Environment Variable Must Be Set");
     let password: String =
-        env::var("SMTP_PASSWORD").expect("[!] SMTP_PASSWORD Environment Variable Must Be Set");
+        std::env::var("SMTP_PASSWORD").expect("[!] SMTP_PASSWORD Environment Variable Must Be Set");
     let server: String =
-        env::var("SMTP_SERVER").expect("[!] SMTP_SERVER Environment Variable Must Be Set");
+        std::env::var("SMTP_SERVER").expect("[!] SMTP_SERVER Environment Variable Must Be Set");
 
     // Create Credentials
     let credentials: Credentials = Credentials::new(username, password);
@@ -57,14 +49,11 @@ pub async fn send_email(
     subject: &str,
     body: String,
 ) -> Result<Response, ProteinError> {
-    // Load Environment Variables
-    dotenv().ok();
-
     // Get SMTP Credentials
     let user: String =
-        env::var("SMTP_USER").expect("[!] SMTP_USER Environment Variable Must Be Set");
+        std::env::var("SMTP_USER").expect("[!] SMTP_USER Environment Variable Must Be Set");
     let username: String =
-        env::var("SMTP_USERNAME").expect("[!] SMTP_USERNAME Environment Variable Must Be Set");
+        std::env::var("SMTP_USERNAME").expect("[!] SMTP_USERNAME Environment Variable Must Be Set");
 
     // Get Full Name
     let full_name: String = format!("{} {}", profile.first_name, profile.last_name);

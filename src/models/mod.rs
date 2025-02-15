@@ -9,6 +9,7 @@ ______          _       _
         Made with ❤️
 */
 
+pub mod announcement;
 pub mod calorie;
 pub mod exercise;
 pub mod keys;

@@ -50,8 +50,8 @@ diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::Status;
 
-    api_keys (id) {
-        id -> Int4,
+    api_keys (key_id) {
+        key_id -> Int4,
         user_id -> Uuid,
         api_key -> Uuid,
         created_at -> Timestamp,
@@ -65,8 +65,8 @@ diesel::table! {
 }
 
 diesel::table! {
-    calorie_logs (id) {
-        id -> Int4,
+    calorie_logs (log_id) {
+        log_id -> Int4,
         user_id -> Uuid,
         date -> Timestamp,
         amount -> Int4,
@@ -75,8 +75,8 @@ diesel::table! {
 }
 
 diesel::table! {
-    exercise_logs (id) {
-        id -> Int4,
+    exercise_logs (log_id) {
+        log_id -> Int4,
         user_id -> Uuid,
         exercise_id -> Int8,
         sets_completed -> Int4,
@@ -93,8 +93,8 @@ diesel::table! {
     use super::sql_types::Musclegroup;
     use super::sql_types::Exercisetype;
 
-    exercises (id) {
-        id -> Int8,
+    exercises (exercise_id) {
+        exercise_id -> Int8,
         #[max_length = 100]
         name -> Varchar,
         description -> Text,
@@ -120,8 +120,8 @@ diesel::table! {
     use super::sql_types::Preferredheight;
     use super::sql_types::Fitnessgoal;
 
-    profiles (id) {
-        id -> Int4,
+    profiles (profile_id) {
+        profile_id -> Int4,
         user_id -> Uuid,
         #[max_length = 255]
         first_name -> Varchar,
@@ -145,8 +145,8 @@ diesel::table! {
 }
 
 diesel::table! {
-    protein_logs (id) {
-        id -> Int4,
+    protein_logs (log_id) {
+        log_id -> Int4,
         user_id -> Uuid,
         date -> Timestamp,
         amount -> Int4,
@@ -155,8 +155,8 @@ diesel::table! {
 }
 
 diesel::table! {
-    sleep_logs (id) {
-        id -> Int4,
+    sleep_logs (log_id) {
+        log_id -> Int4,
         user_id -> Uuid,
         beginning -> Timestamp,
         end -> Timestamp,
@@ -166,8 +166,8 @@ diesel::table! {
 }
 
 diesel::table! {
-    trainer_announcements (id) {
-        id -> Int4,
+    trainer_announcements (announcement_id) {
+        announcement_id -> Int4,
         trainer_id -> Uuid,
         #[max_length = 100]
         title -> Varchar,
@@ -178,9 +178,9 @@ diesel::table! {
 }
 
 diesel::table! {
-    trainers (id) {
-        id -> Int4,
-        trainer_id -> Uuid,
+    trainers (trainer_id) {
+        trainer_id -> Int4,
+        user_id -> Uuid,
         clients -> Array<Nullable<Uuid>>,
         updated_at -> Timestamp,
     }
@@ -190,8 +190,8 @@ diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::Role;
 
-    users (id) {
-        id -> Uuid,
+    users (user_id) {
+        user_id -> Uuid,
         #[max_length = 255]
         username -> Varchar,
         #[max_length = 255]
@@ -205,8 +205,8 @@ diesel::table! {
 }
 
 diesel::table! {
-    water_logs (id) {
-        id -> Int4,
+    water_logs (log_id) {
+        log_id -> Int4,
         user_id -> Uuid,
         date -> Timestamp,
         amount -> Int4,
@@ -215,8 +215,8 @@ diesel::table! {
 }
 
 diesel::table! {
-    workout_logs (id) {
-        id -> Int4,
+    workout_logs (log_id) {
+        log_id -> Int4,
         user_id -> Uuid,
         workout_id -> Uuid,
         date -> Timestamp,
@@ -230,8 +230,8 @@ diesel::table! {
     use super::sql_types::Fitnessgoal;
     use super::sql_types::Difficulty;
 
-    workout_plans (id) {
-        id -> Uuid,
+    workout_plans (plan_id) {
+        plan_id -> Uuid,
         user_id -> Uuid,
         #[max_length = 100]
         name -> Varchar,
@@ -251,8 +251,8 @@ diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::Difficulty;
 
-    workouts (id) {
-        id -> Uuid,
+    workouts (workout_id) {
+        workout_id -> Uuid,
         #[max_length = 100]
         name -> Varchar,
         description -> Text,
@@ -273,7 +273,7 @@ diesel::joinable!(profiles -> users (user_id));
 diesel::joinable!(protein_logs -> users (user_id));
 diesel::joinable!(sleep_logs -> users (user_id));
 diesel::joinable!(trainer_announcements -> users (trainer_id));
-diesel::joinable!(trainers -> users (trainer_id));
+diesel::joinable!(trainers -> users (user_id));
 diesel::joinable!(water_logs -> users (user_id));
 diesel::joinable!(workout_logs -> users (user_id));
 diesel::joinable!(workout_logs -> workouts (workout_id));

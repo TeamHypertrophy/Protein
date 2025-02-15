@@ -19,7 +19,7 @@ use crate::{
     db::DatabaseConnection,
     models::user::User,
     responders::ProteinError,
-    schema::{protein_logs, protein_logs::dsl::*},
+    schema::{protein_logs, protein_logs::dsl::{user_id, log_id}},
 };
 
 // Nutrition Protein Logs
@@ -36,11 +36,12 @@ use crate::{
     Insertable,
     Associations,
 )]
+#[diesel(primary_key(log_id))]
 #[diesel(table_name = protein_logs)]
 #[diesel(belongs_to(User))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct ProteinLog {
-    id: i32,
+    log_id: i32,
     user_id: Uuid,
     date: NaiveDateTime,
     amount: i32,
@@ -50,12 +51,12 @@ pub struct ProteinLog {
 impl ProteinLog {
     pub async fn find(
         user: Uuid,
-        log_id: i32,
+        id: i32,
         connection: &mut DatabaseConnection,
     ) -> Result<ProteinLog, ProteinError> {
         protein_logs::table
             .filter(user_id.eq(user))
-            .filter(id.eq(log_id))
+            .filter(log_id.eq(id))
             .select(ProteinLog::as_select())
             .first(connection)
             .await
@@ -93,13 +94,13 @@ impl ProteinLog {
 
     pub async fn update(
         user: Uuid,
-        log_id: i32,
+        id: i32,
         data: UpdateProteinLog,
         connection: &mut DatabaseConnection,
     ) -> Result<ProteinLog, ProteinError> {
         diesel::update(protein_logs::table)
             .filter(user_id.eq(user))
-            .filter(id.eq(log_id))
+            .filter(log_id.eq(id))
             .set(&data)
             .get_result::<ProteinLog>(connection)
             .await
@@ -111,12 +112,12 @@ impl ProteinLog {
 
     pub async fn delete(
         user: Uuid,
-        log_id: i32,
+        id: i32,
         connection: &mut DatabaseConnection,
     ) -> Result<usize, ProteinError> {
         diesel::delete(protein_logs::table)
             .filter(user_id.eq(user))
-            .filter(id.eq(log_id))
+            .filter(log_id.eq(id))
             .execute(connection)
             .await
             .map_err(|error| {
@@ -147,7 +148,6 @@ impl ProteinLog {
 pub struct UpdateProteinLog {
     pub amount: Option<i32>,
     pub date: Option<NaiveDateTime>,
-    pub updated_at: Option<NaiveDateTime>,
 }
 
 #[derive(AsChangeset)]

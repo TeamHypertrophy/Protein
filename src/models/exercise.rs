@@ -20,7 +20,7 @@ use crate::{
     db::DatabaseConnection,
     models::workout::Difficulty,
     responders::ProteinError,
-    schema::{exercises, exercises::dsl::id as dsl_id},
+    schema::{exercises, exercises::dsl::exercise_id},
 };
 
 // Exercise Model
@@ -36,10 +36,11 @@ use crate::{
     Identifiable,
     Insertable,
 )]
+#[diesel(primary_key(exercise_id))]
 #[diesel(table_name = exercises)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Exercise {
-    pub id: i64,
+    pub exercise_id: i64,
     pub name: String,
     pub description: String,
     pub instructions: String,
@@ -58,7 +59,7 @@ pub struct Exercise {
 
 impl Exercise {
     pub async fn find(
-        exercise_id: i64,
+        id: i64,
         connection: &mut DatabaseConnection,
     ) -> Result<Exercise, ProteinError> {
         exercises::table
@@ -88,7 +89,7 @@ impl Exercise {
         connection: &mut DatabaseConnection,
     ) -> Result<usize, ProteinError> {
         diesel::delete(exercises::table)
-            .filter(dsl_id.eq(exercise))
+            .filter(exercise_id.eq(exercise))
             .execute(connection)
             .await
             .map_err(|error| {
@@ -103,7 +104,7 @@ impl Exercise {
         connection: &mut DatabaseConnection,
     ) -> Result<Exercise, ProteinError> {
         diesel::update(exercises::table)
-            .filter(dsl_id.eq(exercise))
+            .filter(exercise_id.eq(exercise))
             .set(&data)
             .get_result::<Exercise>(connection)
             .await
@@ -147,7 +148,6 @@ pub struct UpdateExercise {
     pub image_url: Option<String>,
     #[validate(url)]
     pub video_url: Option<String>,
-    pub updated_at: Option<NaiveDateTime>,
 }
 
 #[derive(Debug, Clone, Insertable, Serialize, Deserialize, Validate)]

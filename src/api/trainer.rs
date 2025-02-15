@@ -21,9 +21,9 @@ use crate::{
     auth::{key::API, rate_limit::RateLimit},
     db,
     db::DatabasePool,
-    models::trainer::{
-        NewTrainer, NewTrainerAnnouncement, Trainer, TrainerAnnouncement, UpdateTrainer,
-        UpdateTrainerAnnouncement,
+    models::{
+        announcement::{NewTrainerAnnouncement, TrainerAnnouncement, UpdateTrainerAnnouncement},
+        trainer::{NewTrainer, Trainer, UpdateTrainer},
     },
     responders::ProteinError,
 };

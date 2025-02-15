@@ -21,7 +21,7 @@ use crate::{
     db::DatabaseConnection,
     models::user::User,
     responders::ProteinError,
-    schema::{profiles, profiles::dsl::user_id as dsl_user_id},
+    schema::profiles,
 };
 
 // Profile Model
@@ -38,11 +38,12 @@ use crate::{
     Insertable,
     Associations,
 )]
+#[diesel(primary_key(profile_id))]
 #[diesel(table_name = profiles)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(belongs_to(User))]
 pub struct Profile {
-    pub id: i32,
+    pub profile_id: i32,
     pub user_id: Uuid,
     pub first_name: String,
     pub last_name: String,
@@ -139,7 +140,7 @@ impl Profile {
         connection: &mut DatabaseConnection,
     ) -> Result<Profile, ProteinError> {
         diesel::update(profiles::table)
-            .filter(dsl_user_id.eq(user))
+            .filter(profiles::user_id.eq(user))
             .set(&data)
             .get_result::<Profile>(connection)
             .await
@@ -154,7 +155,7 @@ impl Profile {
         connection: &mut DatabaseConnection,
     ) -> Result<usize, ProteinError> {
         diesel::delete(profiles::table)
-            .filter(dsl_user_id.eq(user))
+            .filter(profiles::user_id.eq(user))
             .execute(connection)
             .await
             .map_err(|error| {
@@ -198,7 +199,6 @@ pub struct UpdateProfile {
     pub bio: Option<String>,
     pub avatar_url: Option<String>,
     pub fitness_goal: Option<FitnessGoal>,
-    pub updated_at: Option<NaiveDateTime>,
 }
 
 #[derive(Debug, Clone, Insertable, Serialize, Deserialize, Validate)]

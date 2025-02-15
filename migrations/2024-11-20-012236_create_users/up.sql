@@ -29,9 +29,9 @@ CREATE TYPE FitnessGoal AS ENUM (
     'strength'
 );
 
--- Users: Users will be able to create an account
+-- Users: User Accounts
 CREATE TABLE users (
-    "id" UUID PRIMARY KEY DEFAULT (gen_random_uuid()),
+    "user_id" UUID PRIMARY KEY DEFAULT (gen_random_uuid()),
     "username" VARCHAR(255) UNIQUE NOT NULL,
     "password" VARCHAR(255) UNIQUE NOT NULL,
     "password_updated_at" TIMESTAMP NOT NULL DEFAULT (now()),
@@ -40,10 +40,10 @@ CREATE TABLE users (
     "ip_address" VARCHAR(255) NOT NULL
 );
 
--- Profile: Users will be able to create a profile
+-- Profile: User Profiles
 CREATE TABLE profiles (
-    "id" SERIAL PRIMARY KEY,
-    "user_id" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    "profile_id" SERIAL PRIMARY KEY,
+    "user_id" UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     "first_name" VARCHAR(255) NOT NULL,
     "last_name" VARCHAR(255) NOT NULL,
     "email" VARCHAR(255) UNIQUE NOT NULL,
@@ -60,3 +60,15 @@ CREATE TABLE profiles (
     "created_at" TIMESTAMP NOT NULL DEFAULT now(),
     "updated_at" TIMESTAMP NOT NULL DEFAULT now()
 );
+
+CREATE FUNCTION modify_updated_at() RETURNS TRIGGER
+LANGUAGE PLPGSQL AS
+$$
+BEGIN
+   NEW.updated_at := now();
+   RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER update_timestamp BEFORE UPDATE ON profiles
+FOR EACH ROW EXECUTE PROCEDURE modify_updated_at();

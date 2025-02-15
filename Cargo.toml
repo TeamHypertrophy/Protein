@@ -9,8 +9,11 @@ build = "build.rs"
 [dependencies]
 # -- Base API Requirement
 rocket = { version = "0.5.1", features = ["json", "uuid"] }
-rocket-client-addr = {git = "https://github.com/guenhter/rocket-client-addr", version = "*"}
-rocket-governor = {version = "0.2.0-rc.4", features = ["logger", "limit_info"]}
+rocket-client-addr = { git = "https://github.com/guenhter/rocket-client-addr", version = "*" }
+rocket-governor = { version = "0.2.0-rc.4", features = [
+    "logger",
+    "limit_info",
+] }
 rocket_prometheus = "0.10.1"
 # -- Diesel Requirements (Database)
 diesel = { version = "2.2.7", features = [
@@ -29,6 +32,7 @@ diesel-async = { version = "0.5.2", features = [
 diesel_migrations = { version = "2.2.0" }
 # -- Async
 tokio = { version = "1.43.0", features = ["full"] }
+tokio-cron-scheduler = {version = "0.13.0", features = ["signal"]}
 # -- Serialization
 serde = { version = "1.0.217", features = ["derive"] }
 uuid = { version = "1.13.1", features = ["fast-rng"] }
@@ -38,10 +42,10 @@ validator = { version = "0.20.0", features = ["derive"] }
 # -- Passwords
 rust-argon2 = "2.1"
 # -- .env
-dotenvy = "0.15"
+dotenvy = "0.15.7"
 # -- Tracing
 tracing = "0.1.41"
-tracing-subscriber = "0.3.19"
+tracing-subscriber = {version = "0.3.19", features = ["env-filter"]}
 tracing-appender = "0.2.3"
 # -- Redis
 fred = { version = "10.0.4", features = ["serde-json", "i-keys"] }
@@ -51,7 +55,12 @@ sysinfo = "0.33.1"
 ## -- Sentry
 rocket-sentry = "0.18.0"
 ## -- Emailing
-lettre = { version = "0.11", features = ["tokio1", "tokio1-native-tls", "tracing", "serde"]}
+lettre = { version = "0.11", features = [
+    "tokio1",
+    "tokio1-native-tls",
+    "tracing",
+    "serde",
+] }
 
 [build-dependencies]
 shadow-rs = { version = "0.38.1", features = ["metadata"] }

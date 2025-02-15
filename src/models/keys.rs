@@ -21,7 +21,7 @@ use crate::{
     db::DatabaseConnection,
     models::user::User,
     responders::ProteinError,
-    schema::{api_keys, api_keys::dsl::*},
+    schema::{api_keys, api_keys::dsl::{user_id, api_key, quota, revoked_reason, status, is_developer_key}},
 };
 
 // APIKey Model
@@ -37,11 +37,12 @@ use crate::{
     Clone,
     PartialEq,
 )]
+#[diesel(primary_key(key_id))]
 #[diesel(table_name = api_keys)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(belongs_to(User))]
 pub struct APIKey {
-    pub id: i32,
+    pub key_id: i32,
     pub user_id: Uuid,
     pub api_key: Uuid,
     pub created_at: NaiveDateTime,
@@ -65,7 +66,6 @@ pub enum Status {
 #[diesel(table_name = api_keys)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct UpdateAPIKey {
-    pub updated_at: Option<NaiveDateTime>,
     pub expires_at: Option<NaiveDateTime>,
     pub is_developer_key: Option<bool>,
     pub revoked_reason: Option<String>,
@@ -144,7 +144,7 @@ impl APIKey {
         connection: &mut DatabaseConnection,
     ) -> Result<APIKey, ProteinError> {
         diesel::insert_into(api_keys::table)
-            .values((user_id.eq(user.id), is_developer_key.eq(is_dev)))
+            .values((user_id.eq(user.user_id), is_developer_key.eq(is_dev)))
             .get_result(connection)
             .await
             .map_err(|error| {
@@ -176,10 +176,7 @@ impl APIKey {
     ) -> Result<(), ProteinError> {
         diesel::update(api_keys::table)
             .filter(api_key.eq(key))
-            .set((
-                updated_at.eq(chrono::Utc::now().naive_utc()),
-                quota.eq(original + 1),
-            ))
+            .set(quota.eq(original + 1))
             .execute(connection)
             .await
             .map(|_| ())

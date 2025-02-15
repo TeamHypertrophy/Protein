@@ -9,8 +9,6 @@ ______          _       _
         Made with ❤️
 */
 
-use std::env;
-
 use rocket::{tokio, State};
 use diesel_async::{
     async_connection_wrapper::AsyncConnectionWrapper,
@@ -18,7 +16,6 @@ use diesel_async::{
     pooled_connection::{deadpool, deadpool::Pool, AsyncDieselConnectionManager},
 };
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use dotenvy::dotenv;
 
 use crate::{constants::POSTGRES_POOL_SIZE, responders::ProteinError};
 
@@ -51,12 +48,9 @@ pub type DatabasePool = Pool<AsyncPgConnection>;
 /// * Failed to run migrations
 /// * Database is unreachable
 pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::Error>> {
-    // Load .env
-    dotenv()?;
-
     // Get Database URL
     let database_url: String =
-        env::var("DATABASE_URL").expect("[!] DATABASE_URL Environment Variable Must Be Set");
+        std::env::var("DATABASE_URL").expect("[!] DATABASE_URL Environment Variable Must Be Set");
 
     // Create Manager
     let manager: AsyncDieselConnectionManager<AsyncPgConnection> =

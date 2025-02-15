@@ -22,7 +22,7 @@ use crate::{
     responders::ProteinError,
     schema::{
         workouts,
-        workouts::dsl::{id as dsl_id, user_id as dsl_user_id},
+        workouts::dsl::{user_id, workout_id},
     },
 };
 
@@ -47,11 +47,12 @@ pub enum Difficulty {
     Insertable,
     Associations,
 )]
+#[diesel(primary_key(workout_id))]
 #[diesel(table_name = workouts)]
 #[diesel(belongs_to(User))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Workout {
-    pub id: Uuid,
+    pub workout_id: Uuid,
     pub name: String,
     pub description: String,
     pub duration: i32,
@@ -65,12 +66,12 @@ pub struct Workout {
 impl Workout {
     pub async fn find(
         user: &User,
-        workout_id: Uuid,
+        id: Uuid,
         connection: &mut DatabaseConnection,
     ) -> Result<Workout, ProteinError> {
         Workout::belonging_to(user)
             .select(Workout::as_select())
-            .filter(dsl_id.eq(workout_id))
+            .filter(workout_id.eq(id))
             .first(connection)
             .await
             .map_err(|error| {
@@ -95,7 +96,7 @@ impl Workout {
         connection: &mut DatabaseConnection,
     ) -> Result<Vec<Workout>, ProteinError> {
         workouts::table
-            .filter(dsl_user_id.eq(user))
+            .filter(user_id.eq(user))
             .select(Workout::as_select())
             .load(connection)
             .await
@@ -107,13 +108,13 @@ impl Workout {
 
     pub async fn update(
         user: Uuid,
-        workout_id: Uuid,
+        id: Uuid,
         data: UpdateWorkout,
         connection: &mut DatabaseConnection,
     ) -> Result<Workout, ProteinError> {
         diesel::update(workouts::table)
-            .filter(dsl_user_id.eq(user))
-            .filter(dsl_id.eq(workout_id))
+            .filter(user_id.eq(user))
+            .filter(workout_id.eq(id))
             .set(&data)
             .get_result::<Workout>(connection)
             .await
@@ -125,12 +126,12 @@ impl Workout {
 
     pub async fn delete(
         user: Uuid,
-        workout_id: Uuid,
+        id: Uuid,
         connection: &mut DatabaseConnection,
     ) -> Result<usize, ProteinError> {
         diesel::delete(workouts::table)
-            .filter(dsl_user_id.eq(user))
-            .filter(dsl_id.eq(workout_id))
+            .filter(user_id.eq(user))
+            .filter(workout_id.eq(id))
             .execute(connection)
             .await
             .map_err(|error| {
@@ -164,7 +165,6 @@ pub struct UpdateWorkout {
     pub duration: Option<i32>,
     pub difficulty: Option<Difficulty>,
     pub exercises: Option<Vec<Option<i64>>>,
-    pub updated_at: Option<NaiveDateTime>,
 }
 
 #[derive(AsChangeset)]

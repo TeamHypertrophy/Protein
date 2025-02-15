@@ -22,7 +22,7 @@ use crate::{
     responders::ProteinError,
     schema::{
         workout_plans,
-        workout_plans::dsl::{id as dsl_id, user_id as dsl_user_id},
+        workout_plans::dsl::{user_id, plan_id},
     },
 };
 
@@ -47,11 +47,12 @@ pub enum WorkoutInterval {
     Insertable,
     Associations,
 )]
+#[diesel(primary_key(plan_id))]
 #[diesel(table_name = workout_plans)]
 #[diesel(belongs_to(User))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct WorkoutPlan {
-    pub id: Uuid,
+    pub plan_id: Uuid,
     pub user_id: Uuid,
     pub name: String,
     pub description: String,
@@ -68,12 +69,12 @@ pub struct WorkoutPlan {
 impl WorkoutPlan {
     pub async fn find(
         user: &User,
-        workout_id: Uuid,
+        plan: Uuid,
         connection: &mut DatabaseConnection,
     ) -> Result<WorkoutPlan, ProteinError> {
         WorkoutPlan::belonging_to(user)
             .select(WorkoutPlan::as_select())
-            .filter(dsl_id.eq(workout_id))
+            .filter(plan_id.eq(plan_id))
             .first(connection)
             .await
             .map_err(|error| {
@@ -100,7 +101,7 @@ impl WorkoutPlan {
         connection: &mut DatabaseConnection,
     ) -> Result<Vec<WorkoutPlan>, ProteinError> {
         workout_plans::table
-            .filter(dsl_user_id.eq(user))
+            .filter(user_id.eq(user))
             .select(WorkoutPlan::as_select())
             .load(connection)
             .await
@@ -112,13 +113,13 @@ impl WorkoutPlan {
 
     pub async fn update(
         user: Uuid,
-        plan_id: Uuid,
+        plan: Uuid,
         data: UpdateWorkoutPlan,
         connection: &mut DatabaseConnection,
     ) -> Result<WorkoutPlan, ProteinError> {
         diesel::update(workout_plans::table)
-            .filter(dsl_user_id.eq(user))
-            .filter(dsl_id.eq(plan_id))
+            .filter(user_id.eq(user))
+            .filter(plan_id.eq(plan))
             .set(&data)
             .get_result::<WorkoutPlan>(connection)
             .await
@@ -130,12 +131,12 @@ impl WorkoutPlan {
 
     pub async fn delete(
         user: Uuid,
-        plan_id: Uuid,
+        plan: Uuid,
         connection: &mut DatabaseConnection,
     ) -> Result<usize, ProteinError> {
         diesel::delete(workout_plans::table)
-            .filter(dsl_user_id.eq(user))
-            .filter(dsl_id.eq(plan_id))
+            .filter(user_id.eq(user))
+            .filter(plan_id.eq(plan))
             .execute(connection)
             .await
             .map_err(|error| {
@@ -167,7 +168,6 @@ pub struct UpdateWorkoutPlan {
     pub name: Option<String>,
     pub description: Option<String>,
     pub workouts: Option<Vec<Option<Uuid>>>,
-    pub updated_at: Option<NaiveDateTime>,
     pub start_time: Option<NaiveDateTime>,
     pub repeats: Option<WorkoutInterval>,
     pub goal: Option<FitnessGoal>,

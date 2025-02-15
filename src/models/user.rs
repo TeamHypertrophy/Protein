@@ -19,7 +19,7 @@ use chrono::NaiveDateTime;
 use crate::{
     db::DatabaseConnection,
     responders::ProteinError,
-    schema::{users, users::dsl::*},
+    schema::{users, users::dsl::{user_id, username, password, password_updated_at, created_at, role, ip_address}},
 };
 
 // User Model
@@ -35,10 +35,11 @@ use crate::{
     AsChangeset,
     Identifiable,
 )]
+#[diesel(primary_key(user_id))]
 #[diesel(table_name = users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
-    pub id: Uuid,
+    pub user_id: Uuid,
     pub username: String,
     pub password: String,
     pub password_updated_at: NaiveDateTime,
@@ -69,6 +70,15 @@ pub struct UpdateUser {
     pub ip_address: Option<String>,
 }
 
+#[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
+#[diesel(table_name = users)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct NewUser {
+    pub username: String,
+    pub password: String,
+    pub ip_address: String,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct Password {
     pub old_password: String,
@@ -85,12 +95,9 @@ pub enum Role {
 }
 
 impl User {
-    pub async fn find(
-        user_id: Uuid,
-        connection: &mut DatabaseConnection,
-    ) -> Result<User, ProteinError> {
+    pub async fn find(id: Uuid, connection: &mut DatabaseConnection) -> Result<User, ProteinError> {
         users::table
-            .find(user_id)
+            .find(id)
             .select(User::as_select())
             .first(connection)
             .await
@@ -142,10 +149,10 @@ impl User {
     }
 
     pub async fn delete(
-        user_id: Uuid,
+        id: Uuid,
         connection: &mut DatabaseConnection,
     ) -> Result<usize, ProteinError> {
-        diesel::delete(users::table.filter(id.eq(user_id)))
+        diesel::delete(users::table.filter(user_id.eq(id)))
             .execute(connection)
             .await
             .map_err(|error| {
@@ -155,12 +162,12 @@ impl User {
     }
 
     pub async fn update(
-        user_id: Uuid,
+        id: Uuid,
         data: UpdateUser,
         connection: &mut DatabaseConnection,
     ) -> Result<User, ProteinError> {
         diesel::update(users::table)
-            .filter(id.eq(user_id))
+            .filter(user_id.eq(id))
             .set(&data)
             .get_result::<User>(connection)
             .await
@@ -185,12 +192,12 @@ impl User {
     }
 
     pub async fn update_password(
-        user_id: Uuid,
+        id: Uuid,
         new_password: &String,
         connection: &mut DatabaseConnection,
     ) -> Result<User, ProteinError> {
         diesel::update(users::table)
-            .filter(id.eq(user_id))
+            .filter(user_id.eq(id))
             .set((
                 password.eq(new_password),
                 password_updated_at.eq(chrono::Utc::now().naive_utc()),
@@ -202,14 +209,4 @@ impl User {
                 ProteinError::Database(error.to_string())
             })
     }
-}
-// New User Model
-#[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
-#[diesel(table_name = users)]
-#[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct NewUser {
-    pub username: String,
-    pub password: String,
-    pub role: Role,
-    pub ip_address: String,
 }

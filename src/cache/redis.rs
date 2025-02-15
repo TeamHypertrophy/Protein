@@ -9,25 +9,22 @@ ______          _       _
         Made with ❤️
 */
 
-use std::{env, time::Duration};
+use std::time::Duration;
 
 use rocket::{
     serde::{json, json::Value, Deserialize, Serialize},
     State,
 };
 use fred::{prelude::*, types::config::UnresponsiveConfig};
-use dotenvy::dotenv;
 
 use crate::{constants::CACHE_EXPIRATION_TIME, responders::ProteinError};
 
 pub type RedisPool = Pool;
 
 pub async fn create_redis_pool() -> Result<Pool, Error> {
-    // Load .env
-    dotenv().ok();
-
     // Get Redis URI
-    let redis_uri = env::var("REDIS_URI").expect("[!] REDIS_URI Environment Variable Must Be Set");
+    let redis_uri =
+        std::env::var("REDIS_URI").expect("[!] REDIS_URI Environment Variable Must Be Set");
 
     // Create Redis Config
     let config = Config::from_url(&redis_uri).unwrap();

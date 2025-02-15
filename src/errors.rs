@@ -22,6 +22,7 @@ pub fn default(status: Status, request: &Request) -> Value {
         {
             "status": status.code,
             "path": request.uri(),
+            "method": request.method(),
             "message": "[!!] Error in Protein Service"
         }
     )
@@ -34,6 +35,7 @@ pub fn not_found(status: Status, request: &Request) -> Value {
         {
             "status": status.code,
             "path": request.uri(),
+            "method": request.method(),
             "message": "[!!] Requested Path was Not Found"
         }
     )
@@ -46,6 +48,7 @@ pub fn internal_server_error(status: Status, request: &Request) -> Value {
         {
             "status": status.code,
             "path": request.uri(),
+            "method": request.method(),
             "message": "[!!] There was an Internal Server Issue!"
         }
     )
@@ -58,6 +61,7 @@ pub fn unprocessable_entity(status: Status, request: &Request) -> Value {
         {
             "status": status.code,
             "path": request.uri(),
+            "method": request.method(),
             "message": "[!!] Unprocessable Entity",
             "notes": "The request was well-formed but was unable to be followed due to semantic/parsing errors."
         }

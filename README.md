@@ -12,8 +12,6 @@ This is `Protein`, the Rust API that is used to Serve `Hypertrophy`, A Fully Fea
 
 ## Prerequisites 🧑‍💻
 
-- [Vistual Studio Code Insiders](https://code.visualstudio.com/docs/?dv=win&build=insiders)
-- [HTTPie](https://httpie.io/desktop)
 - [Redis](https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/install-redis-on-windows/)
 - [PostgreSQL 17](https://www.postgresql.org/download/windows/)
 - [Rust](https://www.rust-lang.org/tools/install)
@@ -55,6 +53,23 @@ Building with docker is *so* simple!
     ```
 
 4. Rename `example.env` -> `.env` and Fill Out Variables
+
+    ```env
+    DATABASE_URL - PostgreSQL URI, usually postgresql://username:password@host:port/database_name
+
+    ROCKET_SENTRY_DSN - The Link To Where rocket-sentry can send panic!() logs to
+
+    REDIS_URI - Redis URI, follows same schema as DATABASE_URL
+
+    PASSWORD_SALT - Unique Password Salt For User Authentication
+
+    SMTP_USER - User That Will Be Displayed
+    SMTP_USERNAME - Host Username Configured
+    SMTP_PASSWORD - Host Password Configured
+    SMTP_SERVER - SMTP Server
+
+    APP_ENV - development, production or staging
+    ```
 
 5. Install and Setup Diesel
 

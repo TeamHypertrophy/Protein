@@ -19,7 +19,7 @@ use crate::{
     db::DatabaseConnection,
     models::user::User,
     responders::ProteinError,
-    schema::{sleep_logs, sleep_logs::dsl::*},
+    schema::{sleep_logs, sleep_logs::dsl::{user_id, log_id}},
 };
 
 // Nutrition Sleep Logs
@@ -36,11 +36,12 @@ use crate::{
     Insertable,
     Associations,
 )]
+#[diesel(primary_key(log_id))]
 #[diesel(table_name = sleep_logs)]
 #[diesel(belongs_to(User))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct SleepLog {
-    id: i32,
+    log_id: i32,
     user_id: Uuid,
     beginning: NaiveDateTime,
     end: NaiveDateTime,
@@ -51,12 +52,12 @@ pub struct SleepLog {
 impl SleepLog {
     pub async fn find(
         user: Uuid,
-        log_id: i32,
+        id: i32,
         connection: &mut DatabaseConnection,
     ) -> Result<SleepLog, ProteinError> {
         sleep_logs::table
             .filter(user_id.eq(user))
-            .filter(id.eq(log_id))
+            .filter(log_id.eq(log_id))
             .select(SleepLog::as_select())
             .first(connection)
             .await
@@ -94,13 +95,13 @@ impl SleepLog {
 
     pub async fn update(
         user: Uuid,
-        log_id: i32,
+        id: i32,
         data: UpdateSleepLog,
         connection: &mut DatabaseConnection,
     ) -> Result<SleepLog, ProteinError> {
         diesel::update(sleep_logs::table)
             .filter(user_id.eq(user))
-            .filter(id.eq(log_id))
+            .filter(log_id.eq(id))
             .set(&data)
             .get_result::<SleepLog>(connection)
             .await
@@ -112,12 +113,12 @@ impl SleepLog {
 
     pub async fn delete(
         user: Uuid,
-        log_id: i32,
+        id: i32,
         connection: &mut DatabaseConnection,
     ) -> Result<usize, ProteinError> {
         diesel::delete(sleep_logs::table)
             .filter(user_id.eq(user))
-            .filter(id.eq(log_id))
+            .filter(log_id.eq(id))
             .execute(connection)
             .await
             .map_err(|error| {
@@ -149,7 +150,6 @@ pub struct UpdateSleepLog {
     pub beginning: Option<NaiveDateTime>,
     pub end: Option<NaiveDateTime>,
     pub amount: Option<i32>,
-    pub updated_at: Option<NaiveDateTime>,
 }
 
 #[derive(AsChangeset)]

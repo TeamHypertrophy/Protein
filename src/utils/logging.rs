@@ -15,7 +15,7 @@ use tracing_appender::{
     non_blocking::WorkerGuard,
     rolling::{RollingFileAppender, Rotation},
 };
-use tracing_subscriber::{fmt, fmt::format::FmtSpan, prelude::*};
+use tracing_subscriber::{filter::EnvFilter, fmt, fmt::format::FmtSpan, prelude::*};
 
 pub fn setup_logging() -> Result<(WorkerGuard, ()), Box<dyn std::error::Error>> {
     // Build Path for Logs Directory
@@ -30,19 +30,21 @@ pub fn setup_logging() -> Result<(WorkerGuard, ()), Box<dyn std::error::Error>> 
 
     let (non_blocking_appender, guard) = tracing_appender::non_blocking(appender);
 
+    let the_env_filter =
+        EnvFilter::try_from_default_env().unwrap_or_else(|_| "warn,info,protein=debug".into());
+
     // Separate Layers for File and Terminal Logging
     let file_layer = fmt::layer()
         .with_writer(non_blocking_appender)
         .with_ansi(false)
-        .with_file(true)
-        .with_thread_ids(true)
         .with_thread_names(true)
         .with_span_events(FmtSpan::CLOSE);
 
     let terminal_layer = fmt::layer()
         .with_ansi(true)
         .without_time()
-        .with_span_events(FmtSpan::CLOSE);
+        .with_span_events(FmtSpan::CLOSE)
+        .with_filter(the_env_filter);
 
     // Register Layers
     tracing_subscriber::registry()
