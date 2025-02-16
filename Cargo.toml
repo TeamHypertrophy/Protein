@@ -31,11 +31,12 @@ diesel-async = { version = "0.5.2", features = [
 diesel_migrations = { version = "2.2.0" }
 # -- Async
 tokio = { version = "1.43.0", features = ["rt", "macros"] }
-tokio-cron-scheduler = {version = "0.13.0", features = ["signal"]}
+tokio-cron-scheduler = {version = "0.13.0", features = ["signal", "english"]}
 # -- Serialization
 serde = { version = "1.0.217", features = ["derive"] }
 uuid = { version = "1.13.1", features = ["fast-rng"] }
 chrono = { version = "0.4.39", features = ["serde"] }
+user-agent-parser = {version = "0.3.6", features = ["rocket"]}
 # -- Validation
 validator = { version = "0.20.0", features = ["derive"] }
 # -- Passwords
@@ -63,3 +64,6 @@ lettre = { version = "0.11", features = [
 
 [build-dependencies]
 shadow-rs = { version = "0.38.1", features = ["metadata"] }
+
+[workspace.metadata.typos]
+files.extend-exclude = ["regexes.yaml"]

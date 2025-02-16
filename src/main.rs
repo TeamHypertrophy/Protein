@@ -13,11 +13,13 @@ ______          _       _
 #[macro_use]
 extern crate rocket;
 
-// Vendor Dependencies
-use sysinfo::System;
-use tokio_cron_scheduler::{Job, JobScheduler};
+// Password Hashing
 extern crate argon2;
 
+// Vendor Dependencies
+use tokio_cron_scheduler::{Job, JobScheduler};
+use user_agent_parser::UserAgentParser;
+use sysinfo::System;
 // Schema File
 mod schema;
 
@@ -113,6 +115,18 @@ async fn protein() -> _ {
         }
     };
 
+    // User Agent Parser
+    let user_agent_parser = match UserAgentParser::from_path("regexes.yaml") {
+        Ok(parser) => {
+            tracing::info!("[+] ✅ User Agent Parser Initialized!");
+            parser
+        }
+        Err(e) => {
+            tracing::error!("[-] ❌ Error Initializing User Agent Parser: {:?}", e);
+            std::process::exit(1)
+        }
+    };
+
     // Job Scheduler
     let scheduler = match JobScheduler::new().await {
         Ok(mut scheduler) => {
@@ -128,7 +142,7 @@ async fn protein() -> _ {
 
             let database = pool.clone();
 
-            let job = match Job::new_async("1/10 * * * * *", move |_uuid, _l| {
+            let job = match Job::new_async("every day", move |_uuid, _l| {
                 Box::pin({
                     let db = database.clone();
                     async move {
@@ -182,6 +196,7 @@ async fn protein() -> _ {
         .manage(email)
         .manage(system)
         .manage(scheduler)
+        .manage(user_agent_parser)
         .attach(prometheus.clone())
         .attach(fairings::cors::Cors)
         .attach(fairings::logging::Logging)

@@ -15,6 +15,8 @@ use rocket::{
     Request,
 };
 
+use crate::constants::*;
+
 // Default Catcher
 #[catch(default)]
 pub fn default(status: Status, request: &Request) -> Value {
@@ -23,7 +25,7 @@ pub fn default(status: Status, request: &Request) -> Value {
             "status": status.code,
             "path": request.uri(),
             "method": request.method(),
-            "message": "[!!] Error in Protein Service"
+            "message": DEFAULT_ERROR_MESSAGE
         }
     )
 }
@@ -36,7 +38,7 @@ pub fn not_found(status: Status, request: &Request) -> Value {
             "status": status.code,
             "path": request.uri(),
             "method": request.method(),
-            "message": "[!!] Requested Path was Not Found"
+            "message": NOT_FOUND_ERROR_MESSAGE
         }
     )
 }
@@ -49,7 +51,7 @@ pub fn internal_server_error(status: Status, request: &Request) -> Value {
             "status": status.code,
             "path": request.uri(),
             "method": request.method(),
-            "message": "[!!] There was an Internal Server Issue!"
+            "message": INTERNAL_SERVER_ERROR_MESSAGE
         }
     )
 }
@@ -62,8 +64,8 @@ pub fn unprocessable_entity(status: Status, request: &Request) -> Value {
             "status": status.code,
             "path": request.uri(),
             "method": request.method(),
-            "message": "[!!] Unprocessable Entity",
-            "notes": "The request was well-formed but was unable to be followed due to semantic/parsing errors."
+            "message": UNPROCESSABLE_ENTITY_MESSAGE,
+            "notes": UNPROCESSABLE_ENTITY_NOTE
         }
     )
 }

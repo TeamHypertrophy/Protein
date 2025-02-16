@@ -9,10 +9,29 @@ ______          _       _
         Made with ❤️
 */
 
-pub const CACHE_EXPIRATION_TIME: i64 = 900; // 15 minutes
+// Requests
 pub const RATE_LIMIT_PER: u32 = 30u32; // 30 requests per minnute
-pub const POSTGRES_POOL_SIZE: usize = 10; // 10 Concurrent Postgres Connections
-pub const API_QUOTA_LIMIT: i32 = 3000; // 5000 Requests per API Key
+
+// Redis
+pub const CACHE_EXPIRATION_TIME: i64 = 900; // 15 minutes
 pub const PONG: &str = "PONG"; // Redis PONG Response
-pub const MASTER_API_KEY: &str = "16114308-8693-4fdf-9a98-e40065067ebe"; // This is a temporary API Key that I am creating for the Master User, will be
-                                                                         // removed when prod releases.
+
+// PostgreSQL
+pub const POSTGRES_POOL_SIZE: usize = 10; // 10 Concurrent Postgres Connections
+
+// API
+pub const MASTER_API_KEY: &str = "16114308-8693-4fdf-9a98-e40065067ebe";
+pub const API_QUOTA_LIMIT: i32 = 3000; // 5000 Requests per API Key
+
+// Error Messages
+pub const DEFAULT_ERROR_MESSAGE: &str = "[!!] Error in Protein Service";
+pub const NOT_FOUND_ERROR_MESSAGE: &str = "[!!] Requested Path was Not Found";
+pub const INTERNAL_SERVER_ERROR_MESSAGE: &str = "[!!] There was an Internal Server Issue!";
+pub const UNPROCESSABLE_ENTITY_MESSAGE: &str = "[!!] This Request Has An Unprocessable Entity";
+pub const UNPROCESSABLE_ENTITY_NOTE: &str =
+    "The request was well-formed but was unable to be followed due to semantic/parsing errors.";
+
+// Logging
+pub const TERMINAL_FILTER: &str = "warn,info,protein=debug";
+pub const LOG_FILE: &str = "[Protein].log";
+pub const LOG_PATH: &str = "./logs/";

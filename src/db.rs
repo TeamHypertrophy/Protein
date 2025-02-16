@@ -94,7 +94,7 @@ pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::
 ///
 /// # Example
 /// ```
-/// let connection = get_connection(pool).await?;
+/// let connection = db::get_connection(pool).await?;
 /// let users = User::all(&mut connection).await?;
 /// ```
 ///

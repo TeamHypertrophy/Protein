@@ -17,21 +17,22 @@ use tracing_appender::{
 };
 use tracing_subscriber::{filter::EnvFilter, fmt, fmt::format::FmtSpan, prelude::*};
 
+use crate::constants::*;
+
 pub fn setup_logging() -> Result<(WorkerGuard, ()), Box<dyn std::error::Error>> {
     // Build Path for Logs Directory
-    let path = Path::new("./logs/");
+    let path = Path::new(LOG_PATH);
 
     // This Creates a Log File that Rotates Daily
     let appender: RollingFileAppender = RollingFileAppender::builder()
         .rotation(Rotation::DAILY)
-        .filename_suffix("[Protein].log")
+        .filename_suffix(LOG_FILE)
         .build(path)
-        .expect("[!] Error Building Log Files");
+        .expect("[!] Error Building Log File");
 
     let (non_blocking_appender, guard) = tracing_appender::non_blocking(appender);
 
-    let the_env_filter =
-        EnvFilter::try_from_default_env().unwrap_or_else(|_| "warn,info,protein=debug".into());
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| TERMINAL_FILTER.into());
 
     // Separate Layers for File and Terminal Logging
     let file_layer = fmt::layer()
@@ -44,7 +45,7 @@ pub fn setup_logging() -> Result<(WorkerGuard, ()), Box<dyn std::error::Error>> 
         .with_ansi(true)
         .without_time()
         .with_span_events(FmtSpan::CLOSE)
-        .with_filter(the_env_filter);
+        .with_filter(filter);
 
     // Register Layers
     tracing_subscriber::registry()

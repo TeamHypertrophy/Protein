@@ -11,6 +11,7 @@ ______          _       _
 
 // Rocket
 use rocket_client_addr::ClientRealAddr;
+use user_agent_parser::OS;
 use rocket::{
     get, post,
     response::status,
@@ -282,6 +283,7 @@ pub async fn forgot_password_email(
     _r: RateLimit<'_>,
     mailer: &State<Mailer>,
     pool: &State<DatabasePool>,
+    os: OS<'_>,
     ip: &ClientRealAddr,
     data: Json<ForgotPassword>,
 ) -> Result<status::Accepted<Value>, ProteinError> {
@@ -290,6 +292,13 @@ pub async fn forgot_password_email(
 
     // Get Current IP Address
     let ip_address: String = ip.get_ipv4_string().unwrap();
+
+    // Get Current User Agent OS
+    let device = format!(
+        "{} {}",
+        os.name.unwrap_or_else(|| "_".to_owned().into()),
+        os.major.unwrap_or_else(|| "_".to_owned().into())
+    );
 
     // Get User Profile
     let profile = Profile::find_by_email(data.email.clone(), connection).await?;
@@ -301,7 +310,7 @@ pub async fn forgot_password_email(
     User::update_password(profile.user_id, &hashed_password, connection).await?;
 
     // Send Email To User
-    email::send_email(mailer, &profile, "[Security] Your Password Has Been Reset", format!("Hello {}! \n\nThis Email Serves As Confirmation That Your Password Has Been Successfully Reset.\n\nNew Password: {}\n\n\nIf You Did NOT Request This, Please Ignore This Email\nRequest IP Address: {}", profile.first_name, data.password, ip_address)).await?;
+    email::send_email(mailer, &profile, "[Security] Your Password Has Been Reset", format!("Hello {}! \n\nThis Email Serves As Confirmation That Your Password Has Been Successfully Reset.\n\nNew Password: {}\n\n\nIf You Did NOT Request This, Please Ignore This Email\nRequest IP Address: {}\nDevice: {}", profile.first_name, data.password, ip_address, device)).await?;
 
     // API Response
     Ok(status::Accepted(json!({

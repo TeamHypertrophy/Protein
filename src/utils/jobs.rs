@@ -20,6 +20,7 @@ use crate::{
 };
 
 pub async fn verify_api_keys(pool: &DatabasePool) -> Result<(), Box<dyn std::error::Error>> {
+    tracing::info!("[+] ⏰ Beginning API Key Verification Job");
     // Get Database Connection
     let connection = &mut pool.get().await?;
 
@@ -27,5 +28,6 @@ pub async fn verify_api_keys(pool: &DatabasePool) -> Result<(), Box<dyn std::err
     let keys = APIKey::all(connection).await.unwrap();
 
     // TODO: Implement API Key Verification
+    tracing::info!("[+] ⏰ API Key Verification Completed");
     Ok(())
 }
