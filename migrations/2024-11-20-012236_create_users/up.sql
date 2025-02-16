@@ -36,6 +36,7 @@ CREATE TABLE users (
     "password" VARCHAR(255) UNIQUE NOT NULL,
     "password_updated_at" TIMESTAMP NOT NULL DEFAULT (now()),
     "created_at" TIMESTAMP NOT NULL DEFAULT (now()),
+    "updated_at" TIMESTAMP NOT NULL DEFAULT (now()),
     "role" Role NOT NULL DEFAULT ('user'),
     "ip_address" VARCHAR(255) NOT NULL
 );
@@ -69,6 +70,9 @@ BEGIN
    RETURN NEW;
 END;
 $$;
+
+CREATE TRIGGER update_timestamp BEFORE UPDATE ON users
+FOR EACH ROW EXECUTE PROCEDURE modify_updated_at();
 
 CREATE TRIGGER update_timestamp BEFORE UPDATE ON profiles
 FOR EACH ROW EXECUTE PROCEDURE modify_updated_at();

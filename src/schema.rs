@@ -199,6 +199,7 @@ diesel::table! {
         password -> Varchar,
         password_updated_at -> Timestamp,
         created_at -> Timestamp,
+        updated_at -> Timestamp,
         role -> Role,
         #[max_length = 255]
         ip_address -> Varchar,

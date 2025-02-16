@@ -47,6 +47,7 @@ pub struct User {
     pub password: String,
     pub password_updated_at: NaiveDateTime,
     pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
     pub role: Role,
     pub ip_address: String,
 }
