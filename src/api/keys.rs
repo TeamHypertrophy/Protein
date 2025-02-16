@@ -23,7 +23,7 @@ use crate::{
     auth::{key::API, rate_limit::RateLimit},
     db,
     db::DatabasePool,
-    models::keys::{APIKey, RevokeKey, UpdateAPIKey},
+    models::keys::{APIKey, RevokeKey, UpdateAPIKey, UpdateRole},
     responders::ProteinError,
 };
 
@@ -111,6 +111,21 @@ pub async fn revoke(
     let connection = &mut db::get_connection(pool).await?;
 
     let result = APIKey::revoke(api_key, reason.into_inner(), connection).await?;
+
+    Ok(Json(result))
+}
+
+#[post("/change-role/<api_key>", format = "application/json", data = "<role>")]
+pub async fn change_role(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DatabasePool>,
+    api_key: Uuid,
+    role: Json<UpdateRole>,
+) -> Result<Json<APIKey>, ProteinError> {
+    let connection = &mut db::get_connection(pool).await?;
+
+    let result = APIKey::change_role(api_key, role.into_inner(), connection).await?;
 
     Ok(Json(result))
 }

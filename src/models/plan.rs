@@ -22,7 +22,7 @@ use crate::{
     responders::ProteinError,
     schema::{
         workout_plans,
-        workout_plans::dsl::{user_id, plan_id},
+        workout_plans::dsl::{plan_id, user_id},
     },
 };
 
@@ -74,7 +74,7 @@ impl WorkoutPlan {
     ) -> Result<WorkoutPlan, ProteinError> {
         WorkoutPlan::belonging_to(user)
             .select(WorkoutPlan::as_select())
-            .filter(plan_id.eq(plan_id))
+            .filter(plan_id.eq(plan))
             .first(connection)
             .await
             .map_err(|error| {

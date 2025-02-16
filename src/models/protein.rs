@@ -19,7 +19,10 @@ use crate::{
     db::DatabaseConnection,
     models::user::User,
     responders::ProteinError,
-    schema::{protein_logs, protein_logs::dsl::{user_id, log_id}},
+    schema::{
+        protein_logs,
+        protein_logs::dsl::{log_id, user_id},
+    },
 };
 
 // Nutrition Protein Logs

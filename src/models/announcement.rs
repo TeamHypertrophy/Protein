@@ -18,7 +18,10 @@ use chrono::NaiveDateTime;
 use crate::{
     db::DatabaseConnection,
     responders::ProteinError,
-    schema::{trainer_announcements, trainer_announcements::dsl::{trainer_id, announcement_id}},
+    schema::{
+        trainer_announcements,
+        trainer_announcements::dsl::{announcement_id, trainer_id},
+    },
 };
 
 #[derive(

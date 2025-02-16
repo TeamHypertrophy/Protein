@@ -19,9 +19,12 @@ use chrono::NaiveDateTime;
 use crate::{
     constants::API_QUOTA_LIMIT,
     db::DatabaseConnection,
-    models::user::User,
+    models::user::{Role, User},
     responders::ProteinError,
-    schema::{api_keys, api_keys::dsl::{user_id, api_key, quota, revoked_reason, status, is_developer_key}},
+    schema::{
+        api_keys,
+        api_keys::dsl::{api_key, quota, revoked_reason, role, status, user_id},
+    },
 };
 
 // APIKey Model
@@ -48,7 +51,7 @@ pub struct APIKey {
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
     pub expires_at: NaiveDateTime,
-    pub is_developer_key: bool,
+    pub role: Role,
     pub revoked_reason: String,
     pub status: Status,
     pub quota: i32,
@@ -67,7 +70,7 @@ pub enum Status {
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct UpdateAPIKey {
     pub expires_at: Option<NaiveDateTime>,
-    pub is_developer_key: Option<bool>,
+    pub role: Option<Role>,
     pub revoked_reason: Option<String>,
     pub status: Option<Status>,
     pub quota: Option<i32>,
@@ -76,6 +79,11 @@ pub struct UpdateAPIKey {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RevokeKey {
     pub revoked_reason: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct UpdateRole {
+    pub role: Role,
 }
 
 impl APIKey {
@@ -140,11 +148,10 @@ impl APIKey {
 
     pub async fn generate(
         user: &User,
-        is_dev: bool,
         connection: &mut DatabaseConnection,
     ) -> Result<APIKey, ProteinError> {
         diesel::insert_into(api_keys::table)
-            .values((user_id.eq(user.user_id), is_developer_key.eq(is_dev)))
+            .values(user_id.eq(user.user_id))
             .get_result(connection)
             .await
             .map_err(|error| {
@@ -161,6 +168,22 @@ impl APIKey {
         diesel::update(api_keys::table)
             .filter(api_key.eq(key))
             .set(&data)
+            .get_result::<APIKey>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn change_role(
+        key: Uuid,
+        data: UpdateRole,
+        connection: &mut DatabaseConnection,
+    ) -> Result<APIKey, ProteinError> {
+        diesel::update(api_keys::table)
+            .filter(api_key.eq(key))
+            .set(role.eq(data.role))
             .get_result::<APIKey>(connection)
             .await
             .map_err(|error| {
@@ -267,7 +290,10 @@ impl APIKey {
 
         // Most importantly, Compare API_KEY Header to Actual API Key, As well as
         // checking for developer key/admin
-        if (verified.api_key == key && verified.user_id == user.id) || verified.is_developer_key {
+        if (verified.api_key == key && verified.user_id == user.user_id)
+            || verified.role == Role::Admin
+            || verified.role == Role::Developer
+        {
             APIKey::increment(key, verified.quota, &mut connection).await?;
 
             return Ok(true);

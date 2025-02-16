@@ -63,7 +63,7 @@ impl Exercise {
         connection: &mut DatabaseConnection,
     ) -> Result<Exercise, ProteinError> {
         exercises::table
-            .find(exercise_id)
+            .find(id)
             .select(Exercise::as_select())
             .first(connection)
             .await

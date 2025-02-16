@@ -9,13 +9,13 @@ ______          _       _
         Made with ❤️
 */
 
+use uuid::Uuid;
 use rocket::{
     get, post,
     response::status,
     serde::json::{json, Json, Value},
     State,
 };
-use uuid::Uuid;
 
 use crate::{
     auth::{key::API, rate_limit::RateLimit},
@@ -33,7 +33,7 @@ pub async fn get(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
-    trainer_id: Uuid,
+    trainer_id: i32,
 ) -> Result<Json<Trainer>, ProteinError> {
     let connection = &mut db::get_connection(pool).await?;
 
@@ -59,7 +59,7 @@ pub async fn all(
 pub async fn update(
     _r: RateLimit<'_>,
     pool: &State<DatabasePool>,
-    trainer_id: Uuid,
+    trainer_id: i32,
     data: Json<UpdateTrainer>,
 ) -> Result<Json<Trainer>, ProteinError> {
     let connection = &mut db::get_connection(pool).await?;
@@ -88,7 +88,7 @@ pub async fn delete(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
-    trainer_id: Uuid,
+    trainer_id: i32,
 ) -> Result<status::Accepted<Value>, ProteinError> {
     let connection = &mut db::get_connection(pool).await?;
 

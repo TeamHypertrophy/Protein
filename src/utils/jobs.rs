@@ -13,8 +13,6 @@ ______          _       _
 // Current Jobs:
 // 1. Check If An API Key Expired and Renew It (verify if quota => 0)
 
-use tokio_cron_scheduler::{Job, JobScheduler};
-
 use crate::{
     constants::API_QUOTA_LIMIT,
     db::DatabasePool,
@@ -22,15 +20,12 @@ use crate::{
 };
 
 pub async fn verify_api_keys(pool: &DatabasePool) -> Result<(), Box<dyn std::error::Error>> {
+    // Get Database Connection
     let connection = &mut pool.get().await?;
 
     // Get All API Keys
     let keys = APIKey::all(connection).await.unwrap();
 
-    // Iterate Over Each Key
-    for key in keys {
-        println!("[*] Verifying API Key: {}", key.api_key);
-    }
-
+    // TODO: Implement API Key Verification
     Ok(())
 }

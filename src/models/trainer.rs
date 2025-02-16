@@ -18,7 +18,7 @@ use chrono::NaiveDateTime;
 use crate::{
     db::DatabaseConnection,
     responders::ProteinError,
-    schema::{trainers, trainers::dsl::{trainer_id}},
+    schema::{trainers, trainers::dsl::trainer_id},
 };
 
 #[derive(
@@ -45,7 +45,7 @@ pub struct Trainer {
 
 impl Trainer {
     pub async fn find(
-        trainer: Uuid,
+        trainer: i32,
         connection: &mut DatabaseConnection,
     ) -> Result<Trainer, ProteinError> {
         trainers::table
@@ -70,7 +70,7 @@ impl Trainer {
     }
 
     pub async fn update(
-        trainer: Uuid,
+        trainer: i32,
         data: UpdateTrainer,
         connection: &mut DatabaseConnection,
     ) -> Result<Trainer, ProteinError> {
@@ -100,7 +100,7 @@ impl Trainer {
     }
 
     pub async fn delete(
-        trainer: Uuid,
+        trainer: i32,
         connection: &mut DatabaseConnection,
     ) -> Result<usize, ProteinError> {
         diesel::delete(trainers::table)
@@ -127,6 +127,6 @@ pub struct UpdateTrainer {
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
 pub struct NewTrainer {
-    pub trainer_id: Uuid,
+    pub user_id: Uuid,
     pub clients: Vec<Option<Uuid>>,
 }

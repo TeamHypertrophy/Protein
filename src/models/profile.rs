@@ -18,10 +18,7 @@ use chrono::NaiveDateTime;
 use rocket::serde::{Deserialize, Serialize};
 
 use crate::{
-    db::DatabaseConnection,
-    models::user::User,
-    responders::ProteinError,
-    schema::profiles,
+    db::DatabaseConnection, models::user::User, responders::ProteinError, schema::profiles,
 };
 
 // Profile Model

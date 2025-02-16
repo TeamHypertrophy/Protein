@@ -19,7 +19,10 @@ use chrono::NaiveDateTime;
 use crate::{
     db::DatabaseConnection,
     responders::ProteinError,
-    schema::{users, users::dsl::{user_id, username, password, password_updated_at, created_at, role, ip_address}},
+    schema::{
+        users,
+        users::dsl::{ip_address, password, password_updated_at, user_id, username},
+    },
 };
 
 // User Model

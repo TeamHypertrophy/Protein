@@ -13,7 +13,7 @@ CREATE TABLE api_keys (
     "created_at" TIMESTAMP NOT NULL DEFAULT (now()),
     "updated_at" TIMESTAMP NOT NULL DEFAULT (now()),
     "expires_at" TIMESTAMP NOT NULL DEFAULT (now() + interval '3 months'),
-    "is_developer_key" BOOLEAN NOT NULL DEFAULT (FALSE),
+    "role" Role NOT NULL DEFAULT ('user'),
     "revoked_reason" TEXT NOT NULL DEFAULT (''),
     "status" Status NOT NULL DEFAULT ('active'),
     "quota" INT NOT NULL DEFAULT (0)

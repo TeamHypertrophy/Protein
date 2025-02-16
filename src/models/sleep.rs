@@ -19,7 +19,10 @@ use crate::{
     db::DatabaseConnection,
     models::user::User,
     responders::ProteinError,
-    schema::{sleep_logs, sleep_logs::dsl::{user_id, log_id}},
+    schema::{
+        sleep_logs,
+        sleep_logs::dsl::{log_id, user_id},
+    },
 };
 
 // Nutrition Sleep Logs
@@ -57,7 +60,7 @@ impl SleepLog {
     ) -> Result<SleepLog, ProteinError> {
         sleep_logs::table
             .filter(user_id.eq(user))
-            .filter(log_id.eq(log_id))
+            .filter(log_id.eq(id))
             .select(SleepLog::as_select())
             .first(connection)
             .await

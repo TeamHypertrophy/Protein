@@ -126,14 +126,13 @@ async fn protein() -> _ {
                 })
             }));
 
-            let cloned = pool.clone();
+            let database = pool.clone();
 
-            let mut job = match Job::new_async("1/2 * * * * *", move |uuid, mut l| {
+            let job = match Job::new_async("1/10 * * * * *", move |_uuid, _l| {
                 Box::pin({
-                    let val = cloned.clone();
+                    let db = database.clone();
                     async move {
-                        println!("hello");
-                        utils::jobs::verify_api_keys(&val).await.unwrap();
+                        utils::jobs::verify_api_keys(&db).await.unwrap();
                     }
                 })
             }) {
@@ -224,9 +223,12 @@ async fn protein() -> _ {
             "/v1/keys",
             routes![
                 api::keys::get,
+                api::keys::user_all,
                 api::keys::all,
                 api::keys::update,
-                api::keys::delete
+                api::keys::delete,
+                api::keys::revoke,
+                api::keys::change_role
             ],
         )
         .mount(

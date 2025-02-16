@@ -48,6 +48,7 @@ pub mod sql_types {
 
 diesel::table! {
     use diesel::sql_types::*;
+    use super::sql_types::Role;
     use super::sql_types::Status;
 
     api_keys (key_id) {
@@ -57,7 +58,7 @@ diesel::table! {
         created_at -> Timestamp,
         updated_at -> Timestamp,
         expires_at -> Timestamp,
-        is_developer_key -> Bool,
+        role -> Role,
         revoked_reason -> Text,
         status -> Status,
         quota -> Int4,

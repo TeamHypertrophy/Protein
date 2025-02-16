@@ -9,7 +9,7 @@ ______          _       _
         Made with ❤️
 */
 
-use rocket::{tokio, State};
+use rocket::State;
 use diesel_async::{
     async_connection_wrapper::AsyncConnectionWrapper,
     pg::AsyncPgConnection,

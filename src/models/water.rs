@@ -19,7 +19,10 @@ use crate::{
     db::DatabaseConnection,
     models::user::User,
     responders::ProteinError,
-    schema::{water_logs, water_logs::dsl::{user_id, log_id}},
+    schema::{
+        water_logs,
+        water_logs::dsl::{log_id, user_id},
+    },
 };
 
 // Nutrition Water Logs

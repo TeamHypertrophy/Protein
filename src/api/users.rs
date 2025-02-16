@@ -30,7 +30,7 @@ use crate::{
     db::DatabasePool,
     models::keys::APIKey,
     models::profile::{ForgotPassword, Profile},
-    models::user::{LoginUser, NewUser, Password, ProteinUser, Role, UpdateUser, User},
+    models::user::{LoginUser, NewUser, Password, ProteinUser, UpdateUser, User},
     responders::ProteinError,
     utils::email,
     utils::email::Mailer,
@@ -107,8 +107,7 @@ pub async fn signup(
     let result = User::create(connection, new_user).await?;
 
     // Generate API Key
-    let api_key =
-        APIKey::generate(&result, matches!(result.role, Role::Developer), connection).await?;
+    let api_key = APIKey::generate(&result, connection).await?;
 
     // Set New User in Cache
     Cache::set(

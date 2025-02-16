@@ -15,7 +15,12 @@ use rocket::{
 };
 use uuid::Uuid;
 
-use crate::{constants::MASTER_API_KEY, db, models::keys::APIKey, responders::ProteinError};
+use crate::{
+    constants::MASTER_API_KEY,
+    db,
+    models::{keys::APIKey, user::Role},
+    responders::ProteinError,
+};
 
 pub struct API;
 
@@ -106,15 +111,13 @@ impl<'r> FromRequest<'r> for API {
 
         // 7. Now, we check if the API Key is a Developer Key or the Master Key
         if let Ok(key) = APIKey::find_by_key(api_key, connection).await {
-            if key.is_developer_key {
+            if key.role == Role::Admin || key.role == Role::Developer {
                 return Outcome::Success(API);
             }
-            
+
             // check if request.route not in list of routes that require admin/dev key
             return Outcome::Success(API);
-            
-        } else if api_key == master && std::env::var("APP_ENV").unwrap() == "development"
-        {
+        } else if api_key == master && std::env::var("APP_ENV").unwrap() == "development" {
             return Outcome::Success(API);
         } else {
             return Outcome::Error((
