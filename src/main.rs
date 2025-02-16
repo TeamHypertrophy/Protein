@@ -222,13 +222,13 @@ async fn protein() -> _ {
         .mount(
             "/v1/keys",
             routes![
-                api::keys::get,
-                api::keys::user_all,
+                api::keys::admin_get,
+                api::keys::admin_user_all,
                 api::keys::all,
-                api::keys::update,
-                api::keys::delete,
-                api::keys::revoke,
-                api::keys::change_role
+                api::keys::admin_update,
+                api::keys::admin_delete,
+                api::keys::admin_revoke,
+                api::keys::admin_change_role
             ],
         )
         .mount(
@@ -318,9 +318,9 @@ async fn protein() -> _ {
             routes![
                 api::exercises::get,
                 api::exercises::all,
-                api::exercises::update,
-                api::exercises::create,
-                api::exercises::delete
+                api::exercises::admin_update,
+                api::exercises::admin_create,
+                api::exercises::admin_delete
             ],
         )
         .mount(
@@ -330,7 +330,7 @@ async fn protein() -> _ {
                 api::profile::all,
                 api::profile::create,
                 api::profile::update,
-                api::profile::delete
+                api::profile::admin_delete
             ],
         )
         .mount(

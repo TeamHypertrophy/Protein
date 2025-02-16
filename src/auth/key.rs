@@ -109,13 +109,33 @@ impl<'r> FromRequest<'r> for API {
             }
         };
 
-        // 7. Now, we check if the API Key is a Developer Key or the Master Key
+        // 7. This Is The Final Check
+        // Checks:
+        // 1. If The Key Exists In The Database == Next Step
+        // 2. If The Key Is Admin/Developer == Access
+        // 3. Admin Route && Admin/Developer Key == Access
+        // 4. Master Key && Development Environment == Access
+        // 5. Normal API Access or Unauthorized
         if let Ok(key) = APIKey::find_by_key(api_key, connection).await {
             if key.role == Role::Admin || key.role == Role::Developer {
                 return Outcome::Success(API);
             }
 
-            // check if request.route not in list of routes that require admin/dev key
+            let route = request.route().unwrap();
+            let name = route.name.as_deref().unwrap();
+
+            // Admin Route Check
+            if name == "all" || name.contains("admin") {
+                if key.role == Role::Admin || key.role == Role::Developer {
+                    return Outcome::Success(API);
+                } else {
+                    return Outcome::Error((
+                        Status::Unauthorized,
+                        ProteinError::Authorization("Unauthorized API Key!".to_string()),
+                    ));
+                }
+            }
+
             return Outcome::Success(API);
         } else if api_key == master && std::env::var("APP_ENV").unwrap() == "development" {
             return Outcome::Success(API);

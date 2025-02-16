@@ -53,7 +53,7 @@ pub async fn all(
 }
 
 #[post("/update/<exercise_id>", format = "application/json", data = "<data>")]
-pub async fn update(
+pub async fn admin_update(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -73,7 +73,7 @@ pub async fn update(
 }
 
 #[post("/create", format = "application/json", data = "<data>")]
-pub async fn create(
+pub async fn admin_create(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -92,7 +92,7 @@ pub async fn create(
 }
 
 #[post("/delete/<exercise_id>", format = "application/json")]
-pub async fn delete(
+pub async fn admin_delete(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,

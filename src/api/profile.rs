@@ -108,7 +108,7 @@ pub async fn update(
 }
 
 #[get("/delete/<user_id>", format = "application/json")]
-pub async fn delete(
+pub async fn admin_delete(
     _r: RateLimit<'_>,
     _auth: API,
     user_id: Uuid,
