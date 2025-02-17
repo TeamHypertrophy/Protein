@@ -30,7 +30,7 @@ CREATE TYPE FitnessGoal AS ENUM (
 );
 
 -- Users: User Accounts
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     "user_id" UUID PRIMARY KEY DEFAULT (gen_random_uuid()),
     "username" VARCHAR(255) UNIQUE NOT NULL,
     "password" VARCHAR(255) UNIQUE NOT NULL,
@@ -42,7 +42,7 @@ CREATE TABLE users (
 );
 
 -- Profile: User Profiles
-CREATE TABLE profiles (
+CREATE TABLE IF NOT EXISTS profiles (
     "profile_id" SERIAL PRIMARY KEY,
     "user_id" UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     "first_name" VARCHAR(255) NOT NULL,

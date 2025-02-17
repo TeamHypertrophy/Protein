@@ -13,7 +13,7 @@ CREATE TYPE WorkoutInterval AS ENUM (
 );
 
 -- Workouts: Users will be able to create their own workouts
-CREATE TABLE workouts (
+CREATE TABLE IF NOT EXISTS workouts (
     "workout_id" UUID PRIMARY KEY DEFAULT (gen_random_uuid()),
     "name" VARCHAR(100) NOT NULL,
     "description" TEXT NOT NULL DEFAULT (''),
@@ -26,7 +26,7 @@ CREATE TABLE workouts (
 );
 
 -- Workout Plans: Users will be able to create workout plans
-CREATE TABLE workout_plans (
+CREATE TABLE IF NOT EXISTS workout_plans (
     "plan_id" UUID PRIMARY KEY DEFAULT (gen_random_uuid()),
     "user_id" UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     "name" VARCHAR(100) NOT NULL,
@@ -42,7 +42,7 @@ CREATE TABLE workout_plans (
 );
 
 -- Workout Logs: Users will be able to log their workouts
-CREATE TABLE workout_logs (
+CREATE TABLE IF NOT EXISTS workout_logs (
     "log_id" SERIAL PRIMARY KEY,
     "user_id" UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     "workout_id" UUID NOT NULL REFERENCES workouts(workout_id) ON DELETE CASCADE,

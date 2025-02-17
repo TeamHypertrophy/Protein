@@ -1,7 +1,7 @@
 -- Your SQL goes here
 
 -- Calories: Users will be able to log their calories
-CREATE TABLE calorie_logs (
+CREATE TABLE IF NOT EXISTS calorie_logs (
     "log_id" SERIAL PRIMARY KEY,
     "user_id" UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     "date" TIMESTAMP NOT NULL DEFAULT (now()),
@@ -10,7 +10,7 @@ CREATE TABLE calorie_logs (
 );
 
 -- Protein: Users will be able to log their protein
-CREATE TABLE protein_logs (
+CREATE TABLE IF NOT EXISTS protein_logs (
     "log_id" SERIAL PRIMARY KEY,
     "user_id" UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     "date" TIMESTAMP NOT NULL DEFAULT (now()),
@@ -19,7 +19,7 @@ CREATE TABLE protein_logs (
 );
 
 -- Sleep: Users will be able to log their sleep
-CREATE TABLE sleep_logs (
+CREATE TABLE IF NOT EXISTS sleep_logs (
     "log_id" SERIAL PRIMARY KEY,
     "user_id" UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     "beginning" TIMESTAMP NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE sleep_logs (
 );
 
 -- Water: Users will be able to log their water intake
-CREATE TABLE water_logs (
+CREATE TABLE IF NOT EXISTS water_logs (
     "log_id" SERIAL PRIMARY KEY,
     "user_id" UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     "date" TIMESTAMP NOT NULL DEFAULT (now()),

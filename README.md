@@ -101,7 +101,7 @@ Building with docker is *so* simple!
 
 - [x] Docker Containerization
 - [x] Code Modularization
-- [ ] `/workouts`, `/exercises` Routes
+- [x] `/workouts`, `/exercises` Routes
 - [ ] Automatic CI/CD
 
 > Most Roadmap Features are written in my own private [`obsidian`](https://obsidian.md/) notes :p
@@ -112,5 +112,6 @@ Building with docker is *so* simple!
 `├──`[`.github`](https://github.com/TeamHypertrophy/Protein/tree/dev/.github) — GitHub configuration including CI/CD workflows<br>
 `├──`[`.vscode`](https://github.com/TeamHypertrophy/Protein/tree/dev/.vscode) — VSCode Related Settings and Extension Recommendations<br>
 `├──`[`migrations`](https://github.com/TeamHypertrophy/Protein/tree/dev/migrations) — Database Migrations<br>
+`├──`[`prometheus`](https://github.com/TeamHypertrophy/Protein/tree/dev/prometheus) — Prometheus Configuration<br>
 `├──`[`scripts`](https://github.com/TeamHypertrophy/Protein/tree/dev/scripts) — Utility Scripts<br>
 `├──`[`src`](https://github.com/TeamHypertrophy/Protein/tree/dev/src) — Source Code<br>

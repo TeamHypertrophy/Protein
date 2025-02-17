@@ -1,7 +1,7 @@
 -- Your SQL goes here
 
 -- Trainer: Users will be able to follow trainers workout plans
-CREATE TABLE trainers (
+CREATE TABLE IF NOT EXISTS trainers (
     "trainer_id" SERIAL PRIMARY KEY,
     "user_id" UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     "clients" UUID[] NOT NULL DEFAULT ('{}'),
@@ -9,7 +9,7 @@ CREATE TABLE trainers (
 );
 
 -- Trainer Announcements: Trainers will be able to post announcements
-CREATE TABLE trainer_announcements (
+CREATE TABLE IF NOT EXISTS trainer_announcements (
     "announcement_id" SERIAL PRIMARY KEY,
     "trainer_id" UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     "title" VARCHAR(100) NOT NULL,

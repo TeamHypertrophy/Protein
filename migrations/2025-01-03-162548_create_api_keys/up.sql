@@ -6,7 +6,7 @@ CREATE TYPE Status AS ENUM (
 );
 
 -- API Keys: Main Source of Authentication
-CREATE TABLE api_keys (
+CREATE TABLE IF NOT EXISTS api_keys (
     "key_id" SERIAL PRIMARY KEY,
     "user_id" UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     "api_key" UUID NOT NULL UNIQUE DEFAULT (gen_random_uuid()),
