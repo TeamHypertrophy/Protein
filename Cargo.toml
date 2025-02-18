@@ -34,7 +34,7 @@ tokio = { version = "1.43.0", features = ["rt", "macros"] }
 tokio-cron-scheduler = {version = "0.13.0", features = ["signal", "english"]}
 # -- Serialization
 serde = { version = "1.0.217", features = ["derive"] }
-uuid = { version = "1.13.1", features = ["fast-rng"] }
+uuid = { version = "1.13.2", features = ["fast-rng"] }
 chrono = { version = "0.4.39", features = ["serde"] }
 user-agent-parser = {version = "0.3.6", features = ["rocket"]}
 # -- Validation
