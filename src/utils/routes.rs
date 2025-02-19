@@ -8,9 +8,8 @@ ______          _       _
 
         Made with ❤️
 */
+use std::sync::LazyLock;
 
-pub mod email;
-pub mod jobs;
-pub mod logging;
-pub mod password;
-pub mod routes;
+pub struct AdminRoutes<'a> {
+    pub routes: LazyLock<Vec<&'a str>>,
+}

@@ -30,7 +30,7 @@ use crate::{
 // Exercises
 
 #[get("/exercise/get/<exercise_id>?<user_id>", format = "application/json")]
-pub async fn exercise_get(
+pub async fn get_exercise_log(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -45,7 +45,7 @@ pub async fn exercise_get(
 }
 
 #[get("/exercise/all", format = "application/json")]
-pub async fn exercise_all(
+pub async fn get_all_exercise_logs(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -58,7 +58,7 @@ pub async fn exercise_all(
 }
 
 #[get("/exercise/user/all?<user_id>", format = "application/json")]
-pub async fn exercise_user_all(
+pub async fn get_all_user_exercise_logs(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -76,7 +76,7 @@ pub async fn exercise_user_all(
     format = "application/json",
     data = "<data>"
 )]
-pub async fn exercise_update(
+pub async fn update_exercise_log(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -96,7 +96,7 @@ pub async fn exercise_update(
     format = "application/json",
     data = "<data>"
 )]
-pub async fn exercise_create(
+pub async fn create_exercise_log(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -114,7 +114,7 @@ pub async fn exercise_create(
     "/exercise/delete/<exercise_id>?<user_id>",
     format = "application/json"
 )]
-pub async fn exercise_delete(
+pub async fn delete_exercise_log(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -133,7 +133,7 @@ pub async fn exercise_delete(
 // Workouts
 
 #[get("/workout/get/<workout_id>?<user_id>", format = "application/json")]
-pub async fn workout_get(
+pub async fn get_workout_log(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -148,7 +148,7 @@ pub async fn workout_get(
 }
 
 #[get("/workout/all", format = "application/json")]
-pub async fn workout_all(
+pub async fn get_all_workout_logs(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -161,7 +161,7 @@ pub async fn workout_all(
 }
 
 #[get("/workout/user/all?<user_id>", format = "application/json")]
-pub async fn workout_user_all(
+pub async fn get_all_user_workout_logs(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -179,7 +179,7 @@ pub async fn workout_user_all(
     format = "application/json",
     data = "<data>"
 )]
-pub async fn workout_update(
+pub async fn update_workout_log(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -199,7 +199,7 @@ pub async fn workout_update(
     format = "application/json",
     data = "<data>"
 )]
-pub async fn workout_create(
+pub async fn create_workout_log(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -214,7 +214,7 @@ pub async fn workout_create(
 }
 
 #[post("/workout/delete/<workout_id>?<user_id>", format = "application/json")]
-pub async fn workout_delete(
+pub async fn delete_workout_log(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,

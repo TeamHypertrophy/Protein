@@ -17,7 +17,7 @@ use rocket::{
 };
 use fred::{prelude::*, types::config::UnresponsiveConfig};
 
-use crate::{constants::CACHE_EXPIRATION_TIME, responders::ProteinError};
+use crate::{constants::*, responders::ProteinError};
 
 pub type RedisPool = Pool;
 
@@ -31,13 +31,13 @@ pub async fn create_redis_pool() -> Result<Pool, Error> {
 
     let pool = Builder::from_config(config)
         .with_connection_config(|config| {
-            config.connection_timeout = Duration::from_secs(10);
-            config.max_command_attempts = 5;
-            config.max_redirections = 5;
+            config.connection_timeout = Duration::from_secs(CACHE_CONNECTION_TIMEOUT);
+            config.max_command_attempts = CACHE_MAX_COMMAND_ATTEMPTS;
+            config.max_redirections = CACHE_MAX_REDIRECTIONS;
 
             config.unresponsive = UnresponsiveConfig {
-                max_timeout: Some(Duration::from_secs(10)),
-                interval: Duration::from_secs(3),
+                max_timeout: Some(Duration::from_secs(CACHE_UNRESPONSIVE_MAX_TIMEOUT)),
+                interval: Duration::from_secs(CACHE_UNRESPONSIVE_INTERVAL),
             };
 
             config.tcp = TcpConfig {
@@ -45,7 +45,12 @@ pub async fn create_redis_pool() -> Result<Pool, Error> {
                 ..Default::default()
             };
         })
-        .set_policy(ReconnectPolicy::new_exponential(0, 100, 30_000, 2))
+        .set_policy(ReconnectPolicy::new_exponential(
+            CACHE_RECONNECT_POLICY.0,
+            CACHE_RECONNECT_POLICY.1,
+            CACHE_RECONNECT_POLICY.2,
+            CACHE_RECONNECT_POLICY.3,
+        ))
         .build_pool(5)
         .expect("[!] Failed to Create Redis Pool");
 

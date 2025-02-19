@@ -19,7 +19,6 @@ pub mod plan;
 pub mod profile;
 pub mod protein;
 pub mod sleep;
-pub mod system;
 pub mod trainer;
 pub mod users;
 pub mod water;

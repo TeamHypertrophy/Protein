@@ -31,9 +31,10 @@ use crate::{
     responders::ProteinError,
 };
 
-#[get("/<user_id>", format = "application/json")]
-pub async fn get(
+#[get("/?<user_id>", format = "application/json")]
+pub async fn get_profile(
     _r: RateLimit<'_>,
+    _auth: API,
     user_id: Uuid,
     pool: &State<DatabasePool>,
 ) -> Result<Json<Profile>, ProteinError> {
@@ -50,7 +51,7 @@ pub async fn get(
 }
 
 #[get("/all", format = "application/json")]
-pub async fn all(
+pub async fn get_all_profiles(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -65,7 +66,7 @@ pub async fn all(
 }
 
 #[post("/create?<user_id>", format = "application/json", data = "<profile>")]
-pub async fn create(
+pub async fn create_profile(
     _r: RateLimit<'_>,
     _auth: API,
     user_id: Uuid,
@@ -88,7 +89,7 @@ pub async fn create(
 }
 
 #[post("/update?<user_id>", format = "application/json", data = "<profile>")]
-pub async fn update(
+pub async fn update_profile(
     _r: RateLimit<'_>,
     _auth: API,
     user_id: Uuid,
@@ -108,7 +109,7 @@ pub async fn update(
 }
 
 #[get("/delete/<user_id>", format = "application/json")]
-pub async fn admin_delete(
+pub async fn delete_profile(
     _r: RateLimit<'_>,
     _auth: API,
     user_id: Uuid,

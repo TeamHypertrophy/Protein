@@ -39,7 +39,7 @@ use crate::{
 };
 
 #[get("/?<user_id>", format = "application/json")]
-pub async fn get(
+pub async fn get_user(
     _r: RateLimit<'_>,
     _auth: API,
     user_id: Uuid,
@@ -70,7 +70,7 @@ pub async fn get(
 }
 
 #[get("/all", format = "application/json")]
-pub async fn all(
+pub async fn get_all_users(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -184,7 +184,7 @@ pub async fn login(
 }
 
 #[get("/delete?<user_id>", format = "application/json")]
-pub async fn delete(
+pub async fn delete_user(
     _r: RateLimit<'_>,
     _auth: API,
     user_id: Uuid,
@@ -204,7 +204,7 @@ pub async fn delete(
 }
 
 #[post("/update?<user_id>", format = "application/json", data = "<user>")]
-pub async fn update(
+pub async fn update_user(
     _r: RateLimit<'_>,
     _auth: API,
     user_id: Uuid,
@@ -236,7 +236,7 @@ pub async fn update(
     format = "application/json",
     data = "<data>"
 )]
-pub async fn update_password(
+pub async fn update_user_password(
     _r: RateLimit<'_>,
     _auth: API,
     user_id: Uuid,

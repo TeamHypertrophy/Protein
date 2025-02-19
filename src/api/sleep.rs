@@ -26,7 +26,7 @@ use crate::{
 };
 
 #[get("/get/<log_id>?<user_id>", format = "application/json")]
-pub async fn get(
+pub async fn get_sleep_log(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -41,7 +41,7 @@ pub async fn get(
 }
 
 #[get("/all", format = "application/json")]
-pub async fn all(
+pub async fn get_all_sleep_logs(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -54,7 +54,7 @@ pub async fn all(
 }
 
 #[get("/user/all?<user_id>", format = "application/json")]
-pub async fn user_all(
+pub async fn get_all_user_sleep_logs(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -72,7 +72,7 @@ pub async fn user_all(
     format = "application/json",
     data = "<log>"
 )]
-pub async fn update(
+pub async fn update_sleep_log(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -88,7 +88,7 @@ pub async fn update(
 }
 
 #[post("/create?<user_id>", format = "application/json", data = "<log>")]
-pub async fn create(
+pub async fn create_sleep_log(
     _r: RateLimit<'_>,
     user_id: Uuid,
     pool: &State<DatabasePool>,
@@ -102,7 +102,7 @@ pub async fn create(
 }
 
 #[post("/delete/<log_id>?<user_id>", format = "application/json")]
-pub async fn delete(
+pub async fn delete_sleep_log(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,

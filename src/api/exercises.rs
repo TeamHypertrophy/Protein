@@ -26,7 +26,7 @@ use crate::{
 };
 
 #[get("/get/<exercise_id>", format = "application/json")]
-pub async fn get(
+pub async fn get_exercise(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -40,7 +40,7 @@ pub async fn get(
 }
 
 #[get("/all", format = "application/json")]
-pub async fn all(
+pub async fn get_all_exercises(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -53,7 +53,7 @@ pub async fn all(
 }
 
 #[post("/update/<exercise_id>", format = "application/json", data = "<data>")]
-pub async fn admin_update(
+pub async fn update_exercise(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -73,7 +73,7 @@ pub async fn admin_update(
 }
 
 #[post("/create", format = "application/json", data = "<data>")]
-pub async fn admin_create(
+pub async fn create_exercise(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -92,7 +92,7 @@ pub async fn admin_create(
 }
 
 #[post("/delete/<exercise_id>", format = "application/json")]
-pub async fn admin_delete(
+pub async fn delete_exercise(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,

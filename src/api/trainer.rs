@@ -29,7 +29,7 @@ use crate::{
 };
 
 #[get("/get/<trainer_id>", format = "application/json")]
-pub async fn get(
+pub async fn get_trainer(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -43,7 +43,7 @@ pub async fn get(
 }
 
 #[get("/all", format = "application/json")]
-pub async fn all(
+pub async fn get_all_trainers(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -56,7 +56,7 @@ pub async fn all(
 }
 
 #[post("/update/<trainer_id>", format = "application/json", data = "<data>")]
-pub async fn update(
+pub async fn update_trainer(
     _r: RateLimit<'_>,
     pool: &State<DatabasePool>,
     trainer_id: i32,
@@ -70,7 +70,7 @@ pub async fn update(
 }
 
 #[post("/create", format = "application/json", data = "<data>")]
-pub async fn create(
+pub async fn create_trainer(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -84,7 +84,7 @@ pub async fn create(
 }
 
 #[post("/delete/<trainer_id>", format = "application/json")]
-pub async fn delete(
+pub async fn delete_trainer(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -118,7 +118,7 @@ pub async fn get_announcement(
 }
 
 #[get("/announcement/all", format = "application/json")]
-pub async fn all_announcements(
+pub async fn get_all_announcements(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -131,7 +131,7 @@ pub async fn all_announcements(
 }
 
 #[get("/announcement/all?<trainer_id>", format = "application/json")]
-pub async fn all_trainer_announcements(
+pub async fn get_all_trainer_announcements(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,

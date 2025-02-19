@@ -28,7 +28,7 @@ use crate::{
 };
 
 #[get("/get/<api_key>", format = "application/json")]
-pub async fn admin_get(
+pub async fn get_api_key(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -42,7 +42,7 @@ pub async fn admin_get(
 }
 
 #[get("/all", format = "application/json")]
-pub async fn all(
+pub async fn get_all_api_keys(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -54,8 +54,8 @@ pub async fn all(
     Ok(Json(api_keys))
 }
 
-#[get("/all/<user_id>", format = "application/json")]
-pub async fn admin_user_all(
+#[get("/all?<user_id>", format = "application/json")]
+pub async fn get_all_user_api_keys(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -69,7 +69,7 @@ pub async fn admin_user_all(
 }
 
 #[post("/update/<api_key>", format = "application/json", data = "<key>")]
-pub async fn admin_update(
+pub async fn update_api_key(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -84,7 +84,7 @@ pub async fn admin_update(
 }
 
 #[post("/delete/<api_key>", format = "application/json")]
-pub async fn admin_delete(
+pub async fn delete_api_key(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -101,7 +101,7 @@ pub async fn admin_delete(
 }
 
 #[post("/revoke/<api_key>", format = "application/json", data = "<reason>")]
-pub async fn admin_revoke(
+pub async fn revoke_api_key(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,
@@ -116,7 +116,7 @@ pub async fn admin_revoke(
 }
 
 #[post("/change-role/<api_key>", format = "application/json", data = "<role>")]
-pub async fn admin_change_role(
+pub async fn change_api_key_role(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DatabasePool>,

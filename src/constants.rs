@@ -14,6 +14,13 @@ pub const RATE_LIMIT_PER: u32 = 30u32; // 30 requests per minnute
 
 // Redis
 pub const CACHE_EXPIRATION_TIME: i64 = 900; // 15 minutes
+pub const CACHE_CONNECTION_TIMEOUT: u64 = 10;
+pub const CACHE_MAX_COMMAND_ATTEMPTS: u32 = 5;
+pub const CACHE_MAX_REDIRECTIONS: u32 = 5;
+pub const CACHE_UNRESPONSIVE_MAX_TIMEOUT: u64 = 10;
+pub const CACHE_UNRESPONSIVE_INTERVAL: u64 = 3;
+pub const CACHE_POOL_SIZE: usize = 5;
+pub const CACHE_RECONNECT_POLICY: (u32, u32, u32, u32) = (0, 100, 30_000, 2);
 pub const PONG: &str = "PONG"; // Redis PONG Response
 
 // PostgreSQL
@@ -35,3 +42,6 @@ pub const UNPROCESSABLE_ENTITY_NOTE: &str =
 pub const TERMINAL_FILTER: &str = "warn,info,protein=debug";
 pub const LOG_FILE: &str = "[Protein].log";
 pub const LOG_PATH: &str = "./logs/";
+
+// Jobs
+pub const API_KEY_JOB_INTERVAL: &str = "every day"; // must follow english-cron format

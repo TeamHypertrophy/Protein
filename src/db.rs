@@ -72,7 +72,7 @@ pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::
     let mut wrapper: AsyncConnectionWrapper<DatabaseConnection> =
         AsyncConnectionWrapper::from(connection);
 
-    tokio::task::spawn_blocking(move || {
+    rocket::tokio::task::spawn_blocking(move || {
         wrapper.run_pending_migrations(MIGRATIONS).unwrap();
     })
     .await?;

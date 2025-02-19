@@ -19,7 +19,7 @@ extern crate argon2;
 // Vendor Dependencies
 use tokio_cron_scheduler::{Job, JobScheduler};
 use user_agent_parser::UserAgentParser;
-use sysinfo::System;
+
 // Schema File
 mod schema;
 
@@ -49,12 +49,8 @@ pub mod utils;
 pub mod auth;
 pub mod responders;
 
-// Shadow
-shadow_rs::shadow!(build);
-
 // Launch Rocket Instance
 #[launch]
-#[tokio::main]
 async fn protein() -> _ {
     // Load Environment Variables
     match dotenvy::from_filename(".env") {
@@ -142,7 +138,7 @@ async fn protein() -> _ {
 
             let database = pool.clone();
 
-            let job = match Job::new_async("every day", move |_uuid, _l| {
+            let job = match Job::new_async(constants::API_KEY_JOB_INTERVAL, move |_uuid, _l| {
                 Box::pin({
                     let db = database.clone();
                     async move {
@@ -183,9 +179,6 @@ async fn protein() -> _ {
         }
     }
 
-    // System Information
-    let system: System = System::new_all();
-
     // Prometheus
     let prometheus = rocket_prometheus::PrometheusMetrics::new();
 
@@ -194,12 +187,54 @@ async fn protein() -> _ {
         .manage(pool)
         .manage(redis)
         .manage(email)
-        .manage(system)
         .manage(scheduler)
         .manage(user_agent_parser)
+        .manage(utils::routes::AdminRoutes {
+            routes: std::sync::LazyLock::new(|| {
+                vec![
+                    // Calorie Logs
+                    "get_all_calorie_logs",
+                    // Exercises
+                    "update_exercise",
+                    "create_exercise",
+                    "delete_exercise",
+                    // API Keys
+                    "get_api_key",
+                    "get_all_api_keys",
+                    "get_all_user_api_keys",
+                    "update_api_key",
+                    "create_api_key",
+                    "delete_api_key",
+                    "revoke_api_key",
+                    "change_api_key_role",
+                    // Exercise & Workout Logs
+                    "get_all_exercise_logs",
+                    "get_all_workout_logs",
+                    // Workout Plans
+                    "get_all_workout_plans",
+                    // Profile
+                    "get_all_profiles",
+                    "delete_profile",
+                    // Protein Logs
+                    "get_all_protein_logs",
+                    // Sleep Logs
+                    "get_all_sleep_logs",
+                    // Trainers
+                    "create_trainer",
+                    // Users
+                    "get_all_users",
+                    "forgot_password_email",
+                    // Water Logs
+                    "get_all_water_logs",
+                    // Workouts
+                    "get_all_workouts",
+                ]
+            }),
+        })
         .attach(prometheus.clone())
         .attach(fairings::cors::Cors)
         .attach(fairings::logging::Logging)
+        .attach(rocket_governor::LimitHeaderGen::default())
         .attach(rocket_sentry::RocketSentry::fairing())
         .attach(rocket::fairing::AdHoc::on_shutdown(
             "[!] Write Logs",
@@ -209,76 +244,67 @@ async fn protein() -> _ {
         .mount("/metrics", prometheus)
         .mount(
             "/health",
-            routes![api::health::redis, api::health::postgres],
-        )
-        .mount(
-            "/system",
-            routes![
-                api::system::rust,
-                api::system::package,
-                api::system::git,
-                api::system::system
-            ],
+            routes![api::health::ping_redis, api::health::ping_postgres],
         )
         .mount(
             "/v1/users",
             routes![
-                api::users::get,
+                api::users::get_user,
                 api::users::signup,
                 api::users::login,
-                api::users::update,
-                api::users::update_password,
+                api::users::update_user,
+                api::users::update_user_password,
                 api::users::forgot_password_email,
-                api::users::delete,
-                api::users::all,
+                api::users::delete_user,
+                api::users::get_all_users,
                 api::users::me
             ],
         )
         .mount(
             "/v1/keys",
             routes![
-                api::keys::admin_get,
-                api::keys::admin_user_all,
-                api::keys::all,
-                api::keys::admin_update,
-                api::keys::admin_delete,
-                api::keys::admin_revoke,
-                api::keys::admin_change_role
+                api::keys::get_api_key,
+                api::keys::get_all_api_keys,
+                api::keys::get_all_user_api_keys,
+                api::keys::update_api_key,
+                api::keys::delete_api_key,
+                api::keys::revoke_api_key,
+                api::keys::change_api_key_role
             ],
         )
         .mount(
             "/v1/workouts",
             routes![
-                api::workouts::get,
-                api::workouts::all,
-                api::workouts::user_all,
-                api::workouts::update,
-                api::workouts::create,
-                api::workouts::delete
+                api::workouts::get_workout,
+                api::workouts::get_all_workouts,
+                api::workouts::get_all_user_workouts,
+                api::workouts::update_workout,
+                api::workouts::create_workout,
+                api::workouts::delete_workout
             ],
         )
         .mount(
             "/v1/workout/plans",
             routes![
-                api::plan::get,
-                api::plan::all,
-                api::plan::user_all,
-                api::plan::update,
-                api::plan::create,
-                api::plan::delete
+                api::plan::get_workout_plan,
+                api::plan::get_all_workout_plans,
+                api::plan::get_all_user_workout_plans,
+                api::plan::update_workout_plan,
+                api::plan::create_workout_plan,
+                api::plan::delete_workout_plan
             ],
         )
         .mount(
             "/v1/trainers",
             routes![
-                api::trainer::get,
-                api::trainer::all,
-                api::trainer::update,
-                api::trainer::create,
-                api::trainer::delete,
+                api::trainer::get_trainer,
+                api::trainer::get_all_trainers,
+                api::trainer::update_trainer,
+                api::trainer::create_trainer,
+                api::trainer::delete_trainer,
                 api::trainer::get_announcement,
-                api::trainer::all_announcements,
-                api::trainer::all_trainer_announcements,
+                api::trainer::get_all_announcements,
+                api::trainer::get_all_trainer_announcements,
                 api::trainer::update_announcement,
                 api::trainer::create_announcement,
                 api::trainer::delete_announcement
@@ -287,82 +313,82 @@ async fn protein() -> _ {
         .mount(
             "/v1/calories",
             routes![
-                api::calories::get,
-                api::calories::all,
-                api::calories::user_all,
-                api::calories::update,
-                api::calories::create,
-                api::calories::delete
+                api::calories::get_calorie_log,
+                api::calories::get_all_calorie_logs,
+                api::calories::get_all_user_calorie_logs,
+                api::calories::update_calorie_log,
+                api::calories::create_calorie_log,
+                api::calories::delete_calorie_log
             ],
         )
         .mount(
             "/v1/protein",
             routes![
-                api::protein::get,
-                api::protein::all,
-                api::protein::user_all,
-                api::protein::update,
-                api::protein::create,
-                api::protein::delete
+                api::protein::get_protein_log,
+                api::protein::get_all_protein_logs,
+                api::protein::get_all_user_protein_logs,
+                api::protein::update_protein_log,
+                api::protein::create_protein_log,
+                api::protein::delete_protein_log
             ],
         )
         .mount(
             "/v1/sleep",
             routes![
-                api::sleep::get,
-                api::sleep::all,
-                api::sleep::user_all,
-                api::sleep::update,
-                api::sleep::create,
-                api::sleep::delete
+                api::sleep::get_sleep_log,
+                api::sleep::get_all_sleep_logs,
+                api::sleep::get_all_user_sleep_logs,
+                api::sleep::update_sleep_log,
+                api::sleep::create_sleep_log,
+                api::sleep::delete_sleep_log
             ],
         )
         .mount(
             "/v1/water",
             routes![
-                api::water::get,
-                api::water::all,
-                api::water::user_all,
-                api::water::update,
-                api::water::create,
-                api::water::delete
+                api::water::get_water_log,
+                api::water::get_all_water_logs,
+                api::water::get_all_user_water_logs,
+                api::water::update_water_log,
+                api::water::create_water_log,
+                api::water::delete_water_log
             ],
         )
         .mount(
             "/v1/exercises",
             routes![
-                api::exercises::get,
-                api::exercises::all,
-                api::exercises::admin_update,
-                api::exercises::admin_create,
-                api::exercises::admin_delete
+                api::exercises::get_exercise,
+                api::exercises::get_all_exercises,
+                api::exercises::update_exercise,
+                api::exercises::create_exercise,
+                api::exercises::delete_exercise
             ],
         )
         .mount(
             "/v1/profile",
             routes![
-                api::profile::get,
-                api::profile::all,
-                api::profile::create,
-                api::profile::update,
-                api::profile::admin_delete
+                api::profile::get_profile,
+                api::profile::get_all_profiles,
+                api::profile::create_profile,
+                api::profile::update_profile,
+                api::profile::delete_profile
             ],
         )
         .mount(
             "/v1/logs",
             routes![
-                api::logs::exercise_get,
-                api::logs::exercise_all,
-                api::logs::exercise_user_all,
-                api::logs::exercise_update,
-                api::logs::exercise_create,
-                api::logs::exercise_delete,
-                api::logs::workout_get,
-                api::logs::workout_all,
-                api::logs::workout_user_all,
-                api::logs::workout_update,
-                api::logs::workout_create,
-                api::logs::workout_delete
+                api::logs::get_exercise_log,
+                api::logs::get_all_exercise_logs,
+                api::logs::get_all_user_exercise_logs,
+                api::logs::update_exercise_log,
+                api::logs::create_exercise_log,
+                api::logs::delete_exercise_log,
+                api::logs::get_workout_log,
+                api::logs::get_all_workout_logs,
+                api::logs::get_all_user_workout_logs,
+                api::logs::update_workout_log,
+                api::logs::create_workout_log,
+                api::logs::delete_workout_log
             ],
         )
         .register(

@@ -25,7 +25,10 @@ use crate::{
 };
 
 #[get("/redis", format = "application/json")]
-pub async fn redis(_r: RateLimit<'_>, redis: &State<RedisPool>) -> Result<Value, ProteinError> {
+pub async fn ping_redis(
+    _r: RateLimit<'_>,
+    redis: &State<RedisPool>,
+) -> Result<Value, ProteinError> {
     // Run 'ping "PONG"'
     let ping: String = Cache::ping(redis, Some(PONG.to_owned())).await?;
 
@@ -42,7 +45,7 @@ pub async fn redis(_r: RateLimit<'_>, redis: &State<RedisPool>) -> Result<Value,
 }
 
 #[get("/postgres", format = "application/json")]
-pub async fn postgres(
+pub async fn ping_postgres(
     _r: RateLimit<'_>,
     pool: &State<DatabasePool>,
 ) -> Result<Value, ProteinError> {

@@ -20,6 +20,7 @@ use crate::{
     db,
     models::{keys::APIKey, user::Role},
     responders::ProteinError,
+    utils::routes::AdminRoutes,
 };
 
 pub struct API;
@@ -109,6 +110,10 @@ impl<'r> FromRequest<'r> for API {
             }
         };
 
+        if api_key == master && std::env::var("APP_ENV").unwrap() == "development" {
+            return Outcome::Success(API);
+        }
+
         // 7. This Is The Final Check
         // Checks:
         // 1. If The Key Exists In The Database == Next Step
@@ -122,10 +127,13 @@ impl<'r> FromRequest<'r> for API {
             }
 
             let route = request.route().unwrap();
+
             let name = route.name.as_deref().unwrap();
 
+            let routes = &request.rocket().state::<AdminRoutes>().unwrap().routes;
+
             // Admin Route Check
-            if name == "all" || name.contains("admin") {
+            if routes.contains(&name) {
                 if key.role == Role::Admin || key.role == Role::Developer {
                     return Outcome::Success(API);
                 } else {
@@ -136,8 +144,6 @@ impl<'r> FromRequest<'r> for API {
                 }
             }
 
-            return Outcome::Success(API);
-        } else if api_key == master && std::env::var("APP_ENV").unwrap() == "development" {
             return Outcome::Success(API);
         } else {
             return Outcome::Error((
