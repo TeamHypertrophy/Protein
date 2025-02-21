@@ -296,11 +296,11 @@ impl APIKey {
         {
             APIKey::increment(key, verified.quota, &mut connection).await?;
 
-            return Ok(true);
+            Ok(true)
         } else {
-            return Err(ProteinError::Authorization(
+            Err(ProteinError::Authorization(
                 "API Key Does Not Match!".to_string(),
-            ));
+            ))
         }
     }
 }

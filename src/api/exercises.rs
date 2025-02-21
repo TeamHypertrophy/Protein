@@ -39,6 +39,14 @@ pub async fn get_exercise(
     Ok(Json(exercise))
 }
 
+#[get("/search", format = "application/json")]
+pub async fn search_exercise(
+    _r: RateLimit<'_>,
+    _auth: API,
+) -> Result<Json<Exercise>, ProteinError> {
+    todo!()
+}
+
 #[get("/all", format = "application/json")]
 pub async fn get_all_exercises(
     _r: RateLimit<'_>,

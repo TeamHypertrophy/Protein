@@ -234,7 +234,7 @@ async fn protein() -> _ {
         .attach(prometheus.clone())
         .attach(fairings::cors::Cors)
         .attach(fairings::logging::Logging)
-        .attach(rocket_governor::LimitHeaderGen::default())
+        .attach(rocket_governor::LimitHeaderGen)
         .attach(rocket_sentry::RocketSentry::fairing())
         .attach(rocket::fairing::AdHoc::on_shutdown(
             "[!] Write Logs",

@@ -73,6 +73,10 @@ impl Exercise {
             })
     }
 
+    pub async fn search(connection: &mut DatabaseConnection) -> Result<Exercise, ProteinError> {
+        todo!()
+    }
+
     pub async fn all(connection: &mut DatabaseConnection) -> Result<Vec<Exercise>, ProteinError> {
         exercises::table
             .select(Exercise::as_select())
