@@ -129,59 +129,62 @@ impl<'r> FromRequest<'r> for API {
         // 2. If The Key Is Admin/Developer == Access
         // 3. Admin Route && Admin/Developer Key == Access
         // 5. Normal API Access or Unauthorized
-        if let Ok(key) = APIKey::find_by_key(api_key, connection).await {
-            if key.role == Role::Admin || key.role == Role::Developer {
-                return Outcome::Success(API);
-            }
-
-            let route = match request.route() {
-                Some(route) => route,
-                None => {
-                    return Outcome::Error((
-                        Status::InternalServerError,
-                        ProteinError::Internal("Failed Retrieving Route".to_string()),
-                    ));
-                }
-            };
-
-            let name = match route.name.as_deref() {
-                Some(name) => name,
-                None => {
-                    return Outcome::Error((
-                        Status::InternalServerError,
-                        ProteinError::Internal("Failed Retrieving Route Name".to_string()),
-                    ));
-                }
-            };
-
-            let routes = match request.rocket().state::<AdminRoutes>() {
-                Some(admin) => &admin.routes,
-                None => {
-                    return Outcome::Error((
-                        Status::InternalServerError,
-                        ProteinError::Internal("Failed Retrieving Admin Routes".to_string()),
-                    ));
-                }
-            };
-
-            // Admin Route Check
-            if routes.contains(&name) {
+        match APIKey::find_by_key(api_key, connection).await {
+            Ok(key) => {
                 if key.role == Role::Admin || key.role == Role::Developer {
                     return Outcome::Success(API);
-                } else {
-                    return Outcome::Error((
-                        Status::Unauthorized,
-                        ProteinError::Authorization("Unauthorized API Key!".to_string()),
-                    ));
                 }
-            }
 
-            return Outcome::Success(API);
-        } else {
-            return Outcome::Error((
-                Status::Unauthorized,
-                ProteinError::Authorization("Unauthorized API Key!".to_string()),
-            ));
+                let route = match request.route() {
+                    Some(route) => route,
+                    None => {
+                        return Outcome::Error((
+                            Status::InternalServerError,
+                            ProteinError::Internal("Failed Retrieving Route".to_string()),
+                        ));
+                    }
+                };
+
+                let name = match route.name.as_deref() {
+                    Some(name) => name,
+                    None => {
+                        return Outcome::Error((
+                            Status::InternalServerError,
+                            ProteinError::Internal("Failed Retrieving Route Name".to_string()),
+                        ));
+                    }
+                };
+
+                let routes = match request.rocket().state::<AdminRoutes>() {
+                    Some(admin) => &admin.routes,
+                    None => {
+                        return Outcome::Error((
+                            Status::InternalServerError,
+                            ProteinError::Internal("Failed Retrieving Admin Routes".to_string()),
+                        ));
+                    }
+                };
+
+                // Admin Route Check
+                if routes.contains(&name) {
+                    if key.role == Role::Admin || key.role == Role::Developer {
+                        return Outcome::Success(API);
+                    } else {
+                        return Outcome::Error((
+                            Status::Unauthorized,
+                            ProteinError::Authorization("Unauthorized API Key!".to_string()),
+                        ));
+                    }
+                }
+
+                return Outcome::Success(API);
+            }
+            _ => {
+                return Outcome::Error((
+                    Status::Unauthorized,
+                    ProteinError::Authorization("Unauthorized API Key!".to_string()),
+                ));
+            }
         }
     }
 }
