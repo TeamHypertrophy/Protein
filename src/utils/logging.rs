@@ -24,11 +24,14 @@ pub fn setup_logging() -> Result<(WorkerGuard, ()), Box<dyn std::error::Error>> 
     let path = Path::new(LOG_PATH);
 
     // This Creates a Log File that Rotates Daily
-    let appender: RollingFileAppender = RollingFileAppender::builder()
+    let appender: RollingFileAppender = match RollingFileAppender::builder()
         .rotation(Rotation::DAILY)
         .filename_suffix(LOG_FILE)
         .build(path)
-        .expect("[!] Error Building Log File");
+    {
+        Ok(appender) => appender,
+        Err(_) => panic!("[!] Error Building Rolling Log File"),
+    };
 
     let (non_blocking_appender, guard) = tracing_appender::non_blocking(appender);
 

@@ -57,10 +57,10 @@ pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::
         AsyncDieselConnectionManager::<AsyncPgConnection>::new(database_url);
 
     // Create Database Pool
-    let pool: DatabasePool = Pool::builder(manager)
-        .max_size(POSTGRES_POOL_SIZE)
-        .build()
-        .expect("[!] Could Not Create Database Pool");
+    let pool: DatabasePool = match Pool::builder(manager).max_size(POSTGRES_POOL_SIZE).build() {
+        Ok(pool) => pool,
+        Err(error) => panic!("[!] Could Not Create Database Pool: {}", error),
+    };
 
     // Define Migrations
     pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
@@ -72,8 +72,9 @@ pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::
     let mut wrapper: AsyncConnectionWrapper<DatabaseConnection> =
         AsyncConnectionWrapper::from(connection);
 
-    rocket::tokio::task::spawn_blocking(move || {
-        wrapper.run_pending_migrations(MIGRATIONS).unwrap();
+    rocket::tokio::task::spawn_blocking(move || match wrapper.run_pending_migrations(MIGRATIONS) {
+        Ok(_) => (),
+        Err(error) => panic!("[!] Failed Running Database Migrations: {}", error),
     })
     .await?;
 

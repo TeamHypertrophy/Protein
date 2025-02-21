@@ -58,12 +58,12 @@ pub async fn get_user(
         let user = User::find(user_id, connection).await?;
 
         // Set User in Cache
-        Cache::set(redis, "user", user_id.to_string(), Cache::serialize(&user)).await?;
+        Cache::set(redis, "user", user_id.to_string(), Cache::serialize(&user)?).await?;
 
         Ok(Json(user))
     } else {
         // Deserialize User
-        let user: User = Cache::deserialize(cache);
+        let user: User = Cache::deserialize(cache)?;
 
         Ok(Json(user))
     }
@@ -115,7 +115,7 @@ pub async fn signup(
         redis,
         "user",
         result.user_id.to_string(),
-        Cache::serialize(&result),
+        Cache::serialize(&result)?,
     )
     .await?;
 
@@ -124,7 +124,7 @@ pub async fn signup(
         redis,
         "api_key",
         api_key.api_key.to_string(),
-        Cache::serialize(&api_key),
+        Cache::serialize(&api_key)?,
     )
     .await?;
 
@@ -159,7 +159,7 @@ pub async fn login(
             redis,
             "user",
             result.user_id.to_string(),
-            Cache::serialize(&result),
+            Cache::serialize(&result)?,
         )
         .await?;
 
@@ -168,7 +168,7 @@ pub async fn login(
             redis,
             "api_key",
             api_key.api_key.to_string(),
-            Cache::serialize(&api_key),
+            Cache::serialize(&api_key)?,
         )
         .await?;
 
@@ -223,7 +223,7 @@ pub async fn update_user(
         redis,
         "user",
         user_id.to_string(),
-        Cache::serialize(&updated_user),
+        Cache::serialize(&updated_user)?,
     )
     .await?;
 
@@ -270,7 +270,7 @@ pub async fn update_user_password(
         redis,
         "user",
         user_id.to_string(),
-        Cache::serialize(&updated_user),
+        Cache::serialize(&updated_user)?,
     )
     .await?;
 
@@ -291,7 +291,10 @@ pub async fn forgot_password_email(
     let connection = &mut db::get_connection(pool).await?;
 
     // Get Current IP Address
-    let ip_address: String = ip.get_ipv4_string().unwrap();
+    let ip_address: String = match ip.get_ipv4_string() {
+        Some(addr) => addr,
+        None => String::from("unknown"),
+    };
 
     // Get Current User Agent OS
     let device = format!(
@@ -327,7 +330,10 @@ pub async fn me(
     pool: &State<DatabasePool>,
 ) -> Result<Json<Profile>, ProteinError> {
     // Get IP Address
-    let ip_address: String = ip.get_ipv4_string().unwrap();
+    let ip_address: String = match ip.get_ipv4_string() {
+        Some(addr) => addr,
+        None => String::from("unknown"),
+    };
 
     // Create Database Connection
     let connection = &mut db::get_connection(pool).await?;

@@ -18,7 +18,6 @@ use rocket::{
     serde::json,
 };
 use serde::Serialize;
-use validator::ValidationErrors;
 
 #[derive(Serialize)]
 pub struct ErrorResponse {
@@ -63,6 +62,25 @@ impl ProteinError {
 impl std::fmt::Display for ProteinError {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(fmt, "Error {}.", self.get_http_status())
+    }
+}
+
+impl std::error::Error for ProteinError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        None
+    }
+
+    fn description(&self) -> &str {
+        match self {
+            ProteinError::Internal(_) => "[!] Internal Server Error",
+            ProteinError::NotFound(_) => "[!] Data Not Found",
+            ProteinError::BadRequest(_) => "[!] Bad Request Formed",
+            ProteinError::Cache(_) => "[!] Cache Error",
+            ProteinError::Authorization(_) => "[!] Authorization Error",
+            ProteinError::Validation(_) => "[!] Validation Error",
+            ProteinError::Database(_) => "[!] Database Error",
+            ProteinError::Email(_) => "[!] Email Error",
+        }
     }
 }
 

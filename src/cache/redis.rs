@@ -27,9 +27,12 @@ pub async fn create_redis_pool() -> Result<Pool, Error> {
         std::env::var("REDIS_URI").expect("[!] REDIS_URI Environment Variable Must Be Set");
 
     // Create Redis Config
-    let config = Config::from_url(&redis_uri).unwrap();
+    let config = match Config::from_url(&redis_uri) {
+        Ok(config) => config,
+        Err(error) => panic!("[!] Failed To Create Redis Config: {}", error),
+    };
 
-    let pool = Builder::from_config(config)
+    let pool = match Builder::from_config(config)
         .with_connection_config(|config| {
             config.connection_timeout = Duration::from_secs(CACHE_CONNECTION_TIMEOUT);
             config.max_command_attempts = CACHE_MAX_COMMAND_ATTEMPTS;
@@ -51,13 +54,17 @@ pub async fn create_redis_pool() -> Result<Pool, Error> {
             CACHE_RECONNECT_POLICY.2,
             CACHE_RECONNECT_POLICY.3,
         ))
-        .build_pool(5)
-        .expect("[!] Failed to Create Redis Pool");
+        .build_pool(CACHE_POOL_SIZE)
+    {
+        Ok(pool) => pool,
+        Err(error) => panic!("[!] Failed to Create Redis Pool: {}", error),
+    };
 
     // Initialize Pool
-    pool.init()
-        .await
-        .expect("[!!] Failed to Initialize Redis Pool");
+    match pool.init().await {
+        Ok(_) => (),
+        Err(error) => panic!("[!!] Failed to Initialize Redis Pool: {}", error),
+    }
 
     Ok(pool)
 }
@@ -122,11 +129,11 @@ impl Cache {
         })
     }
 
-    pub fn serialize<T: Serialize>(data: &T) -> String {
-        json::to_string(data).unwrap()
+    pub fn serialize<T: Serialize>(data: &T) -> Result<String, ProteinError> {
+        json::to_string(data).map_err(|error| ProteinError::Cache(error.to_string()))
     }
 
-    pub fn deserialize<T: for<'de> Deserialize<'de>>(data: Value) -> T {
-        json::from_value(data).unwrap()
+    pub fn deserialize<T: for<'de> Deserialize<'de>>(data: Value) -> Result<T, ProteinError> {
+        json::from_value(data).map_err(|error| ProteinError::Cache(error.to_string()))
     }
 }

@@ -57,8 +57,8 @@ async fn protein() -> _ {
         Ok(_) => {
             tracing::info!("[+] ✅ Environment Variables Loaded!");
         }
-        Err(e) => {
-            tracing::error!("[-] ❌ Error Loading Environment Variables: {:?}", e);
+        Err(error) => {
+            tracing::error!("[-] ❌ Error Loading Environment Variables: {:?}", error);
             std::process::exit(1)
         }
     }
@@ -69,8 +69,8 @@ async fn protein() -> _ {
             tracing::info!("[+] ✅ Logging System Initialized!");
             (guard, ())
         }
-        Err(e) => {
-            tracing::error!("[-] ❌ Error Setting Up Logging: {:?}", e);
+        Err(error) => {
+            tracing::error!("[-] ❌ Error Setting Up Logging: {:?}", error);
             std::process::exit(1)
         }
     };
@@ -81,8 +81,8 @@ async fn protein() -> _ {
             tracing::info!("[+] ✅ Database Connection Established!");
             pool
         }
-        Err(e) => {
-            tracing::error!("[-] ❌ Error Connecting to Database: {:?}", e);
+        Err(error) => {
+            tracing::error!("[-] ❌ Error Connecting to Database: {:?}", error);
             std::process::exit(1)
         }
     };
@@ -93,8 +93,8 @@ async fn protein() -> _ {
             tracing::info!("[+] ✅ Redis Connection Established!");
             redis
         }
-        Err(e) => {
-            tracing::error!("[-] ❌ Error Connecting to Redis: {:?}", e);
+        Err(error) => {
+            tracing::error!("[-] ❌ Error Connecting to Redis: {:?}", error);
             std::process::exit(1)
         }
     };
@@ -105,8 +105,8 @@ async fn protein() -> _ {
             tracing::info!("[+] ✅ Email System Initialized!");
             email
         }
-        Err(e) => {
-            tracing::error!("[-] ❌ Error Setting Up Email System: {:?}", e);
+        Err(error) => {
+            tracing::error!("[-] ❌ Error Setting Up Email System: {:?}", error);
             std::process::exit(1)
         }
     };
@@ -117,8 +117,8 @@ async fn protein() -> _ {
             tracing::info!("[+] ✅ User Agent Parser Initialized!");
             parser
         }
-        Err(e) => {
-            tracing::error!("[-] ❌ Error Initializing User Agent Parser: {:?}", e);
+        Err(error) => {
+            tracing::error!("[-] ❌ Error Initializing User Agent Parser: {:?}", error);
             std::process::exit(1)
         }
     };
@@ -142,7 +142,13 @@ async fn protein() -> _ {
                 Box::pin({
                     let db = database.clone();
                     async move {
-                        utils::jobs::verify_api_keys(&db).await.unwrap();
+                        match utils::jobs::verify_api_keys(&db).await {
+                            Ok(_) => tracing::info!("[Scheduler] ✅ API Keys Verified!"),
+                            Err(error) => tracing::error!(
+                                "[Scheduler] ❌ Error Verifying API Keys: {:?}",
+                                error
+                            ),
+                        }
                     }
                 })
             }) {
@@ -150,31 +156,31 @@ async fn protein() -> _ {
                     tracing::info!("[Scheduler] ✅ Job Created!");
                     job
                 }
-                Err(e) => {
-                    tracing::error!("[Scheduler] ❌ Error Creating Job: {:?}", e);
+                Err(error) => {
+                    tracing::error!("[Scheduler] ❌ Error Creating Job: {:?}", error);
                     std::process::exit(1)
                 }
             };
 
             match scheduler.add(job).await {
                 Ok(_) => tracing::info!("[Scheduler] ✅ Job Added To Scheduler!"),
-                Err(e) => {
-                    tracing::error!("[Scheduler] ❌ Error Adding Job To Scheduler: {:?}", e);
+                Err(error) => {
+                    tracing::error!("[Scheduler] ❌ Error Adding Job To Scheduler: {:?}", error);
                     std::process::exit(1)
                 }
             }
             scheduler
         }
-        Err(e) => {
-            tracing::error!("[-] ❌ Error Setting Up Job Scheduler: {:?}", e);
+        Err(error) => {
+            tracing::error!("[-] ❌ Error Setting Up Job Scheduler: {:?}", error);
             std::process::exit(1)
         }
     };
 
     match scheduler.start().await {
         Ok(_) => tracing::info!("[Scheduler] ✅ Job Scheduler Started!"),
-        Err(e) => {
-            tracing::error!("[Scheduler] ❌ Error Starting Job Scheduler: {:?}", e);
+        Err(error) => {
+            tracing::error!("[Scheduler] ❌ Error Starting Job Scheduler: {:?}", error);
             std::process::exit(1)
         }
     }

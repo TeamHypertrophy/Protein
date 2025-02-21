@@ -25,7 +25,10 @@ pub async fn verify_api_keys(pool: &DatabasePool) -> Result<(), Box<dyn std::err
     let connection = &mut pool.get().await?;
 
     // Get All API Keys
-    let keys = APIKey::all(connection).await.unwrap();
+    let keys = match APIKey::all(connection).await {
+        Ok(keys) => keys,
+        Err(e) => return Err(Box::new(e)),
+    };
 
     // TODO: Implement API Key Verification
     tracing::info!("[+] ⏰ API Key Verification Completed");

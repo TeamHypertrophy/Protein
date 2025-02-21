@@ -34,10 +34,10 @@ pub async fn setup_email() -> Result<AsyncSmtpTransport<Tokio1Executor>, Box<dyn
     let credentials: Credentials = Credentials::new(username, password);
 
     // Create Mailer
-    let mailer: Mailer = AsyncSmtpTransport::<Tokio1Executor>::relay(server.as_str())
-        .unwrap()
-        .credentials(credentials)
-        .build();
+    let mailer: Mailer = match AsyncSmtpTransport::<Tokio1Executor>::relay(server.as_str()) {
+        Ok(transport) => transport.credentials(credentials).build(),
+        Err(error) => panic!("[!] Failed To Create Mailer: {:?}", error),
+    };
 
     // Mailer
     Ok(mailer)
@@ -73,8 +73,7 @@ pub async fn send_email(
         .from(from)
         .subject(subject)
         .body(body)
-        .map_err(|error| ProteinError::Email(format!("Error Building Email: {:?}", error)))
-        .unwrap();
+        .map_err(|error| ProteinError::Email(format!("Error Building Email: {:?}", error)))?;
 
     // Send Email
     mailer

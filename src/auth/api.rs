@@ -99,9 +99,19 @@ impl<'r> FromRequest<'r> for API {
             };
         }
 
+        let app_env = match std::env::var("APP_ENV") {
+            Ok(env) => env,
+            Err(_) => {
+                return Outcome::Error((
+                    Status::InternalServerError,
+                    ProteinError::Internal("Failed Retrieving APP_ENV".to_string()),
+                ))
+            }
+        };
+
         // 6. Retrieve The Master API Key From The Constants File
         if let Ok(master_key) = Uuid::parse_str(MASTER_API_KEY) {
-            if api_key == master_key && std::env::var("APP_ENV").unwrap() == "development" {
+            if api_key == master_key && app_env == "development" {
                 return Outcome::Success(API);
             } else {
                 return Outcome::Error((
