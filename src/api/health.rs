@@ -10,9 +10,8 @@ ______          _       _
 */
 
 use rocket::{
-    get,
-    serde::json::{json, Value},
-    State,
+    State, get,
+    serde::json::{Value, json},
 };
 
 use crate::{

@@ -13,9 +13,9 @@ use rocket::State;
 use diesel_async::{
     async_connection_wrapper::AsyncConnectionWrapper,
     pg::AsyncPgConnection,
-    pooled_connection::{deadpool, deadpool::Pool, AsyncDieselConnectionManager},
+    pooled_connection::{AsyncDieselConnectionManager, deadpool, deadpool::Pool},
 };
-use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 
 use crate::{constants::POSTGRES_POOL_SIZE, responders::ProteinError};
 

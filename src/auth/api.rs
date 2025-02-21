@@ -42,14 +42,14 @@ impl<'r> FromRequest<'r> for API {
                     return Outcome::Error((
                         Status::BadRequest,
                         ProteinError::Validation("Invalid API Key".to_string()),
-                    ))
+                    ));
                 }
             },
             None => {
                 return Outcome::Error((
                     Status::Unauthorized,
                     ProteinError::Authorization("No API Key Provided".to_string()),
-                ))
+                ));
             }
         };
 
@@ -60,7 +60,7 @@ impl<'r> FromRequest<'r> for API {
                 return Outcome::Error((
                     Status::InternalServerError,
                     ProteinError::Database("Failed to Retrieve Database Pool".to_string()),
-                ))
+                ));
             }
         };
 
@@ -71,7 +71,7 @@ impl<'r> FromRequest<'r> for API {
                 return Outcome::Error((
                     Status::InternalServerError,
                     ProteinError::Database("Failed to Retrieve Database Connection".to_string()),
-                ))
+                ));
             }
         };
 
@@ -105,7 +105,7 @@ impl<'r> FromRequest<'r> for API {
                 return Outcome::Error((
                     Status::InternalServerError,
                     ProteinError::Internal("Failed Retrieving APP_ENV".to_string()),
-                ))
+                ));
             }
         };
 
@@ -140,7 +140,7 @@ impl<'r> FromRequest<'r> for API {
                     return Outcome::Error((
                         Status::InternalServerError,
                         ProteinError::Internal("Failed Retrieving Route".to_string()),
-                    ))
+                    ));
                 }
             };
 
@@ -150,7 +150,7 @@ impl<'r> FromRequest<'r> for API {
                     return Outcome::Error((
                         Status::InternalServerError,
                         ProteinError::Internal("Failed Retrieving Route Name".to_string()),
-                    ))
+                    ));
                 }
             };
 
@@ -160,7 +160,7 @@ impl<'r> FromRequest<'r> for API {
                     return Outcome::Error((
                         Status::InternalServerError,
                         ProteinError::Internal("Failed Retrieving Admin Routes".to_string()),
-                    ))
+                    ));
                 }
             };
 

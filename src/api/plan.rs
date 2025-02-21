@@ -10,10 +10,9 @@ ______          _       _
 */
 
 use rocket::{
-    get, post,
+    State, get, post,
     response::status,
-    serde::json::{json, Json, Value},
-    State,
+    serde::json::{Json, Value, json},
 };
 use uuid::Uuid;
 

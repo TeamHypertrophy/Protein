@@ -11,9 +11,9 @@ ______          _       _
 
 use rocket::State;
 use lettre::{
+    AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
     message::Mailbox,
     transport::smtp::{authentication::Credentials, response::Response},
-    AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
 };
 
 use crate::{models::profile::Profile, responders::ProteinError};

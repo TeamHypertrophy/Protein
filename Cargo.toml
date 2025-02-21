@@ -3,7 +3,7 @@ cargo-features = ["profile-rustflags"]
 [package]
 name = "protein"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 # -- Base API Requirement
@@ -31,8 +31,8 @@ diesel_migrations = { version = "2.2.0" }
 # -- Async
 tokio-cron-scheduler = {version = "0.13.0", features = ["signal", "english"]}
 # -- Serialization
-serde = { version = "1.0.217", features = ["derive"] }
-uuid = { version = "1.13.2", features = ["fast-rng"] }
+serde = { version = "1.0.218", features = ["derive"] }
+uuid = { version = "1.14.0", features = ["fast-rng"] }
 chrono = { version = "0.4.39", features = ["serde"] }
 user-agent-parser = {version = "0.3.6", features = ["rocket"]}
 # -- Validation

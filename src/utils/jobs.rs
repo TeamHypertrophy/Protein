@@ -9,15 +9,10 @@ ______          _       _
         Made with ❤️
 */
 
-// use tokio-cron-scheduler to schedule jobs
 // Current Jobs:
 // 1. Check If An API Key Expired and Renew It (verify if quota => 0)
 
-use crate::{
-    constants::API_QUOTA_LIMIT,
-    db::DatabasePool,
-    models::keys::{APIKey, UpdateAPIKey},
-};
+use crate::{db::DatabasePool, models::keys::APIKey};
 
 pub async fn verify_api_keys(pool: &DatabasePool) -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("[+] ⏰ Beginning API Key Verification Job");

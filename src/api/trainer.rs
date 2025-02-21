@@ -11,10 +11,9 @@ ______          _       _
 
 use uuid::Uuid;
 use rocket::{
-    get, post,
+    State, get, post,
     response::status,
-    serde::json::{json, Json, Value},
-    State,
+    serde::json::{Json, Value, json},
 };
 
 use crate::{

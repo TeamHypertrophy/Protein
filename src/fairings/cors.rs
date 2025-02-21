@@ -10,9 +10,9 @@ ______          _       _
 */
 
 use rocket::{
+    Request, Response,
     fairing::{Fairing, Info, Kind},
     http::Header,
-    Request, Response,
 };
 
 pub struct Cors;

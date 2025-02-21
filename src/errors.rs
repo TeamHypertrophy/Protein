@@ -10,9 +10,9 @@ ______          _       _
 */
 
 use rocket::{
-    http::Status,
-    serde::json::{json, Value},
     Request,
+    http::Status,
+    serde::json::{Value, json},
 };
 
 use crate::constants::*;

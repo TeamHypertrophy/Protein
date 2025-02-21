@@ -12,8 +12,8 @@ ______          _       _
 use std::time::Duration;
 
 use rocket::{
-    serde::{json, json::Value, Deserialize, Serialize},
     State,
+    serde::{Deserialize, Serialize, json, json::Value},
 };
 use fred::{prelude::*, types::config::UnresponsiveConfig};
 

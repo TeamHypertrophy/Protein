@@ -10,8 +10,8 @@ ______          _       _
 */
 
 use rocket::{
-    fairing::{Fairing, Info, Kind},
     Data, Request,
+    fairing::{Fairing, Info, Kind},
 };
 // Tracing
 use tracing::info;
