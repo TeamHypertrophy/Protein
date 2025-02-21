@@ -18,10 +18,10 @@ use rocket::{
 use validator::Validate;
 
 use crate::{
-    auth::{key::API, rate_limit::RateLimit},
+    auth::{api::API, rate_limit::RateLimit},
     db,
     db::DatabasePool,
-    models::exercise::{Exercise, NewExercise, UpdateExercise},
+    models::exercise::{Exercise, NewExercise, SearchExercise, UpdateExercise},
     responders::ProteinError,
 };
 
@@ -39,12 +39,18 @@ pub async fn get_exercise(
     Ok(Json(exercise))
 }
 
-#[get("/search", format = "application/json")]
-pub async fn search_exercise(
+#[post("/search", format = "application/json", data = "<data>")]
+pub async fn search_exercises(
     _r: RateLimit<'_>,
     _auth: API,
-) -> Result<Json<Exercise>, ProteinError> {
-    todo!()
+    pool: &State<DatabasePool>,
+    data: Json<SearchExercise>,
+) -> Result<Json<Vec<Exercise>>, ProteinError> {
+    let connection = &mut db::get_connection(pool).await?;
+
+    let exercises = Exercise::search(connection, data.into_inner()).await?;
+
+    Ok(Json(exercises))
 }
 
 #[get("/all", format = "application/json")]

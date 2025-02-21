@@ -43,6 +43,19 @@ pub fn not_found(status: Status, request: &Request) -> Value {
     )
 }
 
+// 401 - Unauthorized
+#[catch(401)]
+pub fn unauthorized(status: Status, request: &Request) -> Value {
+    json!(
+        {
+            "status": status.code,
+            "path": request.uri(),
+            "method": request.method(),
+            "message": UNAUTHORIZED_ERROR_MESSAGE
+        }
+    )
+}
+
 // 500 - Internal Server Error
 #[catch(500)]
 pub fn internal_server_error(status: Status, request: &Request) -> Value {

@@ -24,7 +24,7 @@ use rocket::{
 
 // Protein
 use crate::{
-    auth::key::API,
+    auth::api::API,
     auth::rate_limit::RateLimit,
     cache::redis::{Cache, RedisPool},
     db,

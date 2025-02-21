@@ -34,6 +34,7 @@ pub const API_QUOTA_LIMIT: i32 = 3000; // 5000 Requests per API Key
 pub const DEFAULT_ERROR_MESSAGE: &str = "[!!] Error in Protein Service";
 pub const NOT_FOUND_ERROR_MESSAGE: &str = "[!!] Requested Path was Not Found";
 pub const INTERNAL_SERVER_ERROR_MESSAGE: &str = "[!!] There was an Internal Server Issue!";
+pub const UNAUTHORIZED_ERROR_MESSAGE: &str = "[!!] Unauthorized Request";
 pub const UNPROCESSABLE_ENTITY_MESSAGE: &str = "[!!] This Request Has An Unprocessable Entity";
 pub const UNPROCESSABLE_ENTITY_NOTE: &str =
     "The request was well-formed but was unable to be followed due to semantic/parsing errors.";

@@ -73,8 +73,32 @@ impl Exercise {
             })
     }
 
-    pub async fn search(connection: &mut DatabaseConnection) -> Result<Exercise, ProteinError> {
-        todo!()
+    pub async fn search(
+        connection: &mut DatabaseConnection,
+        data: SearchExercise,
+    ) -> Result<Vec<Exercise>, ProteinError> {
+        let mut query = exercises::table.into_boxed();
+
+        if let Some(name) = data.name {
+            query = query.filter(exercises::name.eq(name));
+        }
+
+        if let Some(equipment) = data.equipment {
+            query = query.filter(exercises::equipment.eq(equipment));
+        }
+
+        if let Some(difficulty) = data.difficulty {
+            query = query.filter(exercises::difficulty.eq(difficulty));
+        }
+
+        if let Some(muscle_group) = data.muscle_group {
+            query = query.filter(exercises::muscle_group.eq(muscle_group));
+        }
+
+        query.load::<Exercise>(connection).await.map_err(|error| {
+            tracing::error!("[!] PostgreSQL Error: {:?}", error);
+            ProteinError::Database(error.to_string())
+        })
     }
 
     pub async fn all(connection: &mut DatabaseConnection) -> Result<Vec<Exercise>, ProteinError> {
@@ -172,6 +196,15 @@ pub struct NewExercise {
     pub image_url: String,
     #[validate(url)]
     pub video_url: String,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct SearchExercise {
+    pub name: Option<String>,
+    pub equipment: Option<Equipment>,
+    pub difficulty: Option<Difficulty>,
+    pub muscle_group: Option<MuscleGroup>,
+    pub exercise_type: Option<ExerciseType>,
 }
 
 #[derive(DbEnum, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]

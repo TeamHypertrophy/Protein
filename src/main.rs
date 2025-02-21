@@ -359,6 +359,7 @@ async fn protein() -> _ {
             routes![
                 api::exercises::get_exercise,
                 api::exercises::get_all_exercises,
+                api::exercises::search_exercises,
                 api::exercises::update_exercise,
                 api::exercises::create_exercise,
                 api::exercises::delete_exercise
@@ -398,6 +399,7 @@ async fn protein() -> _ {
                 errors::not_found,
                 errors::internal_server_error,
                 errors::unprocessable_entity,
+                errors::unauthorized,
                 rocket_governor::rocket_governor_catcher
             ],
         )

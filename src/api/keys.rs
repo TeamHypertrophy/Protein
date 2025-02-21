@@ -20,7 +20,7 @@ use rocket::{
 };
 
 use crate::{
-    auth::{key::API, rate_limit::RateLimit},
+    auth::{api::API, rate_limit::RateLimit},
     db,
     db::DatabasePool,
     models::keys::{APIKey, RevokeKey, UpdateAPIKey, UpdateRole},

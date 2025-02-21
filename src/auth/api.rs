@@ -100,18 +100,17 @@ impl<'r> FromRequest<'r> for API {
         }
 
         // 6. Retrieve The Master API Key From The Constants File
-        let master = match Uuid::parse_str(MASTER_API_KEY) {
-            Ok(master) => master,
-            Err(_) => {
+        if let Ok(master_key) = Uuid::parse_str(MASTER_API_KEY) {
+            if api_key == master_key && std::env::var("APP_ENV").unwrap() == "development" {
+                return Outcome::Success(API);
+            } else {
                 return Outcome::Error((
-                    Status::InternalServerError,
-                    ProteinError::Internal("Failed to Parse Master API Key, Please Set A Correct UUID Value In `constants.rs`".to_string()),
-                ))
+                    Status::Unauthorized,
+                    ProteinError::Authorization(
+                        "Using MASTER_API_KEY but APP_ENV != development".to_string(),
+                    ),
+                ));
             }
-        };
-
-        if api_key == master && std::env::var("APP_ENV").unwrap() == "development" {
-            return Outcome::Success(API);
         }
 
         // 7. This Is The Final Check
@@ -119,18 +118,41 @@ impl<'r> FromRequest<'r> for API {
         // 1. If The Key Exists In The Database == Next Step
         // 2. If The Key Is Admin/Developer == Access
         // 3. Admin Route && Admin/Developer Key == Access
-        // 4. Master Key && Development Environment == Access
         // 5. Normal API Access or Unauthorized
         if let Ok(key) = APIKey::find_by_key(api_key, connection).await {
             if key.role == Role::Admin || key.role == Role::Developer {
                 return Outcome::Success(API);
             }
 
-            let route = request.route().unwrap();
+            let route = match request.route() {
+                Some(route) => route,
+                None => {
+                    return Outcome::Error((
+                        Status::InternalServerError,
+                        ProteinError::Internal("Failed Retrieving Route".to_string()),
+                    ))
+                }
+            };
 
-            let name = route.name.as_deref().unwrap();
+            let name = match route.name.as_deref() {
+                Some(name) => name,
+                None => {
+                    return Outcome::Error((
+                        Status::InternalServerError,
+                        ProteinError::Internal("Failed Retrieving Route Name".to_string()),
+                    ))
+                }
+            };
 
-            let routes = &request.rocket().state::<AdminRoutes>().unwrap().routes;
+            let routes = match request.rocket().state::<AdminRoutes>() {
+                Some(admin) => &admin.routes,
+                None => {
+                    return Outcome::Error((
+                        Status::InternalServerError,
+                        ProteinError::Internal("Failed Retrieving Admin Routes".to_string()),
+                    ))
+                }
+            };
 
             // Admin Route Check
             if routes.contains(&name) {

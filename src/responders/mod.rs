@@ -18,6 +18,7 @@ use rocket::{
     serde::json,
 };
 use serde::Serialize;
+use validator::ValidationErrors;
 
 #[derive(Serialize)]
 pub struct ErrorResponse {

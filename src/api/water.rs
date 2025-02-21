@@ -18,7 +18,7 @@ use rocket::{
 use uuid::Uuid;
 
 use crate::{
-    auth::{key::API, rate_limit::RateLimit},
+    auth::{api::API, rate_limit::RateLimit},
     db,
     db::DatabasePool,
     models::water::{NewWaterLog, UpdateWaterLog, WaterLog},
