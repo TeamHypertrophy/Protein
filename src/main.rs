@@ -18,6 +18,7 @@ extern crate argon2;
 
 // Vendor Dependencies
 use tokio_cron_scheduler::{Job, JobScheduler};
+use discord_webhook2::webhook::DiscordWebhook;
 use user_agent_parser::UserAgentParser;
 
 // Schema File
@@ -37,7 +38,7 @@ pub mod api;
 pub mod fairings;
 
 // Error Handlers
-pub mod errors;
+pub mod catchers;
 
 // Constants
 pub mod constants;
@@ -47,7 +48,7 @@ pub mod utils;
 
 // Responders
 pub mod auth;
-pub mod responders;
+pub mod errors;
 
 // Launch Rocket Instance
 #[launch]
@@ -123,6 +124,20 @@ async fn protein() -> _ {
         }
     };
 
+    let webhook = match DiscordWebhook::new(
+        std::env::var("DISCORD_WEBHOOK_URL")
+            .expect("[!] DISCORD_WEBHOOK_URL Environment Variable Must Be Set"),
+    ) {
+        Ok(webhook) => {
+            tracing::info!("[+] ✅ Discord Webhook Initialized!");
+            webhook
+        }
+        Err(error) => {
+            tracing::error!("[-] ❌ Error Initializing Discord Webhook: {:?}", error);
+            std::process::exit(1)
+        }
+    };
+
     // Job Scheduler
     let scheduler = match JobScheduler::new().await {
         Ok(mut scheduler) => {
@@ -194,6 +209,7 @@ async fn protein() -> _ {
         .manage(redis)
         .manage(email)
         .manage(scheduler)
+        .manage(webhook)
         .manage(user_agent_parser)
         .manage(utils::routes::AdminRoutes {
             routes: std::sync::LazyLock::new(|| {
@@ -239,7 +255,6 @@ async fn protein() -> _ {
         })
         .attach(prometheus.clone())
         .attach(fairings::cors::Cors)
-        .attach(fairings::logging::Logging)
         .attach(rocket_governor::LimitHeaderGen)
         .attach(rocket_sentry::RocketSentry::fairing())
         .attach(rocket::fairing::AdHoc::on_shutdown(
@@ -260,6 +275,7 @@ async fn protein() -> _ {
                 api::users::login,
                 api::users::update_user,
                 api::users::update_user_password,
+                api::users::verify_email,
                 api::users::forgot_password_email,
                 api::users::delete_user,
                 api::users::get_all_users,
@@ -401,11 +417,11 @@ async fn protein() -> _ {
         .register(
             "/",
             catchers![
-                errors::default,
-                errors::not_found,
-                errors::internal_server_error,
-                errors::unprocessable_entity,
-                errors::unauthorized,
+                catchers::default,
+                catchers::not_found,
+                catchers::internal_server_error,
+                catchers::unprocessable_entity,
+                catchers::unauthorized,
                 rocket_governor::rocket_governor_catcher
             ],
         )

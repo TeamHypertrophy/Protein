@@ -16,7 +16,7 @@ use lettre::{
     transport::smtp::{authentication::Credentials, response::Response},
 };
 
-use crate::{models::profile::Profile, responders::ProteinError};
+use crate::{errors::ProteinError, models::user::User};
 
 pub type Mailer = AsyncSmtpTransport<Tokio1Executor>;
 
@@ -45,7 +45,7 @@ pub async fn setup_email() -> Result<AsyncSmtpTransport<Tokio1Executor>, Box<dyn
 
 pub async fn send_email(
     mailer: &State<Mailer>,
-    profile: &Profile,
+    data: &User,
     subject: &str,
     body: String,
 ) -> Result<Response, ProteinError> {
@@ -55,15 +55,13 @@ pub async fn send_email(
     let username: String =
         std::env::var("SMTP_USERNAME").expect("[!] SMTP_USERNAME Environment Variable Must Be Set");
 
-    // Get Full Name
-    let full_name: String = format!("{} {}", profile.first_name, profile.last_name);
-
-    // Create Mailboxes
+    // System Mailbox
     let from: Mailbox = format!("{} <{}>", user, username)
         .parse::<Mailbox>()
         .map_err(|error| ProteinError::Email(format!("Error Parsing From Address: {:?}", error)))?;
 
-    let to: Mailbox = format!("{} <{}>", full_name, profile.email)
+    // User Mailbox
+    let to: Mailbox = format!("{} <{}>", data.username, data.email)
         .parse::<Mailbox>()
         .map_err(|error| ProteinError::Email(format!("Error Parsing To Address: {:?}", error)))?;
 

@@ -17,9 +17,7 @@ use diesel_async::RunQueryDsl;
 use chrono::NaiveDateTime;
 use rocket::serde::{Deserialize, Serialize};
 
-use crate::{
-    db::DatabaseConnection, models::user::User, responders::ProteinError, schema::profiles,
-};
+use crate::{db::DatabaseConnection, errors::ProteinError, models::user::User, schema::profiles};
 
 // Profile Model
 #[derive(
@@ -44,7 +42,6 @@ pub struct Profile {
     pub user_id: Uuid,
     pub first_name: String,
     pub last_name: String,
-    pub email: String,
     pub age: i32,
     pub weight: f64,
     pub height: f64,
@@ -53,8 +50,11 @@ pub struct Profile {
     pub preferred_height_unit: PreferredHeight,
     pub public: bool,
     pub bio: String,
+    pub streak: i32,
     pub avatar_url: String,
+    pub activity_level: ActivityLevel,
     pub fitness_goal: FitnessGoal,
+    pub diet: Diet,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -90,27 +90,30 @@ pub enum FitnessGoal {
     Strength,
 }
 
+#[derive(DbEnum, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[ExistingTypePath = "crate::schema::sql_types::Activitylevel"]
+pub enum ActivityLevel {
+    Light,
+    Moderate,
+    Very,
+    Extremely,
+}
+
+#[derive(DbEnum, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[ExistingTypePath = "crate::schema::sql_types::Diet"]
+pub enum Diet {
+    Vegetarian,
+    Vegan,
+    Keto,
+    Anything,
+}
+
 impl Profile {
     pub async fn find(
         user: &User,
         connection: &mut DatabaseConnection,
     ) -> Result<Profile, ProteinError> {
         Profile::belonging_to(user)
-            .select(Profile::as_select())
-            .first(connection)
-            .await
-            .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
-            })
-    }
-
-    pub async fn find_by_email(
-        address: String,
-        connection: &mut DatabaseConnection,
-    ) -> Result<Profile, ProteinError> {
-        profiles::table
-            .filter(profiles::email.eq(address))
             .select(Profile::as_select())
             .first(connection)
             .await
@@ -183,8 +186,6 @@ impl Profile {
 pub struct UpdateProfile {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
-    #[validate(email)]
-    pub email: Option<String>,
     #[validate(range(min = 13, max = 100))]
     pub age: Option<i32>,
     pub weight: Option<f64>,
@@ -194,8 +195,11 @@ pub struct UpdateProfile {
     pub preferred_height_unit: Option<PreferredHeight>,
     pub public: Option<bool>,
     pub bio: Option<String>,
+    pub streak: Option<i32>,
+    pub activity_level: Option<ActivityLevel>,
     pub avatar_url: Option<String>,
     pub fitness_goal: Option<FitnessGoal>,
+    pub diet: Option<Diet>,
 }
 
 #[derive(Debug, Clone, Insertable, Serialize, Deserialize, Validate)]
@@ -205,15 +209,7 @@ pub struct NewProfile {
     pub user_id: Uuid,
     pub first_name: String,
     pub last_name: String,
-    #[validate(email)]
-    pub email: String,
     #[validate(range(min = 13, max = 100))]
     pub age: i32,
     pub gender: Gender,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct ForgotPassword {
-    pub password: String,
-    pub email: String,
 }

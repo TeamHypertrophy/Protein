@@ -20,10 +20,10 @@ use crate::{
     auth::{api::API, rate_limit::RateLimit},
     db,
     db::DatabasePool,
+    errors::ProteinError,
     models::logs::{
         ExerciseLog, NewExerciseLog, NewWorkoutLog, UpdateExerciseLog, UpdateWorkoutLog, WorkoutLog,
     },
-    responders::ProteinError,
 };
 
 // Exercises

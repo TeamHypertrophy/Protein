@@ -16,10 +16,9 @@ use rocket::{
 use uuid::Uuid;
 
 use crate::{
-    constants::MASTER_API_KEY,
     db,
+    errors::ProteinError,
     models::{keys::APIKey, user::Role},
-    responders::ProteinError,
     utils::routes::AdminRoutes,
 };
 
@@ -53,7 +52,43 @@ impl<'r> FromRequest<'r> for API {
             }
         };
 
-        // 2. Get The Database Pool From The Request State
+        // 2. Get The Master API Key From The Environment Variables
+        let master = match std::env::var("MASTER_API_KEY") {
+            Ok(key) => key,
+            Err(_) => {
+                return Outcome::Error((
+                    Status::InternalServerError,
+                    ProteinError::Internal("Failed Retrieving MASTER_API_KEY".to_string()),
+                ));
+            }
+        };
+
+        // 3. Get The Application Environment
+        let app_env = match std::env::var("APP_ENV") {
+            Ok(env) => env,
+            Err(_) => {
+                return Outcome::Error((
+                    Status::InternalServerError,
+                    ProteinError::Internal("Failed Retrieving APP_ENV".to_string()),
+                ));
+            }
+        };
+
+        // 4. Check If The API Key Is The Master Key
+        if let Ok(master_key) = Uuid::parse_str(master.as_str()) {
+            if api_key == master_key && app_env == "development" {
+                return Outcome::Success(API);
+            } else {
+                return Outcome::Error((
+                    Status::Unauthorized,
+                    ProteinError::Authorization(
+                        "Using MASTER_API_KEY but APP_ENV != development".to_string(),
+                    ),
+                ));
+            }
+        }
+
+        // 5. Get The Database Pool From The Request State
         let pool = match request.rocket().state::<db::DatabasePool>() {
             Some(pool) => pool,
             _ => {
@@ -64,7 +99,7 @@ impl<'r> FromRequest<'r> for API {
             }
         };
 
-        // 3. Get A Database Connection From The Pool
+        // 6. Get A Database Connection From The Pool
         let connection = match pool.get().await {
             Ok(connection) => connection,
             Err(_) => {
@@ -75,7 +110,7 @@ impl<'r> FromRequest<'r> for API {
             }
         };
 
-        // 4. Get The User ID From The Query Parameters
+        // 7. Get The User ID From The Query Parameters
         // https://api.hypertrophy.app/v1/users?user_id=...
         let user_id = request
             .uri()
@@ -83,7 +118,7 @@ impl<'r> FromRequest<'r> for API {
             .and_then(|q| q.as_str().strip_prefix("user_id="))
             .and_then(|id| Uuid::parse_str(id).ok());
 
-        // 5. If The User ID Exists, Verify:
+        // 8. If The User ID Exists, Verify:
         // That The Request That Is Being Performed Against The User Matches The API Key
         if let Some(uid) = user_id {
             match APIKey::verify(uid, api_key, connection).await {
@@ -99,31 +134,7 @@ impl<'r> FromRequest<'r> for API {
             };
         }
 
-        let app_env = match std::env::var("APP_ENV") {
-            Ok(env) => env,
-            Err(_) => {
-                return Outcome::Error((
-                    Status::InternalServerError,
-                    ProteinError::Internal("Failed Retrieving APP_ENV".to_string()),
-                ));
-            }
-        };
-
-        // 6. Retrieve The Master API Key From The Constants File
-        if let Ok(master_key) = Uuid::parse_str(MASTER_API_KEY) {
-            if api_key == master_key && app_env == "development" {
-                return Outcome::Success(API);
-            } else {
-                return Outcome::Error((
-                    Status::Unauthorized,
-                    ProteinError::Authorization(
-                        "Using MASTER_API_KEY but APP_ENV != development".to_string(),
-                    ),
-                ));
-            }
-        }
-
-        // 7. This Is The Final Check
+        // 9. This Is The Final Check
         // Checks:
         // 1. If The Key Exists In The Database == Next Step
         // 2. If The Key Is Admin/Developer == Access

@@ -11,7 +11,7 @@ ______          _       _
 
 use argon2::{self, Config};
 
-use crate::responders::ProteinError;
+use crate::errors::ProteinError;
 
 pub fn generate_hashed_password(password: String) -> Result<String, ProteinError> {
     // Get Password Salt

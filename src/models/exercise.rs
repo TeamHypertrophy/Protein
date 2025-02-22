@@ -18,8 +18,8 @@ use chrono::NaiveDateTime;
 
 use crate::{
     db::DatabaseConnection,
+    errors::ProteinError,
     models::workout::Difficulty,
-    responders::ProteinError,
     schema::{exercises, exercises::dsl::exercise_id},
 };
 

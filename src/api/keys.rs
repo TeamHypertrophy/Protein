@@ -22,8 +22,8 @@ use crate::{
     auth::{api::API, rate_limit::RateLimit},
     db,
     db::DatabasePool,
+    errors::ProteinError,
     models::keys::{APIKey, RevokeKey, UpdateAPIKey, UpdateRole},
-    responders::ProteinError,
 };
 
 #[get("/get/<api_key>", format = "application/json")]

@@ -20,7 +20,7 @@ use crate::{
     constants::PONG,
     db,
     db::DatabasePool,
-    responders::ProteinError,
+    errors::ProteinError,
 };
 
 #[get("/redis", format = "application/json")]

@@ -14,3 +14,4 @@ pub mod jobs;
 pub mod logging;
 pub mod password;
 pub mod routes;
+pub mod webhook;

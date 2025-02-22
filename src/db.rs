@@ -17,7 +17,7 @@ use diesel_async::{
 };
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 
-use crate::{constants::POSTGRES_POOL_SIZE, responders::ProteinError};
+use crate::{constants::POSTGRES_POOL_SIZE, errors::ProteinError};
 
 pub type DatabaseConnection = deadpool::Object<AsyncPgConnection>;
 pub type DatabasePool = Pool<AsyncPgConnection>;

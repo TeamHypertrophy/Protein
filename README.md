@@ -61,12 +61,16 @@ Building with docker is *so* simple!
 
     REDIS_URI - Redis URI, follows same schema as DATABASE_URL
 
+    HOST_URL - API Base URL
+    MASTER_API_KEY - API Key For Development Purposes
     PASSWORD_SALT - Unique Password Salt For User Authentication
 
     SMTP_USER - User That Will Be Displayed
     SMTP_USERNAME - Host Username Configured
     SMTP_PASSWORD - Host Password Configured
     SMTP_SERVER - SMTP Server
+
+    DISCORD_WEBHOOK_URL - Discord Webhook For Audit Logging
 
     APP_ENV - development, production or staging
     ```

@@ -20,11 +20,11 @@ use crate::{
     auth::{api::API, rate_limit::RateLimit},
     db,
     db::DatabasePool,
+    errors::ProteinError,
     models::{
         plan::{NewWorkoutPlan, UpdateWorkoutPlan, WorkoutPlan},
         user::User,
     },
-    responders::ProteinError,
 };
 
 #[get("/get/<plan_id>?<user_id>", format = "application/json")]

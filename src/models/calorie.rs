@@ -17,8 +17,8 @@ use chrono::NaiveDateTime;
 
 use crate::{
     db::DatabaseConnection,
+    errors::ProteinError,
     models::user::User,
-    responders::ProteinError,
     schema::{
         calorie_logs,
         calorie_logs::dsl::{log_id, user_id},

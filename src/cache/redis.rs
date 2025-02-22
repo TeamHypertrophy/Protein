@@ -17,7 +17,7 @@ use rocket::{
 };
 use fred::{prelude::*, types::config::UnresponsiveConfig};
 
-use crate::{constants::*, responders::ProteinError};
+use crate::{constants::*, errors::ProteinError};
 
 pub type RedisPool = Pool;
 

@@ -19,8 +19,8 @@ use chrono::NaiveDateTime;
 use crate::{
     constants::API_QUOTA_LIMIT,
     db::DatabaseConnection,
+    errors::ProteinError,
     models::user::{Role, User},
-    responders::ProteinError,
     schema::{
         api_keys,
         api_keys::dsl::{api_key, quota, revoked_reason, role, status, user_id},

@@ -42,6 +42,8 @@ pub enum ProteinError {
     Database(String),
 
     Email(String),
+
+    Webhook(String),
 }
 
 impl ProteinError {
@@ -54,6 +56,7 @@ impl ProteinError {
             ProteinError::NotFound(_) => Status::NotFound,
             ProteinError::Validation(_) => Status::BadRequest,
             ProteinError::Email(_) => Status::InternalServerError,
+            ProteinError::Webhook(_) => Status::BadRequest,
             _ => Status::BadRequest,
         }
     }
@@ -80,6 +83,7 @@ impl std::error::Error for ProteinError {
             ProteinError::Validation(_) => "[!] Validation Error",
             ProteinError::Database(_) => "[!] Database Error",
             ProteinError::Email(_) => "[!] Email Error",
+            ProteinError::Webhook(_) => "[!] Webhook Error",
         }
     }
 }
@@ -97,6 +101,7 @@ impl<'r> Responder<'r, 'static> for ProteinError {
             ProteinError::Validation(error) => error,
             ProteinError::Database(error) => error,
             ProteinError::Email(error) => error,
+            ProteinError::Webhook(error) => error,
         };
 
         let response = json::to_string(&ErrorResponse {

@@ -19,7 +19,7 @@ diesel = { version = "2.2.7", features = [
     "postgres",
     "uuid",
     "chrono",
-    "numeric"
+    "numeric",
 ] }
 diesel-derive-enum = { version = "2.1.0", features = ["postgres"] }
 diesel-async = { version = "0.5.2", features = [
@@ -29,12 +29,13 @@ diesel-async = { version = "0.5.2", features = [
 ] }
 diesel_migrations = { version = "2.2.0" }
 # -- Async
-tokio-cron-scheduler = {version = "0.13.0", features = ["signal", "english"]}
+tokio-cron-scheduler = { version = "0.13.0", features = ["signal", "english"] }
 # -- Serialization
 serde = { version = "1.0.218", features = ["derive"] }
 uuid = { version = "1.14.0", features = ["fast-rng"] }
 chrono = { version = "0.4.39", features = ["serde"] }
-user-agent-parser = {version = "0.3.6", features = ["rocket"]}
+user-agent-parser = { version = "0.3.6", features = ["rocket"] }
+iso8061-timestamp = "0.1"
 # -- Validation
 validator = { version = "0.20.0", features = ["derive"] }
 # -- Passwords
@@ -43,12 +44,14 @@ rust-argon2 = "2.1"
 dotenvy = "0.15.7"
 # -- Tracing
 tracing = "0.1.41"
-tracing-subscriber = {version = "0.3.19", features = ["env-filter"]}
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 tracing-appender = "0.2.3"
 # -- Redis
 fred = { version = "10.0.4", features = ["serde-json", "i-keys"] }
-## -- Sentry
+## -- Communication
 rocket-sentry = "0.18.0"
+discord-webhook2 = "0.4.3"
+reqwest = "0.12.12"
 ## -- Emailing
 lettre = { version = "0.11", features = [
     "tokio1",

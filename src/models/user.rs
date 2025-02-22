@@ -13,17 +13,11 @@ use uuid::Uuid;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use diesel_async::RunQueryDsl;
+use validator::Validate;
 use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
-use crate::{
-    db::DatabaseConnection,
-    responders::ProteinError,
-    schema::{
-        users,
-        users::dsl::{ip_address, password, password_updated_at, user_id, username},
-    },
-};
+use crate::{db::DatabaseConnection, errors::ProteinError, schema::users};
 
 // User Model
 #[derive(
@@ -45,11 +39,18 @@ pub struct User {
     pub user_id: Uuid,
     pub username: String,
     pub password: String,
+    pub email: String,
+    pub email_verified: bool,
+    pub email_verified_at: Option<NaiveDateTime>,
+    pub email_verification_token: Uuid,
     pub password_updated_at: NaiveDateTime,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
-    pub role: Role,
+    pub last_login: NaiveDateTime,
+    pub last_login_ip: String,
     pub ip_address: String,
+    pub role: Role,
+    pub status: UserStatus,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -67,26 +68,43 @@ pub struct LoginUser {
 #[derive(AsChangeset)]
 #[diesel(table_name = users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Validate)]
 pub struct UpdateUser {
     pub username: Option<String>,
-    pub role: Option<Role>,
+    #[validate(email)]
+    pub email: Option<String>,
+    pub email_verified: Option<bool>,
+    pub email_verified_at: Option<NaiveDateTime>,
+    pub email_verification_token: Option<Uuid>,
+    pub password_updated_at: Option<NaiveDateTime>,
+    pub last_login: Option<NaiveDateTime>,
+    pub last_login_ip: Option<String>,
+    pub status: Option<UserStatus>,
     pub ip_address: Option<String>,
 }
 
-#[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
+#[derive(Debug, Clone, Insertable, Serialize, Deserialize, Validate)]
 #[diesel(table_name = users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct NewUser {
     pub username: String,
     pub password: String,
-    pub ip_address: String,
+    #[validate(email)]
+    pub email: String,
+    pub last_login_ip: Option<String>,
+    pub ip_address: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Password {
     pub old_password: String,
     pub new_password: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ForgotPassword {
+    pub password: String,
+    pub email: String,
 }
 
 #[derive(DbEnum, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -96,6 +114,13 @@ pub enum Role {
     Admin,
     Trainer,
     User,
+}
+
+#[derive(DbEnum, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[ExistingTypePath = "crate::schema::sql_types::Userstatus"]
+pub enum UserStatus {
+    Active,
+    Pending,
 }
 
 impl User {
@@ -116,7 +141,37 @@ impl User {
         connection: &mut DatabaseConnection,
     ) -> Result<User, ProteinError> {
         users::table
-            .filter(username.eq(name))
+            .filter(users::username.eq(name))
+            .select(User::as_select())
+            .first(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn find_by_email(
+        address: String,
+        connection: &mut DatabaseConnection,
+    ) -> Result<User, ProteinError> {
+        users::table
+            .filter(users::email.eq(address))
+            .select(User::as_select())
+            .first(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn find_by_email_verification_token(
+        token: Uuid,
+        connection: &mut DatabaseConnection,
+    ) -> Result<User, ProteinError> {
+        users::table
+            .filter(users::email_verification_token.eq(token))
             .select(User::as_select())
             .first(connection)
             .await
@@ -131,7 +186,7 @@ impl User {
         connection: &mut DatabaseConnection,
     ) -> Result<User, ProteinError> {
         users::table
-            .filter(ip_address.eq(address))
+            .filter(users::ip_address.eq(address))
             .select(User::as_select())
             .first(connection)
             .await
@@ -155,9 +210,9 @@ impl User {
     pub async fn delete(
         id: Uuid,
         connection: &mut DatabaseConnection,
-    ) -> Result<usize, ProteinError> {
-        diesel::delete(users::table.filter(user_id.eq(id)))
-            .execute(connection)
+    ) -> Result<User, ProteinError> {
+        diesel::delete(users::table.filter(users::user_id.eq(id)))
+            .get_result::<User>(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
@@ -171,7 +226,7 @@ impl User {
         connection: &mut DatabaseConnection,
     ) -> Result<User, ProteinError> {
         diesel::update(users::table)
-            .filter(user_id.eq(id))
+            .filter(users::user_id.eq(id))
             .set(&data)
             .get_result::<User>(connection)
             .await
@@ -201,10 +256,29 @@ impl User {
         connection: &mut DatabaseConnection,
     ) -> Result<User, ProteinError> {
         diesel::update(users::table)
-            .filter(user_id.eq(id))
+            .filter(users::user_id.eq(id))
             .set((
-                password.eq(new_password),
-                password_updated_at.eq(chrono::Utc::now().naive_utc()),
+                users::password.eq(new_password),
+                users::password_updated_at.eq(chrono::Utc::now().naive_utc()),
+            ))
+            .get_result::<User>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn verify_email(
+        id: Uuid,
+        connection: &mut DatabaseConnection,
+    ) -> Result<User, ProteinError> {
+        diesel::update(users::table)
+            .filter(users::user_id.eq(id))
+            .set((
+                users::email_verified.eq(true),
+                users::status.eq(UserStatus::Active),
+                users::email_verified_at.eq(chrono::Utc::now().naive_utc()),
             ))
             .get_result::<User>(connection)
             .await

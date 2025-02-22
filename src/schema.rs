@@ -2,6 +2,14 @@
 
 pub mod sql_types {
     #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "activitylevel"))]
+    pub struct Activitylevel;
+
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "diet"))]
+    pub struct Diet;
+
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "difficulty"))]
     pub struct Difficulty;
 
@@ -40,6 +48,10 @@ pub mod sql_types {
     #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "status"))]
     pub struct Status;
+
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "userstatus"))]
+    pub struct Userstatus;
 
     #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "workoutinterval"))]
@@ -119,7 +131,9 @@ diesel::table! {
     use super::sql_types::Gender;
     use super::sql_types::Preferredweight;
     use super::sql_types::Preferredheight;
+    use super::sql_types::Activitylevel;
     use super::sql_types::Fitnessgoal;
+    use super::sql_types::Diet;
 
     profiles (profile_id) {
         profile_id -> Int4,
@@ -128,8 +142,6 @@ diesel::table! {
         first_name -> Varchar,
         #[max_length = 255]
         last_name -> Varchar,
-        #[max_length = 255]
-        email -> Varchar,
         age -> Int4,
         weight -> Float8,
         height -> Float8,
@@ -138,8 +150,11 @@ diesel::table! {
         preferred_height_unit -> Preferredheight,
         public -> Bool,
         bio -> Text,
+        streak -> Int4,
         avatar_url -> Text,
+        activity_level -> Activitylevel,
         fitness_goal -> Fitnessgoal,
+        diet -> Diet,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
@@ -190,6 +205,7 @@ diesel::table! {
 diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::Role;
+    use super::sql_types::Userstatus;
 
     users (user_id) {
         user_id -> Uuid,
@@ -197,12 +213,21 @@ diesel::table! {
         username -> Varchar,
         #[max_length = 255]
         password -> Varchar,
+        #[max_length = 255]
+        email -> Varchar,
+        email_verified -> Bool,
+        email_verified_at -> Nullable<Timestamp>,
+        email_verification_token -> Uuid,
         password_updated_at -> Timestamp,
         created_at -> Timestamp,
         updated_at -> Timestamp,
-        role -> Role,
-        #[max_length = 255]
+        last_login -> Timestamp,
+        #[max_length = 50]
+        last_login_ip -> Varchar,
+        #[max_length = 50]
         ip_address -> Varchar,
+        role -> Role,
+        status -> Userstatus,
     }
 }
 

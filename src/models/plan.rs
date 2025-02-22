@@ -18,8 +18,8 @@ use chrono::NaiveDateTime;
 
 use crate::{
     db::DatabaseConnection,
+    errors::ProteinError,
     models::{profile::FitnessGoal, user::User, workout::Difficulty},
-    responders::ProteinError,
     schema::{
         workout_plans,
         workout_plans::dsl::{plan_id, user_id},

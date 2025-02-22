@@ -20,8 +20,8 @@ use crate::{
     auth::{api::API, rate_limit::RateLimit},
     db,
     db::DatabasePool,
+    errors::ProteinError,
     models::sleep::{NewSleepLog, SleepLog, UpdateSleepLog},
-    responders::ProteinError,
 };
 
 #[get("/get/<log_id>?<user_id>", format = "application/json")]

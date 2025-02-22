@@ -17,7 +17,7 @@ use chrono::NaiveDateTime;
 
 use crate::{
     db::DatabaseConnection,
-    responders::ProteinError,
+    errors::ProteinError,
     schema::{trainers, trainers::dsl::trainer_id},
 };
 

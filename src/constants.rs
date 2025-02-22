@@ -27,7 +27,6 @@ pub const PONG: &str = "PONG"; // Redis PONG Response
 pub const POSTGRES_POOL_SIZE: usize = 10; // 10 Concurrent Postgres Connections
 
 // API
-pub const MASTER_API_KEY: &str = "16114308-8693-4fdf-9a98-e40065067ebe";
 pub const API_QUOTA_LIMIT: i32 = 3000; // 5000 Requests per API Key
 
 // Error Messages
@@ -46,3 +45,9 @@ pub const LOG_PATH: &str = "./logs/";
 
 // Jobs
 pub const API_KEY_JOB_INTERVAL: &str = "every day"; // must follow english-cron format
+
+// Embeds
+pub const EMBED_COLOR: u32 = 0x5865F2;
+pub const EMBED_TITLE: &str = "Hypertrophy - Protein";
+pub const EMBED_THUMBNAIL: &str = "https://files.catbox.moe/025e3m.png";
+pub const EMBED_FOOTER: &str = "Hypertrophy - Made with ❤️";
