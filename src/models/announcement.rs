@@ -40,12 +40,14 @@ use crate::{
 #[diesel(table_name = trainer_announcements)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct TrainerAnnouncement {
-    announcement_id: i32,
-    trainer_id: Uuid,
-    title: String,
-    content: String,
-    created_at: NaiveDateTime,
-    updated_at: NaiveDateTime,
+    pub announcement_id: i32,
+    pub trainer_id: Uuid,
+    pub title: String,
+    pub visibility: bool,
+    pub content: String,
+    pub pinned: bool,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
 
 impl TrainerAnnouncement {

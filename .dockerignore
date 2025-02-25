@@ -9,6 +9,7 @@
 .gitignore
 .markdownlint.json
 .pre-commit-config.yaml
+.goreleaser.yaml
 protein.bat
 README.md
 rustfmt.toml

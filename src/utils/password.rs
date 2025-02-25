@@ -9,6 +9,7 @@ ______          _       _
         Made with ❤️
 */
 
+use rand::Rng;
 use argon2::{self, Config};
 
 use crate::errors::ProteinError;
@@ -34,4 +35,10 @@ pub fn verify_password(hashed_password: String, password: String) -> Result<bool
         tracing::error!("[!] Password Verification Error: {:?}", error);
         ProteinError::Internal(error.to_string())
     })
+}
+
+pub fn generate_mfa_code() -> String {
+    let mut rng = rand::rng();
+
+    rng.random_range(100000..=999999).to_string()
 }

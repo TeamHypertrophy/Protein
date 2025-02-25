@@ -73,6 +73,8 @@ Building with docker is *so* simple!
     DISCORD_WEBHOOK_URL - Discord Webhook For Audit Logging
 
     APP_ENV - development, production or staging
+
+    GITHUB_TOKEN - Github Token For Releasing
     ```
 
 5. Install and Setup Diesel

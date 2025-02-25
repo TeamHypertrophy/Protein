@@ -17,7 +17,7 @@ use validator::Validate;
 use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
-use crate::{db::DatabaseConnection, errors::ProteinError, schema::users};
+use crate::{db::DatabaseConnection, errors::ProteinError, schema::users, utils};
 
 // User Model
 #[derive(
@@ -43,6 +43,11 @@ pub struct User {
     pub email_verified: bool,
     pub email_verified_at: Option<NaiveDateTime>,
     pub email_verification_token: Uuid,
+    pub mfa_enabled: bool,
+    pub mfa_code: Option<String>,
+    pub mfa_verified: bool,
+    pub mfa_verification_token: Uuid,
+    pub mfa_code_expires_at: Option<NaiveDateTime>,
     pub password_updated_at: NaiveDateTime,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
@@ -181,12 +186,12 @@ impl User {
             })
     }
 
-    pub async fn find_by_ip(
-        address: String,
+    pub async fn find_by_mfa_verification_token(
+        token: Uuid,
         connection: &mut DatabaseConnection,
     ) -> Result<User, ProteinError> {
         users::table
-            .filter(users::ip_address.eq(address))
+            .filter(users::mfa_verification_token.eq(token))
             .select(User::as_select())
             .first(connection)
             .await
@@ -269,6 +274,27 @@ impl User {
             })
     }
 
+    pub async fn update_ip_info(
+        id: Uuid,
+        new_ip: &String,
+        new_last_login: NaiveDateTime,
+        connection: &mut DatabaseConnection,
+    ) -> Result<User, ProteinError> {
+        diesel::update(users::table)
+            .filter(users::user_id.eq(id))
+            .set((
+                users::last_login.eq(new_last_login),
+                users::last_login_ip.eq(new_ip),
+                users::ip_address.eq(new_ip),
+            ))
+            .get_result::<User>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
     pub async fn verify_email(
         id: Uuid,
         connection: &mut DatabaseConnection,
@@ -279,6 +305,104 @@ impl User {
                 users::email_verified.eq(true),
                 users::status.eq(UserStatus::Active),
                 users::email_verified_at.eq(chrono::Utc::now().naive_utc()),
+            ))
+            .get_result::<User>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn generate_mfa_code(
+        id: Uuid,
+        connection: &mut DatabaseConnection,
+    ) -> Result<User, ProteinError> {
+        let code = utils::password::generate_mfa_code();
+        let expires_at = chrono::Utc::now().naive_utc() + chrono::Duration::minutes(10);
+
+        diesel::update(users::table)
+            .filter(users::user_id.eq(id))
+            .set((
+                users::mfa_code.eq(code),
+                users::mfa_code_expires_at.eq(expires_at),
+            ))
+            .get_result::<User>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn enable_mfa(
+        id: Uuid,
+        connection: &mut DatabaseConnection,
+    ) -> Result<User, ProteinError> {
+        diesel::update(users::table)
+            .filter(users::user_id.eq(id))
+            .set((
+                users::mfa_enabled.eq(true),
+                users::mfa_code.eq(None::<String>),
+                users::mfa_verified.eq(false),
+                users::mfa_code_expires_at.eq(None::<NaiveDateTime>),
+            ))
+            .get_result::<User>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn verify_mfa(
+        id: Uuid,
+        connection: &mut DatabaseConnection,
+    ) -> Result<User, ProteinError> {
+        diesel::update(users::table)
+            .filter(users::user_id.eq(id))
+            .set((
+                users::mfa_verified.eq(true),
+                users::mfa_code.eq(None::<String>),
+                users::mfa_code_expires_at.eq(None::<NaiveDateTime>),
+            ))
+            .get_result::<User>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn reset_mfa(
+        id: Uuid,
+        connection: &mut DatabaseConnection,
+    ) -> Result<User, ProteinError> {
+        diesel::update(users::table)
+            .filter(users::user_id.eq(id))
+            .set((
+                users::mfa_code.eq(None::<String>),
+                users::mfa_code_expires_at.eq(None::<NaiveDateTime>),
+            ))
+            .get_result::<User>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
+
+    pub async fn disable_mfa(
+        id: Uuid,
+        connection: &mut DatabaseConnection,
+    ) -> Result<User, ProteinError> {
+        diesel::update(users::table)
+            .filter(users::user_id.eq(id))
+            .set((
+                users::mfa_enabled.eq(false),
+                users::mfa_code.eq(None::<String>),
+                users::mfa_verified.eq(false),
+                users::mfa_code_expires_at.eq(None::<NaiveDateTime>),
             ))
             .get_result::<User>(connection)
             .await

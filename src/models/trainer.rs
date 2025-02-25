@@ -12,6 +12,7 @@ ______          _       _
 use uuid::Uuid;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
+use diesel_derive_enum::DbEnum;
 use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
@@ -37,10 +38,24 @@ use crate::{
 #[diesel(table_name = trainers)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Trainer {
-    trainer_id: i32,
-    user_id: Uuid,
-    clients: Vec<Option<Uuid>>,
-    updated_at: NaiveDateTime,
+    pub trainer_id: i32,
+    pub user_id: Uuid,
+    pub clients: Vec<Option<Uuid>>,
+    pub specialization: Specialization,
+    pub verified: bool,
+    pub verified_at: Option<NaiveDateTime>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+}
+
+#[derive(DbEnum, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[ExistingTypePath = "crate::schema::sql_types::Specialization"]
+pub enum Specialization {
+    WeightLoss,
+    MuscleGain,
+    Maintenance,
+    Endurance,
+    Strength,
 }
 
 impl Trainer {
@@ -120,6 +135,7 @@ impl Trainer {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateTrainer {
     pub clients: Option<Vec<Option<Uuid>>>,
+    pub specialization: Option<Specialization>,
 }
 
 #[derive(AsChangeset)]
@@ -129,4 +145,5 @@ pub struct UpdateTrainer {
 pub struct NewTrainer {
     pub user_id: Uuid,
     pub clients: Vec<Option<Uuid>>,
+    pub specialization: Specialization,
 }

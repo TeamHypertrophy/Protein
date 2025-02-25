@@ -4,3 +4,5 @@ docker.env
 logs
 uptime-kuma-data
 uptime_kuma.pwd
+dist/
+.intentionally-empty-file.o

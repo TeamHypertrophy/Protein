@@ -79,7 +79,7 @@ impl Cache {
         key: String,
     ) -> Result<Value, ProteinError> {
         tracing::info!(
-            "[>] Fetching Key From Redis Cache: {}",
+            "[Cache] ⚙️ Fetching Key From Redis Cache: {:#?}",
             format!("{}:{}", group, key)
         );
 
@@ -98,7 +98,7 @@ impl Cache {
         value: String,
     ) -> Result<(), ProteinError> {
         tracing::info!(
-            "[>] Setting Key In Redis Cache: {} With Values: {}",
+            "[Cache] ⚙️ Setting Key In Redis Cache: {:#?} With Values: {:#?}",
             format!("{}:{}", group, key),
             value
         );
@@ -121,7 +121,7 @@ impl Cache {
         pool: &State<RedisPool>,
         message: Option<String>,
     ) -> Result<String, ProteinError> {
-        tracing::info!("[>] Pinging Redis For Health Check");
+        tracing::info!("[Cache] ⚙️ Pinging Redis For Health Check");
 
         pool.ping(message).await.map_err(|error| {
             tracing::error!("[!] Redis Error: {:?}", error);

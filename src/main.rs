@@ -130,7 +130,7 @@ async fn protein() -> _ {
     ) {
         Ok(webhook) => {
             tracing::info!("[+] ✅ Discord Webhook Initialized!");
-            webhook
+            std::sync::Arc::new(webhook)
         }
         Err(error) => {
             tracing::error!("[-] ❌ Error Initializing Discord Webhook: {:?}", error);
@@ -279,7 +279,10 @@ async fn protein() -> _ {
                 api::users::forgot_password_email,
                 api::users::delete_user,
                 api::users::get_all_users,
-                api::users::me
+                api::users::enable_mfa,
+                api::users::check_mfa,
+                api::users::verify_mfa,
+                api::users::disable_mfa,
             ],
         )
         .mount(

@@ -8,21 +8,25 @@ ______          _       _
 
         Made with ❤️
 */
-use rocket::State;
+
+use std::sync::Arc;
+
 use iso8061_timestamp::Timestamp;
 use discord_webhook2::{message::Message, webhook::DiscordWebhook};
 
 use crate::{constants::*, errors::ProteinError};
 
-pub type Webhook = DiscordWebhook;
+pub type Webhook = Arc<DiscordWebhook>;
 
 pub async fn send_audit_log(
-    webhook: &State<Webhook>,
+    webhook: &Webhook,
     description: &str,
     user: &str,
     ip: &str,
     action: &str,
 ) -> Result<(), ProteinError> {
+    tracing::info!("[Webhook] ⚙️ Sending {} Audit Log", &action);
+
     webhook
         .send(&Message::new(|message| {
             message.embed(|embed| {

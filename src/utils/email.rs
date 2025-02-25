@@ -9,7 +9,6 @@ ______          _       _
     Made with ❤️
 */
 
-use rocket::State;
 use lettre::{
     AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
     message::Mailbox,
@@ -44,7 +43,7 @@ pub async fn setup_email() -> Result<AsyncSmtpTransport<Tokio1Executor>, Box<dyn
 }
 
 pub async fn send_email(
-    mailer: &State<Mailer>,
+    mailer: &Mailer,
     data: &User,
     subject: &str,
     body: String,
@@ -72,6 +71,8 @@ pub async fn send_email(
         .subject(subject)
         .body(body)
         .map_err(|error| ProteinError::Email(format!("Error Building Email: {:?}", error)))?;
+
+    tracing::info!("[Email] ⚙️ Sending {} Email To: {}", subject, data.email);
 
     // Send Email
     mailer

@@ -123,3 +123,16 @@ pub async fn delete_profile(
         "user_id": user_id,
     })))
 }
+
+#[get("/leaderboard", format = "application/json")]
+pub async fn get_leaderboard(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DatabasePool>,
+) -> Result<Json<Vec<Profile>>, ProteinError> {
+    let connection = &mut db::get_connection(pool).await?;
+
+    let profiles = Profile::leaderboard(connection).await?;
+
+    Ok(Json(profiles))
+}

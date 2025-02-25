@@ -46,6 +46,10 @@ pub mod sql_types {
     pub struct Role;
 
     #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "specialization"))]
+    pub struct Specialization;
+
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "status"))]
     pub struct Status;
 
@@ -187,17 +191,26 @@ diesel::table! {
         trainer_id -> Uuid,
         #[max_length = 100]
         title -> Varchar,
+        visibility -> Bool,
         content -> Text,
+        pinned -> Bool,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
 }
 
 diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::Specialization;
+
     trainers (trainer_id) {
         trainer_id -> Int4,
         user_id -> Uuid,
         clients -> Array<Nullable<Uuid>>,
+        specialization -> Specialization,
+        verified -> Bool,
+        verified_at -> Nullable<Timestamp>,
+        created_at -> Timestamp,
         updated_at -> Timestamp,
     }
 }
@@ -218,6 +231,12 @@ diesel::table! {
         email_verified -> Bool,
         email_verified_at -> Nullable<Timestamp>,
         email_verification_token -> Uuid,
+        mfa_enabled -> Bool,
+        #[max_length = 6]
+        mfa_code -> Nullable<Varchar>,
+        mfa_verified -> Bool,
+        mfa_verification_token -> Uuid,
+        mfa_code_expires_at -> Nullable<Timestamp>,
         password_updated_at -> Timestamp,
         created_at -> Timestamp,
         updated_at -> Timestamp,

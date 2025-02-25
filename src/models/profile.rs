@@ -177,6 +177,21 @@ impl Profile {
                 ProteinError::Database(error.to_string())
             })
     }
+
+    pub async fn leaderboard(
+        connection: &mut DatabaseConnection,
+    ) -> Result<Vec<Profile>, ProteinError> {
+        profiles::table
+            .select(Profile::as_select())
+            .order_by(profiles::streak.desc())
+            .limit(100)
+            .load(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                ProteinError::Database(error.to_string())
+            })
+    }
 }
 
 #[derive(AsChangeset)]
