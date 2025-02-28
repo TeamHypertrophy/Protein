@@ -125,6 +125,7 @@ pub async fn delete_exercise_log(
     ExerciseLog::delete(user_id, exercise_id, connection).await?;
 
     Ok(status::Accepted(json!({
+        "status": 200,
         "message": "Log Deleted Successfully",
     })))
 }
@@ -225,6 +226,7 @@ pub async fn delete_workout_log(
     WorkoutLog::delete(user_id, workout_id, connection).await?;
 
     Ok(status::Accepted(json!({
+        "status": 200,
         "message": "Log Deleted Successfully",
     })))
 }

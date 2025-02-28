@@ -94,6 +94,7 @@ pub async fn delete_trainer(
     Trainer::delete(trainer_id, connection).await?;
 
     Ok(status::Accepted(json!({
+        "status": 200,
         "message": "Trainer Deleted Successfully",
     })))
 }
@@ -194,6 +195,7 @@ pub async fn delete_announcement(
     TrainerAnnouncement::delete(trainer_id, announcement_id, connection).await?;
 
     Ok(status::Accepted(json!({
+        "status": 200,
         "message": "Announcement Deleted Successfully",
     })))
 }

@@ -11,7 +11,7 @@ ______          _       _
 
 use lettre::{
     AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
-    message::Mailbox,
+    message::{Mailbox, MultiPart, SinglePart, header::ContentType},
     transport::smtp::{authentication::Credentials, response::Response},
 };
 
@@ -68,7 +68,13 @@ pub async fn send(
         .to(to)
         .from(from)
         .subject(subject)
-        .body(body)
+        .multipart(
+            MultiPart::alternative().singlepart(
+                SinglePart::builder()
+                    .header(ContentType::TEXT_HTML)
+                    .body(body.clone()),
+            ),
+        )
         .map_err(|error| Error::Email(format!("Error Building Email: {:?}", error)))?;
 
     tracing::info!("[Email] ⚙️ Sending {} Email To: {}", subject, data.email);

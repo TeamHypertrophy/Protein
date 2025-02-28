@@ -391,6 +391,17 @@ async fn protein() -> _ {
             ],
         )
         .mount(
+            "/v1/exercises/custom",
+            routes![
+                api::custom::get_custom_exercise,
+                api::custom::get_all_custom_exercises,
+                api::custom::get_all_user_custom_exercises,
+                api::custom::update_custom_exercise,
+                api::custom::create_custom_exercise,
+                api::custom::delete_custom_exercise
+            ],
+        )
+        .mount(
             "/v1/profile",
             routes![
                 api::profile::get_profile,

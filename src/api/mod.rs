@@ -10,6 +10,7 @@ ______          _       _
 */
 
 pub mod calories;
+pub mod custom;
 pub mod exercises;
 pub mod health;
 pub mod index;

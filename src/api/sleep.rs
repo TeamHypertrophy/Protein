@@ -113,6 +113,7 @@ pub async fn delete_sleep_log(
     SleepLog::delete(user_id, log_id, connection).await?;
 
     Ok(status::Accepted(json!({
+        "status": 200,
         "message": "Log Deleted Successfully",
     })))
 }

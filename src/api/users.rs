@@ -22,6 +22,8 @@ use rocket::{
 };
 // Validation
 use validator::Validate;
+// Email Templates
+use askama::Template;
 
 // Protein
 use crate::{
@@ -36,6 +38,10 @@ use crate::{
     utils::email,
     utils::email::Email,
     utils::password,
+    utils::templates::{
+        AccountDeleted, EmailVerified, Login, MFACode, MFADisabled, MFAVerification, PasswordReset,
+        Signup, UpdatedPassword,
+    },
     utils::webhook,
     utils::webhook::Webhook,
 };
@@ -158,7 +164,19 @@ pub async fn signup(
     let mail = mailer.inner().clone();
 
     rocket::tokio::task::spawn(async move {
-        match email::send(&mail, &receipent, "[Security] Account Verification", format!("Hello {}! \n\nWelcome To Hypertrophy!\n\nWe Hope You Enjoy The Multitude of Features Provided\n\nPlease Verify Your Email At This Link:\n\n\n{}", receipent.username, verification_link)).await {
+        let body = Signup {
+            name: &receipent.username,
+            verification_link: &verification_link,
+        };
+
+        match email::send(
+            &mail,
+            &receipent,
+            "[Security] Account Verification",
+            body.render().unwrap(),
+        )
+        .await
+        {
             Ok(_) => tracing::info!("[Email] ✅ Sent Verification Email"),
             Err(e) => tracing::info!("[Email] ❌ Failed Sending Verification Email: {}", e),
         }
@@ -199,14 +217,15 @@ pub async fn verify_email(
         let mail = mailer.inner().clone();
 
         rocket::tokio::task::spawn(async move {
+            let body = EmailVerified {
+                name: &receipent.username,
+            };
+
             match email::send(
                 &mail,
                 &receipent,
                 "[Security] Email Successfully Verified",
-                format!(
-                    "Hello {}! \n\nYour Email Has Been Successfully Verified!",
-                    receipent.username
-                ),
+                body.render().unwrap(),
             )
             .await
             {
@@ -219,6 +238,7 @@ pub async fn verify_email(
         });
 
         Ok(Json(json!({
+            "status": 200,
             "message": "Email Verified Successfully",
             "user": verified_user,
         })))
@@ -243,7 +263,7 @@ pub async fn login(
     // Get Current IP Address
     let ip_address: String = match ip.get_ipv4_string() {
         Some(addr) => addr,
-        None => String::from("unknown"),
+        None => return Err(Error::Internal("Invalid IP Address".to_string())),
     };
 
     // Get Current User Agent OS
@@ -308,7 +328,21 @@ pub async fn login(
 
             // Send Email
             rocket::tokio::task::spawn(async move {
-                match email::send(&mail, &receipent, "[Security] New Login", format!("Hello {}! \n\nThis Email Serves As Confirmation That There Has Been A New Login Into Your Account.\n\n\nIf You Did NOT Request This, Please Ignore This Email\nRequest IP Address: {}\nDevice: {}", receipent.username, ip_address, device)).await {
+                let body = Login {
+                    name: &receipent.username,
+                    time: &chrono::Utc::now().naive_utc().to_string(),
+                    ip_address: &ip_address,
+                    device: &device,
+                };
+
+                match email::send(
+                    &mail,
+                    &receipent,
+                    "[Security] New Login",
+                    body.render().unwrap(),
+                )
+                .await
+                {
                     Ok(_) => tracing::info!("[Email] ✅ Sent New Login Email"),
                     Err(e) => tracing::info!("[Email] ❌ Failed Sending New Login Email: {}", e),
                 }
@@ -341,7 +375,19 @@ pub async fn login(
             let mail = mailer.inner().clone();
 
             rocket::tokio::task::spawn(async move {
-                match email::send(&mail, &mfa_user, "[Security] MFA Code", format!("Hello {}! \n\nThis Email Serves As Your MFA Code!\n\n\n{}\n\nCode Expires In 10 Minutes!", mfa_user.username, code)).await {
+                let body = MFACode {
+                    name: &mfa_user.username,
+                    code: &code,
+                };
+
+                match email::send(
+                    &mail,
+                    &mfa_user,
+                    "[Security] MFA Code",
+                    body.render().unwrap(),
+                )
+                .await
+                {
                     Ok(_) => tracing::info!("[Email] ✅ Sent MFA Code Email"),
                     Err(e) => tracing::info!("[Email] ❌ Failed Sending MFA Code Email: {}", e),
                 }
@@ -349,6 +395,7 @@ pub async fn login(
 
             // Return MFA Code Required
             return Ok(Json(json!({
+                "status": 200,
                 "status": 200,
                 "message": "MFA Code Required & Sent",
             })));
@@ -389,7 +436,18 @@ pub async fn delete_user(
     let mail = mailer.inner().clone();
 
     rocket::tokio::task::spawn(async move {
-        match email::send(&mail, &receipent, "[Security] Your Account Has Been Deleted", format!("Hello {}! \n\nThis Email Serves As Confirmation That Your Account Has Been Successfully Deleted.\n\n\nIf You Did NOT Request This, Please Contact Support Immediately", receipent.username)).await {
+        let body = AccountDeleted {
+            name: &receipent.username,
+        };
+
+        match email::send(
+            &mail,
+            &receipent,
+            "[Security] Your Account Has Been Deleted",
+            body.render().unwrap(),
+        )
+        .await
+        {
             Ok(_) => tracing::info!("[Email] ✅ Sent Account Deletion Email"),
             Err(e) => tracing::info!("[Email] ❌ Failed Sending Account Deletion Email: {}", e),
         }
@@ -468,7 +526,7 @@ pub async fn update_user_password(
     // Get IP Address
     let ip_address: String = match ip.get_ipv4_string() {
         Some(addr) => addr,
-        None => String::from("unknown"),
+        None => return Err(Error::Internal("Invalid IP Address".to_string())),
     };
 
     // Grab User
@@ -503,7 +561,19 @@ pub async fn update_user_password(
     let mail = mailer.inner().clone();
 
     rocket::tokio::task::spawn(async move {
-        match email::send(&mail, &receipent, "[Security] Your Password Has Been Updated", format!("Hello {}! \n\nThis Email Serves As Confirmation That Your Password Has Been Successfully Updated.\n\n\nIf You Did NOT Request This, Please Contact Support Immediately\n\nIP Address: {}", receipent.username, ip_address)).await {
+        let body = UpdatedPassword {
+            name: &receipent.username,
+            ip_address: &ip_address,
+        };
+
+        match email::send(
+            &mail,
+            &receipent,
+            "[Security] Your Password Has Been Updated",
+            body.render().unwrap(),
+        )
+        .await
+        {
             Ok(_) => tracing::info!("[Email] ✅ Sent Password Update Email"),
             Err(e) => tracing::info!("[Email] ❌ Failed Sending Password Update Email: {}", e),
         }
@@ -561,7 +631,21 @@ pub async fn forgot_password_email(
     let mail = mailer.inner().clone();
 
     rocket::tokio::task::spawn(async move {
-        match email::send(&mail, &receipent, "[Security] Your Password Has Been Reset", format!("Hello {}! \n\nThis Email Serves As Confirmation That Your Password Has Been Successfully Reset.\n\nNew Password: {}\n\n\nIf You Did NOT Request This, Please Ignore This Email\nRequest IP Address: {}\nDevice: {}", receipent.username, data.password, ip_address, device)).await {
+        let body = PasswordReset {
+            name: &receipent.username,
+            new_password: &data.password,
+            ip_address: &ip_address,
+            device: &device,
+        };
+
+        match email::send(
+            &mail,
+            &receipent,
+            "[Security] Your Password Has Been Reset",
+            body.render().unwrap(),
+        )
+        .await
+        {
             Ok(_) => tracing::info!("[Email] ✅ Sent Password Reset Email"),
             Err(e) => tracing::info!("[Email] ❌ Failed Sending Password Reset Email: {}", e),
         }
@@ -614,7 +698,19 @@ pub async fn enable_mfa(
     let mail = mailer.inner().clone();
 
     rocket::tokio::task::spawn(async move {
-        match email::send(&mail, &receipent, "[Security] Account MFA Verification", format!("Hello {}! \n\nThis Email Serves As Verification For Enabling MFA!\nPlease Verify MFA At This Link:\n\n\n{}", receipent.username, verification_link)).await {
+        let body = MFAVerification {
+            name: &receipent.username,
+            verification_link: &verification_link,
+        };
+
+        match email::send(
+            &mail,
+            &receipent,
+            "[Security] Account MFA Verification",
+            body.render().unwrap(),
+        )
+        .await
+        {
             Ok(_) => tracing::info!("[Email] ✅ Sent MFA Verification Email"),
             Err(e) => tracing::info!("[Email] ❌ Failed Sending MFA Verification Email: {}", e),
         }
@@ -630,10 +726,24 @@ pub async fn check_mfa(
     pool: &State<DB>,
     redis: &State<Redis>,
     mailer: &State<Email>,
+    ip: &ClientRealAddr,
+    os: OS<'_>,
     user_id: Uuid,
     code: &str,
 ) -> Result<Json<Value>, Error> {
     let connection = &mut db::get_connection(pool).await?;
+
+    let ip_address: String = match ip.get_ipv4_string() {
+        Some(addr) => addr,
+        None => return Err(Error::Internal("Invalid IP Address".to_string())),
+    };
+
+    // Get Current User Agent OS
+    let device = format!(
+        "{} {}",
+        os.name.unwrap_or_else(|| "_".to_owned().into()),
+        os.major.unwrap_or_else(|| "_".to_owned().into())
+    );
 
     let user = User::find(user_id, connection).await?;
 
@@ -667,27 +777,33 @@ pub async fn check_mfa(
                 )
                 .await?;
 
-                let receipent = result.clone();
-                let mail = mailer.inner().clone();
+                if result.last_login_ip != ip_address {
+                    let receipent = result.clone();
+                    let mail = mailer.inner().clone();
 
-                rocket::tokio::task::spawn(async move {
-                    match email::send(
-                        &mail,
-                        &receipent,
-                        "[Security] New Login",
-                        format!(
-                            "Hello {}! \n\nThere Has Been A New Login To Your Account Using MFA!",
-                            receipent.username
-                        ),
-                    )
-                    .await
-                    {
-                        Ok(_) => tracing::info!("[Email] ✅ Sent New Login Email"),
-                        Err(e) => {
-                            tracing::info!("[Email] ❌ Failed Sending New Login Email: {}", e)
+                    rocket::tokio::task::spawn(async move {
+                        let body = Login {
+                            name: &receipent.username,
+                            time: &chrono::Utc::now().naive_utc().to_string(),
+                            ip_address: &ip_address,
+                            device: &device,
+                        };
+
+                        match email::send(
+                            &mail,
+                            &receipent,
+                            "[Security] New Login",
+                            body.render().unwrap(),
+                        )
+                        .await
+                        {
+                            Ok(_) => tracing::info!("[Email] ✅ Sent New Login Email"),
+                            Err(e) => {
+                                tracing::info!("[Email] ❌ Failed Sending New Login Email: {}", e)
+                            }
                         }
-                    }
-                });
+                    });
+                }
 
                 return Ok(Json(json!(
                     {
@@ -759,7 +875,18 @@ pub async fn disable_mfa(
     let mail = mailer.inner().clone();
 
     rocket::tokio::task::spawn(async move {
-        match email::send(&mail, &receipent, "[Security] MFA Disabled", format!("Hello {}! \n\nThis Email Serves As Notification For Disabling MFA For Your Account!", receipent.username)).await {
+        let body = MFADisabled {
+            name: &receipent.username,
+        };
+
+        match email::send(
+            &mail,
+            &receipent,
+            "[Security] MFA Disabled",
+            body.render().unwrap(),
+        )
+        .await
+        {
             Ok(_) => tracing::info!("[Email] ✅ Sent MFA Notification Email"),
             Err(e) => tracing::info!("[Email] ❌ Failed Sending MFA Notification Email: {}", e),
         }

@@ -92,6 +92,30 @@ diesel::table! {
 }
 
 diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::Equipment;
+    use super::sql_types::Difficulty;
+    use super::sql_types::Musclegroup;
+    use super::sql_types::Exercisetype;
+
+    custom_exercises (exercise_id) {
+        exercise_id -> Int8,
+        user_id -> Uuid,
+        #[max_length = 100]
+        name -> Varchar,
+        equipment -> Equipment,
+        difficulty -> Difficulty,
+        muscle_group -> Musclegroup,
+        sets -> Int4,
+        reps -> Int4,
+        rest_time -> Int4,
+        exercise_type -> Exercisetype,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
     exercise_logs (log_id) {
         log_id -> Int4,
         user_id -> Uuid,
@@ -313,6 +337,7 @@ diesel::table! {
 
 diesel::joinable!(api_keys -> users (user_id));
 diesel::joinable!(calorie_logs -> users (user_id));
+diesel::joinable!(custom_exercises -> users (user_id));
 diesel::joinable!(exercise_logs -> exercises (exercise_id));
 diesel::joinable!(exercise_logs -> users (user_id));
 diesel::joinable!(profiles -> users (user_id));
@@ -329,6 +354,7 @@ diesel::joinable!(workouts -> users (user_id));
 diesel::allow_tables_to_appear_in_same_query!(
     api_keys,
     calorie_logs,
+    custom_exercises,
     exercise_logs,
     exercises,
     profiles,

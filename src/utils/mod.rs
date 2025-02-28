@@ -14,4 +14,5 @@ pub mod email;
 pub mod jobs;
 pub mod logging;
 pub mod password;
+pub mod templates;
 pub mod webhook;

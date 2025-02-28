@@ -114,6 +114,7 @@ pub async fn delete_protein_log(
     ProteinLog::delete(user_id, log_id, connection).await?;
 
     Ok(status::Accepted(json!({
+        "status": 200,
         "message": "Log Deleted Successfully",
     })))
 }

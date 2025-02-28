@@ -114,6 +114,7 @@ pub async fn delete_water_log(
     WaterLog::delete(user_id, log_id, connection).await?;
 
     Ok(status::Accepted(json!({
+        "status": 200,
         "message": "Log Deleted Successfully",
     })))
 }

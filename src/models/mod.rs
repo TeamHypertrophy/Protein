@@ -11,6 +11,7 @@ ______          _       _
 
 pub mod announcement;
 pub mod calorie;
+pub mod custom;
 pub mod exercise;
 pub mod keys;
 pub mod logs;

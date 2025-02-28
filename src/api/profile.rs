@@ -119,6 +119,7 @@ pub async fn delete_profile(
     Profile::delete(user_id, connection).await?;
 
     Ok(status::Accepted(json!({
+        "status": 200,
         "message": "Profile Deleted Successfully",
         "user_id": user_id,
     })))

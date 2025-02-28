@@ -94,6 +94,7 @@ pub async fn delete_api_key(
     APIKey::delete(api_key, connection).await?;
 
     Ok(status::Accepted(json!({
+        "status": 200,
         "message": "API Key Revoked",
         "api_key": api_key
     })))

@@ -57,6 +57,7 @@ lettre = { version = "0.11.14", features = [
     "tokio1-native-tls",
     "serde",
 ] }
+askama = "0.12.1"
 # -- Random
 rand = "0.9.0"
 

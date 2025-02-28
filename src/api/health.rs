@@ -31,10 +31,12 @@ pub async fn ping_redis(_r: RateLimit<'_>, redis: &State<Redis>) -> Result<Value
     // Compare and Return
     if ping == *PONG {
         Ok(json!({
+            "status": 200,
             "is_healthy": true
         }))
     } else {
         Ok(json!({
+            "status": 500,
             "is_healthy": false
         }))
     }
@@ -45,9 +47,11 @@ pub async fn ping_postgres(_r: RateLimit<'_>, pool: &State<DB>) -> Result<Value,
     // Verify Database Connectivity
     match db::get_connection(pool).await {
         Ok(_) => Ok(json!({
+            "status": 200,
             "is_healthy": true
         })),
         Err(_) => Ok(json!({
+            "status": 500,
             "is_healthy": false
         })),
     }

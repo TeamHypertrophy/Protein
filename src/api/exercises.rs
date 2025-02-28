@@ -116,6 +116,7 @@ pub async fn delete_exercise(
     Exercise::delete(exercise_id, connection).await?;
 
     Ok(status::Accepted(json!({
+        "status": 200,
         "message": "Exercise Deleted Successfully",
         "exercise_id": exercise_id,
     })))

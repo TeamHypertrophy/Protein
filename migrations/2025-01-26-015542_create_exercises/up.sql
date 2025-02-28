@@ -54,6 +54,22 @@ CREATE TABLE IF NOT EXISTS exercises (
     "updated_at" TIMESTAMP NOT NULL DEFAULT (now())
 );
 
+-- Private: Users will be able to create their own exercises
+CREATE TABLE IF NOT EXISTS custom_exercises (
+    "exercise_id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    "user_id" UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    "name" VARCHAR(100) NOT NULL,
+    "equipment" Equipment NOT NULL,
+    "difficulty" Difficulty NOT NULL,
+    "muscle_group" MuscleGroup NOT NULL,
+    "sets" INT NOT NULL DEFAULT (3),
+    "reps" INT NOT NULL DEFAULT (12),
+    "rest_time" INT NOT NULL DEFAULT (60),
+    "exercise_type" ExerciseType NOT NULL,
+    "created_at" TIMESTAMP NOT NULL DEFAULT (now()),
+    "updated_at" TIMESTAMP NOT NULL DEFAULT (now())
+);
+
 -- Public: Users will log their exercises (sets, reps, etc.) 1 Exercise = 1 Log
 CREATE TABLE IF NOT EXISTS exercise_logs (
     "log_id" SERIAL PRIMARY KEY,
