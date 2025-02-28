@@ -22,8 +22,8 @@ use validator::Validate;
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
     db,
-    db::DatabasePool,
-    errors::ProteinError,
+    db::DB,
+    errors::Error,
     models::{
         profile::{NewProfile, Profile, UpdateProfile},
         user::User,
@@ -35,8 +35,8 @@ pub async fn get_profile(
     _r: RateLimit<'_>,
     _auth: API,
     user_id: Uuid,
-    pool: &State<DatabasePool>,
-) -> Result<Json<Profile>, ProteinError> {
+    pool: &State<DB>,
+) -> Result<Json<Profile>, Error> {
     // Create Database Connection
     let connection = &mut db::get_connection(pool).await?;
 
@@ -53,8 +53,8 @@ pub async fn get_profile(
 pub async fn get_all_profiles(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
-) -> Result<Json<Vec<Profile>>, ProteinError> {
+    pool: &State<DB>,
+) -> Result<Json<Vec<Profile>>, Error> {
     // Creating Database Connection
     let connection = &mut db::get_connection(pool).await?;
 
@@ -69,16 +69,16 @@ pub async fn create_profile(
     _r: RateLimit<'_>,
     _auth: API,
     user_id: Uuid,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     profile: Json<NewProfile>,
-) -> Result<Json<Profile>, ProteinError> {
+) -> Result<Json<Profile>, Error> {
     // Create Database Connection
     let connection = &mut db::get_connection(pool).await?;
 
     // Validation
     match profile.clone().into_inner().validate() {
         Ok(_) => (),
-        Err(error) => return Err(ProteinError::Validation(error.to_string())),
+        Err(error) => return Err(Error::Validation(error.to_string())),
     }
 
     // Create New Profile
@@ -92,14 +92,14 @@ pub async fn update_profile(
     _r: RateLimit<'_>,
     _auth: API,
     user_id: Uuid,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     profile: Json<UpdateProfile>,
-) -> Result<Json<Profile>, ProteinError> {
+) -> Result<Json<Profile>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     match profile.clone().into_inner().validate() {
         Ok(_) => (),
-        Err(error) => return Err(ProteinError::Validation(error.to_string())),
+        Err(error) => return Err(Error::Validation(error.to_string())),
     }
 
     let result = Profile::update(user_id, profile.into_inner(), connection).await?;
@@ -112,8 +112,8 @@ pub async fn delete_profile(
     _r: RateLimit<'_>,
     _auth: API,
     user_id: Uuid,
-    pool: &State<DatabasePool>,
-) -> Result<status::Accepted<Value>, ProteinError> {
+    pool: &State<DB>,
+) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     Profile::delete(user_id, connection).await?;
@@ -128,8 +128,8 @@ pub async fn delete_profile(
 pub async fn get_leaderboard(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
-) -> Result<Json<Vec<Profile>>, ProteinError> {
+    pool: &State<DB>,
+) -> Result<Json<Vec<Profile>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let profiles = Profile::leaderboard(connection).await?;

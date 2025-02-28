@@ -17,16 +17,16 @@ use uuid::Uuid;
 
 use crate::{
     db,
-    errors::ProteinError,
+    errors::Error,
     models::{keys::APIKey, user::Role},
-    utils::routes::AdminRoutes,
+    utils::admin::Admin,
 };
 
 pub struct API;
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for API {
-    type Error = ProteinError;
+    type Error = Error;
 
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         // The Second Form of Authentication for Hypertrophy Users
@@ -40,14 +40,14 @@ impl<'r> FromRequest<'r> for API {
                 Err(_) => {
                     return Outcome::Error((
                         Status::BadRequest,
-                        ProteinError::Validation("Invalid API Key".to_string()),
+                        Error::Validation("Invalid API Key".to_string()),
                     ));
                 }
             },
             None => {
                 return Outcome::Error((
                     Status::Unauthorized,
-                    ProteinError::Authorization("No API Key Provided".to_string()),
+                    Error::Authorization("No API Key Provided".to_string()),
                 ));
             }
         };
@@ -58,7 +58,7 @@ impl<'r> FromRequest<'r> for API {
             Err(_) => {
                 return Outcome::Error((
                     Status::InternalServerError,
-                    ProteinError::Internal("Failed Retrieving MASTER_API_KEY".to_string()),
+                    Error::Internal("Failed Retrieving MASTER_API_KEY".to_string()),
                 ));
             }
         };
@@ -69,7 +69,7 @@ impl<'r> FromRequest<'r> for API {
             Err(_) => {
                 return Outcome::Error((
                     Status::InternalServerError,
-                    ProteinError::Internal("Failed Retrieving APP_ENV".to_string()),
+                    Error::Internal("Failed Retrieving APP_ENV".to_string()),
                 ));
             }
         };
@@ -81,7 +81,7 @@ impl<'r> FromRequest<'r> for API {
             } else {
                 return Outcome::Error((
                     Status::Unauthorized,
-                    ProteinError::Authorization(
+                    Error::Authorization(
                         "Using MASTER_API_KEY but APP_ENV != development".to_string(),
                     ),
                 ));
@@ -89,12 +89,12 @@ impl<'r> FromRequest<'r> for API {
         }
 
         // 5. Get The Database Pool From The Request State
-        let pool = match request.rocket().state::<db::DatabasePool>() {
+        let pool = match request.rocket().state::<db::DB>() {
             Some(pool) => pool,
             _ => {
                 return Outcome::Error((
                     Status::InternalServerError,
-                    ProteinError::Database("Failed to Retrieve Database Pool".to_string()),
+                    Error::Database("Failed to Retrieve Database Pool".to_string()),
                 ));
             }
         };
@@ -105,7 +105,7 @@ impl<'r> FromRequest<'r> for API {
             Err(_) => {
                 return Outcome::Error((
                     Status::InternalServerError,
-                    ProteinError::Database("Failed to Retrieve Database Connection".to_string()),
+                    Error::Database("Failed to Retrieve Database Connection".to_string()),
                 ));
             }
         };
@@ -128,7 +128,7 @@ impl<'r> FromRequest<'r> for API {
                 Err(error) => {
                     return Outcome::Error((
                         Status::Unauthorized,
-                        ProteinError::Database(error.to_string()),
+                        Error::Database(error.to_string()),
                     ));
                 }
             };
@@ -151,7 +151,7 @@ impl<'r> FromRequest<'r> for API {
                     None => {
                         return Outcome::Error((
                             Status::InternalServerError,
-                            ProteinError::Internal("Failed Retrieving Route".to_string()),
+                            Error::Internal("Failed Retrieving Route".to_string()),
                         ));
                     }
                 };
@@ -161,17 +161,17 @@ impl<'r> FromRequest<'r> for API {
                     None => {
                         return Outcome::Error((
                             Status::InternalServerError,
-                            ProteinError::Internal("Failed Retrieving Route Name".to_string()),
+                            Error::Internal("Failed Retrieving Route Name".to_string()),
                         ));
                     }
                 };
 
-                let routes = match request.rocket().state::<AdminRoutes>() {
+                let routes = match request.rocket().state::<Admin>() {
                     Some(admin) => &admin.routes,
                     None => {
                         return Outcome::Error((
                             Status::InternalServerError,
-                            ProteinError::Internal("Failed Retrieving Admin Routes".to_string()),
+                            Error::Internal("Failed Retrieving Admin Routes".to_string()),
                         ));
                     }
                 };
@@ -183,7 +183,7 @@ impl<'r> FromRequest<'r> for API {
                     } else {
                         return Outcome::Error((
                             Status::Unauthorized,
-                            ProteinError::Authorization("Unauthorized API Key!".to_string()),
+                            Error::Authorization("Unauthorized API Key!".to_string()),
                         ));
                     }
                 }
@@ -193,7 +193,7 @@ impl<'r> FromRequest<'r> for API {
             _ => {
                 return Outcome::Error((
                     Status::Unauthorized,
-                    ProteinError::Authorization("Unauthorized API Key!".to_string()),
+                    Error::Authorization("Unauthorized API Key!".to_string()),
                 ));
             }
         }

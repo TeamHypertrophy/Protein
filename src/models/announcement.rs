@@ -16,8 +16,8 @@ use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
 use crate::{
-    db::DatabaseConnection,
-    errors::ProteinError,
+    db::DBConnection,
+    errors::Error,
     schema::{
         trainer_announcements,
         trainer_announcements::dsl::{announcement_id, trainer_id},
@@ -54,8 +54,8 @@ impl TrainerAnnouncement {
     pub async fn find(
         trainer: Uuid,
         announcement: i32,
-        connection: &mut DatabaseConnection,
-    ) -> Result<TrainerAnnouncement, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<TrainerAnnouncement, Error> {
         trainer_announcements::table
             .filter(trainer_id.eq(trainer))
             .filter(announcement_id.eq(announcement))
@@ -63,27 +63,25 @@ impl TrainerAnnouncement {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
-    pub async fn all(
-        connection: &mut DatabaseConnection,
-    ) -> Result<Vec<TrainerAnnouncement>, ProteinError> {
+    pub async fn all(connection: &mut DBConnection) -> Result<Vec<TrainerAnnouncement>, Error> {
         trainer_announcements::table
             .select(TrainerAnnouncement::as_select())
             .load(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn trainer_all(
         trainer: Uuid,
-        connection: &mut DatabaseConnection,
-    ) -> Result<Vec<TrainerAnnouncement>, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<Vec<TrainerAnnouncement>, Error> {
         trainer_announcements::table
             .filter(trainer_id.eq(trainer))
             .select(TrainerAnnouncement::as_select())
@@ -91,7 +89,7 @@ impl TrainerAnnouncement {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
@@ -99,8 +97,8 @@ impl TrainerAnnouncement {
         trainer: Uuid,
         announcement: i32,
         data: UpdateTrainerAnnouncement,
-        connection: &mut DatabaseConnection,
-    ) -> Result<TrainerAnnouncement, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<TrainerAnnouncement, Error> {
         diesel::update(trainer_announcements::table)
             .filter(trainer_id.eq(trainer))
             .filter(announcement_id.eq(announcement))
@@ -109,15 +107,15 @@ impl TrainerAnnouncement {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn delete(
         trainer: Uuid,
         announcement: i32,
-        connection: &mut DatabaseConnection,
-    ) -> Result<usize, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<usize, Error> {
         diesel::delete(trainer_announcements::table)
             .filter(trainer_id.eq(trainer))
             .filter(announcement_id.eq(announcement))
@@ -125,21 +123,21 @@ impl TrainerAnnouncement {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn create(
         data: NewTrainerAnnouncement,
-        connection: &mut DatabaseConnection,
-    ) -> Result<TrainerAnnouncement, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<TrainerAnnouncement, Error> {
         diesel::insert_into(trainer_announcements::table)
             .values(&data)
             .get_result::<TrainerAnnouncement>(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 }

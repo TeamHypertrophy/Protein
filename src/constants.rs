@@ -10,7 +10,7 @@ ______          _       _
 */
 
 // Requests
-pub const RATE_LIMIT_PER: u32 = 30u32; // 30 requests per minnute
+pub const RATE_LIMIT: u32 = 30u32; // 30 requests per minnute
 
 // Redis
 pub const CACHE_EXPIRATION_TIME: i64 = 900; // 15 minutes

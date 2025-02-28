@@ -11,7 +11,7 @@ ______          _       _
 
 use rocket_governor::{Method, Quota, RocketGovernable, RocketGovernor};
 
-use crate::constants::RATE_LIMIT_PER;
+use crate::constants::RATE_LIMIT;
 
 pub type RateLimit<'a> = RocketGovernor<'a, RateLimitGuard>;
 
@@ -19,6 +19,6 @@ pub struct RateLimitGuard;
 
 impl RocketGovernable<'_> for RateLimitGuard {
     fn quota(_method: Method, _route_name: &str) -> Quota {
-        Quota::per_minute(Self::nonzero(RATE_LIMIT_PER))
+        Quota::per_minute(Self::nonzero(RATE_LIMIT))
     }
 }

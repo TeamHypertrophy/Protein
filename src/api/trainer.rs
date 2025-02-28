@@ -19,8 +19,8 @@ use rocket::{
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
     db,
-    db::DatabasePool,
-    errors::ProteinError,
+    db::DB,
+    errors::Error,
     models::{
         announcement::{NewTrainerAnnouncement, TrainerAnnouncement, UpdateTrainerAnnouncement},
         trainer::{NewTrainer, Trainer, UpdateTrainer},
@@ -31,9 +31,9 @@ use crate::{
 pub async fn get_trainer(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     trainer_id: i32,
-) -> Result<Json<Trainer>, ProteinError> {
+) -> Result<Json<Trainer>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let trainer = Trainer::find(trainer_id, connection).await?;
@@ -45,8 +45,8 @@ pub async fn get_trainer(
 pub async fn get_all_trainers(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
-) -> Result<Json<Vec<Trainer>>, ProteinError> {
+    pool: &State<DB>,
+) -> Result<Json<Vec<Trainer>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let trainers = Trainer::all(connection).await?;
@@ -57,10 +57,10 @@ pub async fn get_all_trainers(
 #[post("/update/<trainer_id>", format = "application/json", data = "<data>")]
 pub async fn update_trainer(
     _r: RateLimit<'_>,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     trainer_id: i32,
     data: Json<UpdateTrainer>,
-) -> Result<Json<Trainer>, ProteinError> {
+) -> Result<Json<Trainer>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let trainer = Trainer::update(trainer_id, data.into_inner(), connection).await?;
@@ -72,9 +72,9 @@ pub async fn update_trainer(
 pub async fn create_trainer(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     data: Json<NewTrainer>,
-) -> Result<Json<Trainer>, ProteinError> {
+) -> Result<Json<Trainer>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let trainer = Trainer::create(data.into_inner(), connection).await?;
@@ -86,9 +86,9 @@ pub async fn create_trainer(
 pub async fn delete_trainer(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     trainer_id: i32,
-) -> Result<status::Accepted<Value>, ProteinError> {
+) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     Trainer::delete(trainer_id, connection).await?;
@@ -105,10 +105,10 @@ pub async fn delete_trainer(
 pub async fn get_announcement(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     trainer_id: Uuid,
     announcement_id: i32,
-) -> Result<Json<TrainerAnnouncement>, ProteinError> {
+) -> Result<Json<TrainerAnnouncement>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let announcement = TrainerAnnouncement::find(trainer_id, announcement_id, connection).await?;
@@ -120,8 +120,8 @@ pub async fn get_announcement(
 pub async fn get_all_announcements(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
-) -> Result<Json<Vec<TrainerAnnouncement>>, ProteinError> {
+    pool: &State<DB>,
+) -> Result<Json<Vec<TrainerAnnouncement>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let announcements = TrainerAnnouncement::all(connection).await?;
@@ -133,9 +133,9 @@ pub async fn get_all_announcements(
 pub async fn get_all_trainer_announcements(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     trainer_id: Uuid,
-) -> Result<Json<Vec<TrainerAnnouncement>>, ProteinError> {
+) -> Result<Json<Vec<TrainerAnnouncement>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let announcements = TrainerAnnouncement::trainer_all(trainer_id, connection).await?;
@@ -150,11 +150,11 @@ pub async fn get_all_trainer_announcements(
 )]
 pub async fn update_announcement(
     _r: RateLimit<'_>,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     trainer_id: Uuid,
     announcement_id: i32,
     data: Json<UpdateTrainerAnnouncement>,
-) -> Result<Json<TrainerAnnouncement>, ProteinError> {
+) -> Result<Json<TrainerAnnouncement>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let announcement =
@@ -168,9 +168,9 @@ pub async fn update_announcement(
 pub async fn create_announcement(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     data: Json<NewTrainerAnnouncement>,
-) -> Result<Json<TrainerAnnouncement>, ProteinError> {
+) -> Result<Json<TrainerAnnouncement>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let announcement = TrainerAnnouncement::create(data.into_inner(), connection).await?;
@@ -185,10 +185,10 @@ pub async fn create_announcement(
 pub async fn delete_announcement(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     trainer_id: Uuid,
     announcement_id: i32,
-) -> Result<status::Accepted<Value>, ProteinError> {
+) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     TrainerAnnouncement::delete(trainer_id, announcement_id, connection).await?;

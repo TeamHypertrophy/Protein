@@ -17,10 +17,10 @@ use diesel_async::{
 };
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 
-use crate::{constants::POSTGRES_POOL_SIZE, errors::ProteinError};
+use crate::{constants::POSTGRES_POOL_SIZE, errors::Error};
 
-pub type DatabaseConnection = deadpool::Object<AsyncPgConnection>;
-pub type DatabasePool = Pool<AsyncPgConnection>;
+pub type DBConnection = deadpool::Object<AsyncPgConnection>;
+pub type DB = Pool<AsyncPgConnection>;
 
 /// Establishes a connection pool to the PostgreSQL database and runs
 /// migrations.
@@ -36,9 +36,8 @@ pub type DatabasePool = Pool<AsyncPgConnection>;
 /// * `POSTGRES_POOL_SIZE` - Maximum number of connections in pool
 ///
 /// # Returns
-/// * `Result<DatabasePool, Box<dyn std::error::Error>>` - A Result containing
-///   either:
-///   - `DatabasePool`: The configured connection pool
+/// * `Result<DB, Box<dyn std::error::Error>>` - A Result containing either:
+///   - `DB`: The configured connection pool
 ///   - `Box<dyn std::error::Error>`: Any error that occurred during setup
 ///
 /// # Errors
@@ -47,7 +46,7 @@ pub type DatabasePool = Pool<AsyncPgConnection>;
 /// * Failed to create connection pool
 /// * Failed to run migrations
 /// * Database is unreachable
-pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::Error>> {
+pub async fn create() -> Result<DB, Box<dyn std::error::Error>> {
     // Get Database URL
     let database_url: String =
         std::env::var("DATABASE_URL").expect("[!] DATABASE_URL Environment Variable Must Be Set");
@@ -57,7 +56,7 @@ pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::
         AsyncDieselConnectionManager::<AsyncPgConnection>::new(database_url);
 
     // Create Database Pool
-    let pool: DatabasePool = match Pool::builder(manager).max_size(POSTGRES_POOL_SIZE).build() {
+    let pool: DB = match Pool::builder(manager).max_size(POSTGRES_POOL_SIZE).build() {
         Ok(pool) => pool,
         Err(error) => panic!("[!] Could Not Create Database Pool: {}", error),
     };
@@ -66,10 +65,10 @@ pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::
     pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
     // Get Database Connection
-    let connection: DatabaseConnection = pool.clone().get().await?;
+    let connection: DBConnection = pool.clone().get().await?;
 
     // Run Migrations
-    let mut wrapper: AsyncConnectionWrapper<DatabaseConnection> =
+    let mut wrapper: AsyncConnectionWrapper<DBConnection> =
         AsyncConnectionWrapper::from(connection);
 
     rocket::tokio::task::spawn_blocking(move || match wrapper.run_pending_migrations(MIGRATIONS) {
@@ -89,9 +88,9 @@ pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::
 ///   state
 ///
 /// # Returns
-/// * `Result<DatabaseConnection, ProteinError>` - A Result containing either:
-///   - `DatabaseConnection`: A successful connection from the pool
-///   - `ProteinError`: A database error with details
+/// * `Result<DBConnection, Error>` - A Result containing either:
+///   - `DBConnection`: A successful connection from the pool
+///   - `Error`: A database error with details
 ///
 /// # Example
 /// ```
@@ -100,15 +99,13 @@ pub async fn establish_connection() -> Result<DatabasePool, Box<dyn std::error::
 /// ```
 ///
 /// # Errors
-/// Returns a `ProteinError::Database` if:
+/// Returns a `Error::Database` if:
 /// * The pool is exhausted
 /// * Connection timeout occurs
 /// * Database is unreachable
-pub async fn get_connection(
-    pool: &State<DatabasePool>,
-) -> Result<DatabaseConnection, ProteinError> {
+pub async fn get_connection(pool: &State<DB>) -> Result<DBConnection, Error> {
     pool.get().await.map_err(|error| {
         tracing::error!("[!] PostgreSQL Error {:?}", error);
-        ProteinError::Database(error.to_string())
+        Error::Database(error.to_string())
     })
 }

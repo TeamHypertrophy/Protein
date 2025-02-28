@@ -17,8 +17,8 @@ use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
 use crate::{
-    db::DatabaseConnection,
-    errors::ProteinError,
+    db::DBConnection,
+    errors::Error,
     models::{profile::FitnessGoal, user::User, workout::Difficulty},
     schema::{
         workout_plans,
@@ -70,8 +70,8 @@ impl WorkoutPlan {
     pub async fn find(
         user: &User,
         plan: Uuid,
-        connection: &mut DatabaseConnection,
-    ) -> Result<WorkoutPlan, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<WorkoutPlan, Error> {
         WorkoutPlan::belonging_to(user)
             .select(WorkoutPlan::as_select())
             .filter(plan_id.eq(plan))
@@ -79,27 +79,25 @@ impl WorkoutPlan {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
-    pub async fn all(
-        connection: &mut DatabaseConnection,
-    ) -> Result<Vec<WorkoutPlan>, ProteinError> {
+    pub async fn all(connection: &mut DBConnection) -> Result<Vec<WorkoutPlan>, Error> {
         workout_plans::table
             .select(WorkoutPlan::as_select())
             .load(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn user_all(
         user: Uuid,
-        connection: &mut DatabaseConnection,
-    ) -> Result<Vec<WorkoutPlan>, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<Vec<WorkoutPlan>, Error> {
         workout_plans::table
             .filter(user_id.eq(user))
             .select(WorkoutPlan::as_select())
@@ -107,7 +105,7 @@ impl WorkoutPlan {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
@@ -115,8 +113,8 @@ impl WorkoutPlan {
         user: Uuid,
         plan: Uuid,
         data: UpdateWorkoutPlan,
-        connection: &mut DatabaseConnection,
-    ) -> Result<WorkoutPlan, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<WorkoutPlan, Error> {
         diesel::update(workout_plans::table)
             .filter(user_id.eq(user))
             .filter(plan_id.eq(plan))
@@ -125,15 +123,15 @@ impl WorkoutPlan {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn delete(
         user: Uuid,
         plan: Uuid,
-        connection: &mut DatabaseConnection,
-    ) -> Result<usize, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<usize, Error> {
         diesel::delete(workout_plans::table)
             .filter(user_id.eq(user))
             .filter(plan_id.eq(plan))
@@ -141,21 +139,21 @@ impl WorkoutPlan {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn create(
         data: NewWorkoutPlan,
-        connection: &mut DatabaseConnection,
-    ) -> Result<WorkoutPlan, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<WorkoutPlan, Error> {
         diesel::insert_into(workout_plans::table)
             .values(&data)
             .get_result::<WorkoutPlan>(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 }

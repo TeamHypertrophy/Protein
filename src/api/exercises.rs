@@ -19,8 +19,8 @@ use validator::Validate;
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
     db,
-    db::DatabasePool,
-    errors::ProteinError,
+    db::DB,
+    errors::Error,
     models::exercise::{Exercise, NewExercise, SearchExercise, UpdateExercise},
 };
 
@@ -28,9 +28,9 @@ use crate::{
 pub async fn get_exercise(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     exercise_id: i64,
-) -> Result<Json<Exercise>, ProteinError> {
+) -> Result<Json<Exercise>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let exercise = Exercise::find(exercise_id, connection).await?;
@@ -42,9 +42,9 @@ pub async fn get_exercise(
 pub async fn search_exercises(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     data: Json<SearchExercise>,
-) -> Result<Json<Vec<Exercise>>, ProteinError> {
+) -> Result<Json<Vec<Exercise>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let exercises = Exercise::search(connection, data.into_inner()).await?;
@@ -56,8 +56,8 @@ pub async fn search_exercises(
 pub async fn get_all_exercises(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
-) -> Result<Json<Vec<Exercise>>, ProteinError> {
+    pool: &State<DB>,
+) -> Result<Json<Vec<Exercise>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let exercises = Exercise::all(connection).await?;
@@ -69,15 +69,15 @@ pub async fn get_all_exercises(
 pub async fn update_exercise(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     exercise_id: i64,
     data: Json<UpdateExercise>,
-) -> Result<Json<Exercise>, ProteinError> {
+) -> Result<Json<Exercise>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     match data.clone().into_inner().validate() {
         Ok(_) => (),
-        Err(error) => return Err(ProteinError::Validation(error.to_string())),
+        Err(error) => return Err(Error::Validation(error.to_string())),
     }
 
     let exercise = Exercise::update(exercise_id, data.into_inner(), connection).await?;
@@ -89,14 +89,14 @@ pub async fn update_exercise(
 pub async fn create_exercise(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     data: Json<NewExercise>,
-) -> Result<Json<Exercise>, ProteinError> {
+) -> Result<Json<Exercise>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     match data.clone().into_inner().validate() {
         Ok(_) => (),
-        Err(error) => return Err(ProteinError::Validation(error.to_string())),
+        Err(error) => return Err(Error::Validation(error.to_string())),
     }
 
     let exercise = Exercise::create(connection, data.into_inner()).await?;
@@ -108,9 +108,9 @@ pub async fn create_exercise(
 pub async fn delete_exercise(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     exercise_id: i64,
-) -> Result<status::Accepted<Value>, ProteinError> {
+) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     Exercise::delete(exercise_id, connection).await?;

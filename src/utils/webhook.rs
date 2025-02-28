@@ -14,7 +14,7 @@ use std::sync::Arc;
 use iso8061_timestamp::Timestamp;
 use discord_webhook2::{message::Message, webhook::DiscordWebhook};
 
-use crate::{constants::*, errors::ProteinError};
+use crate::{constants::*, errors::Error};
 
 pub type Webhook = Arc<DiscordWebhook>;
 
@@ -24,7 +24,7 @@ pub async fn send_audit_log(
     user: &str,
     ip: &str,
     action: &str,
-) -> Result<(), ProteinError> {
+) -> Result<(), Error> {
     tracing::info!("[Webhook] ⚙️ Sending {} Audit Log", &action);
 
     webhook
@@ -43,7 +43,9 @@ pub async fn send_audit_log(
             })
         }))
         .await
-        .map_err(|e| ProteinError::Webhook(e.to_string()))?;
+        .map_err(|e| Error::Webhook(e.to_string()))?;
+
+    tracing::info!("[Webhook] ⚙️ Sent {} Audit Log", &action);
 
     Ok(())
 }

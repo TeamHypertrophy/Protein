@@ -19,8 +19,8 @@ use uuid::Uuid;
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
     db,
-    db::DatabasePool,
-    errors::ProteinError,
+    db::DB,
+    errors::Error,
     models::sleep::{NewSleepLog, SleepLog, UpdateSleepLog},
 };
 
@@ -28,10 +28,10 @@ use crate::{
 pub async fn get_sleep_log(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
     log_id: i32,
-) -> Result<Json<SleepLog>, ProteinError> {
+) -> Result<Json<SleepLog>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let log = SleepLog::find(user_id, log_id, connection).await?;
@@ -43,8 +43,8 @@ pub async fn get_sleep_log(
 pub async fn get_all_sleep_logs(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
-) -> Result<Json<Vec<SleepLog>>, ProteinError> {
+    pool: &State<DB>,
+) -> Result<Json<Vec<SleepLog>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let logs = SleepLog::all(connection).await?;
@@ -56,9 +56,9 @@ pub async fn get_all_sleep_logs(
 pub async fn get_all_user_sleep_logs(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
-) -> Result<Json<Vec<SleepLog>>, ProteinError> {
+) -> Result<Json<Vec<SleepLog>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let logs = SleepLog::user_all(user_id, connection).await?;
@@ -74,11 +74,11 @@ pub async fn get_all_user_sleep_logs(
 pub async fn update_sleep_log(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
     log_id: i32,
     log: Json<UpdateSleepLog>,
-) -> Result<Json<SleepLog>, ProteinError> {
+) -> Result<Json<SleepLog>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let result = SleepLog::update(user_id, log_id, log.into_inner(), connection).await?;
@@ -90,9 +90,9 @@ pub async fn update_sleep_log(
 pub async fn create_sleep_log(
     _r: RateLimit<'_>,
     user_id: Uuid,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     log: Json<NewSleepLog>,
-) -> Result<Json<SleepLog>, ProteinError> {
+) -> Result<Json<SleepLog>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let result = SleepLog::create(log.into_inner(), connection).await?;
@@ -104,10 +104,10 @@ pub async fn create_sleep_log(
 pub async fn delete_sleep_log(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
     log_id: i32,
-) -> Result<status::Accepted<Value>, ProteinError> {
+) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     SleepLog::delete(user_id, log_id, connection).await?;

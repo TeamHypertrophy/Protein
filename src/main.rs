@@ -65,7 +65,7 @@ async fn protein() -> _ {
     }
 
     // Logging
-    let (guard, ()) = match utils::logging::setup_logging() {
+    let (guard, ()) = match utils::logging::setup() {
         Ok((guard, ())) => {
             tracing::info!("[+] ✅ Logging System Initialized!");
             (guard, ())
@@ -77,7 +77,7 @@ async fn protein() -> _ {
     };
 
     // PostgreSQL
-    let pool = match db::establish_connection().await {
+    let pool = match db::create().await {
         Ok(pool) => {
             tracing::info!("[+] ✅ Database Connection Established!");
             pool
@@ -89,7 +89,7 @@ async fn protein() -> _ {
     };
 
     // Redis
-    let redis = match cache::redis::create_redis_pool().await {
+    let redis = match cache::redis::create().await {
         Ok(redis) => {
             tracing::info!("[+] ✅ Redis Connection Established!");
             redis
@@ -101,7 +101,7 @@ async fn protein() -> _ {
     };
 
     // Email
-    let email = match utils::email::setup_email().await {
+    let email = match utils::email::setup().await {
         Ok(email) => {
             tracing::info!("[+] ✅ Email System Initialized!");
             email
@@ -211,7 +211,7 @@ async fn protein() -> _ {
         .manage(scheduler)
         .manage(webhook)
         .manage(user_agent_parser)
-        .manage(utils::routes::AdminRoutes {
+        .manage(utils::admin::Admin {
             routes: std::sync::LazyLock::new(|| {
                 vec![
                     // Calorie Logs

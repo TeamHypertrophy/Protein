@@ -16,8 +16,8 @@ use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
 use crate::{
-    db::DatabaseConnection,
-    errors::ProteinError,
+    db::DBConnection,
+    errors::Error,
     models::user::User,
     schema::{
         calorie_logs,
@@ -55,8 +55,8 @@ impl CalorieLog {
     pub async fn find(
         user: Uuid,
         id: i32,
-        connection: &mut DatabaseConnection,
-    ) -> Result<CalorieLog, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<CalorieLog, Error> {
         calorie_logs::table
             .filter(user_id.eq(user))
             .filter(log_id.eq(id))
@@ -65,25 +65,25 @@ impl CalorieLog {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
-    pub async fn all(connection: &mut DatabaseConnection) -> Result<Vec<CalorieLog>, ProteinError> {
+    pub async fn all(connection: &mut DBConnection) -> Result<Vec<CalorieLog>, Error> {
         calorie_logs::table
             .select(CalorieLog::as_select())
             .load(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn user_all(
         user: Uuid,
-        connection: &mut DatabaseConnection,
-    ) -> Result<Vec<CalorieLog>, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<Vec<CalorieLog>, Error> {
         calorie_logs::table
             .filter(user_id.eq(user))
             .select(CalorieLog::as_select())
@@ -91,7 +91,7 @@ impl CalorieLog {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
@@ -99,8 +99,8 @@ impl CalorieLog {
         user: Uuid,
         id: i32,
         data: UpdateCalorieLog,
-        connection: &mut DatabaseConnection,
-    ) -> Result<CalorieLog, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<CalorieLog, Error> {
         diesel::update(calorie_logs::table)
             .filter(user_id.eq(user))
             .filter(log_id.eq(id))
@@ -109,15 +109,15 @@ impl CalorieLog {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn delete(
         user: Uuid,
         id: i32,
-        connection: &mut DatabaseConnection,
-    ) -> Result<usize, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<usize, Error> {
         diesel::delete(calorie_logs::table)
             .filter(user_id.eq(user))
             .filter(log_id.eq(id))
@@ -125,21 +125,21 @@ impl CalorieLog {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn create(
         data: NewCalorieLog,
-        connection: &mut DatabaseConnection,
-    ) -> Result<CalorieLog, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<CalorieLog, Error> {
         diesel::insert_into(calorie_logs::table)
             .values(&data)
             .get_result::<CalorieLog>(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 }

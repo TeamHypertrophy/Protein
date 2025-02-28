@@ -13,11 +13,11 @@ ______          _       _
 // 1. Check If An API Key Expired
 
 use crate::{
-    db::DatabasePool,
+    db::DB,
     models::keys::{APIKey, Status, UpdateAPIKey},
 };
 
-pub async fn verify_api_keys(pool: &DatabasePool) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn verify_api_keys(pool: &DB) -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("[+] ⏰ Beginning API Key Verification Job");
 
     // Get Database Connection

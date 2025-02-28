@@ -19,8 +19,8 @@ use uuid::Uuid;
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
     db,
-    db::DatabasePool,
-    errors::ProteinError,
+    db::DB,
+    errors::Error,
     models::calorie::{CalorieLog, NewCalorieLog, UpdateCalorieLog},
 };
 
@@ -28,10 +28,10 @@ use crate::{
 pub async fn get_calorie_log(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
     log_id: i32,
-) -> Result<Json<CalorieLog>, ProteinError> {
+) -> Result<Json<CalorieLog>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let log = CalorieLog::find(user_id, log_id, connection).await?;
@@ -43,8 +43,8 @@ pub async fn get_calorie_log(
 pub async fn get_all_calorie_logs(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
-) -> Result<Json<Vec<CalorieLog>>, ProteinError> {
+    pool: &State<DB>,
+) -> Result<Json<Vec<CalorieLog>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let logs = CalorieLog::all(connection).await?;
@@ -56,9 +56,9 @@ pub async fn get_all_calorie_logs(
 pub async fn get_all_user_calorie_logs(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
-) -> Result<Json<Vec<CalorieLog>>, ProteinError> {
+) -> Result<Json<Vec<CalorieLog>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let logs = CalorieLog::user_all(user_id, connection).await?;
@@ -74,11 +74,11 @@ pub async fn get_all_user_calorie_logs(
 pub async fn update_calorie_log(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
     log_id: i32,
     log: Json<UpdateCalorieLog>,
-) -> Result<Json<CalorieLog>, ProteinError> {
+) -> Result<Json<CalorieLog>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let result = CalorieLog::update(user_id, log_id, log.into_inner(), connection).await?;
@@ -91,9 +91,9 @@ pub async fn create_calorie_log(
     _r: RateLimit<'_>,
     _auth: API,
     user_id: Uuid,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     log: Json<NewCalorieLog>,
-) -> Result<Json<CalorieLog>, ProteinError> {
+) -> Result<Json<CalorieLog>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let result = CalorieLog::create(log.into_inner(), connection).await?;
@@ -105,10 +105,10 @@ pub async fn create_calorie_log(
 pub async fn delete_calorie_log(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
     log_id: i32,
-) -> Result<status::Accepted<Value>, ProteinError> {
+) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     CalorieLog::delete(user_id, log_id, connection).await?;

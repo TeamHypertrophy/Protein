@@ -17,8 +17,8 @@ use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
 use crate::{
-    db::DatabaseConnection,
-    errors::ProteinError,
+    db::DBConnection,
+    errors::Error,
     schema::{trainers, trainers::dsl::trainer_id},
 };
 
@@ -59,36 +59,33 @@ pub enum Specialization {
 }
 
 impl Trainer {
-    pub async fn find(
-        trainer: i32,
-        connection: &mut DatabaseConnection,
-    ) -> Result<Trainer, ProteinError> {
+    pub async fn find(trainer: i32, connection: &mut DBConnection) -> Result<Trainer, Error> {
         trainers::table
             .filter(trainer_id.eq(trainer))
             .first(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
-    pub async fn all(connection: &mut DatabaseConnection) -> Result<Vec<Trainer>, ProteinError> {
+    pub async fn all(connection: &mut DBConnection) -> Result<Vec<Trainer>, Error> {
         trainers::table
             .select(Trainer::as_select())
             .load(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn update(
         trainer: i32,
         data: UpdateTrainer,
-        connection: &mut DatabaseConnection,
-    ) -> Result<Trainer, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<Trainer, Error> {
         diesel::update(trainers::table)
             .filter(trainer_id.eq(trainer))
             .set(&data)
@@ -96,35 +93,29 @@ impl Trainer {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
-    pub async fn create(
-        data: NewTrainer,
-        connection: &mut DatabaseConnection,
-    ) -> Result<Trainer, ProteinError> {
+    pub async fn create(data: NewTrainer, connection: &mut DBConnection) -> Result<Trainer, Error> {
         diesel::insert_into(trainers::table)
             .values(&data)
             .get_result::<Trainer>(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
-    pub async fn delete(
-        trainer: i32,
-        connection: &mut DatabaseConnection,
-    ) -> Result<usize, ProteinError> {
+    pub async fn delete(trainer: i32, connection: &mut DBConnection) -> Result<usize, Error> {
         diesel::delete(trainers::table)
             .filter(trainer_id.eq(trainer))
             .execute(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 }

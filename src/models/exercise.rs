@@ -17,8 +17,8 @@ use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
 use crate::{
-    db::DatabaseConnection,
-    errors::ProteinError,
+    db::DBConnection,
+    errors::Error,
     models::workout::Difficulty,
     schema::{exercises, exercises::dsl::exercise_id},
 };
@@ -58,10 +58,7 @@ pub struct Exercise {
 }
 
 impl Exercise {
-    pub async fn find(
-        id: i64,
-        connection: &mut DatabaseConnection,
-    ) -> Result<Exercise, ProteinError> {
+    pub async fn find(id: i64, connection: &mut DBConnection) -> Result<Exercise, Error> {
         exercises::table
             .find(id)
             .select(Exercise::as_select())
@@ -69,14 +66,14 @@ impl Exercise {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn search(
-        connection: &mut DatabaseConnection,
+        connection: &mut DBConnection,
         data: SearchExercise,
-    ) -> Result<Vec<Exercise>, ProteinError> {
+    ) -> Result<Vec<Exercise>, Error> {
         let mut query = exercises::table.into_boxed();
 
         if let Some(name) = data.name {
@@ -97,40 +94,37 @@ impl Exercise {
 
         query.load::<Exercise>(connection).await.map_err(|error| {
             tracing::error!("[!] PostgreSQL Error: {:?}", error);
-            ProteinError::Database(error.to_string())
+            Error::Database(error.to_string())
         })
     }
 
-    pub async fn all(connection: &mut DatabaseConnection) -> Result<Vec<Exercise>, ProteinError> {
+    pub async fn all(connection: &mut DBConnection) -> Result<Vec<Exercise>, Error> {
         exercises::table
             .select(Exercise::as_select())
             .load(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
-    pub async fn delete(
-        exercise: i64,
-        connection: &mut DatabaseConnection,
-    ) -> Result<usize, ProteinError> {
+    pub async fn delete(exercise: i64, connection: &mut DBConnection) -> Result<usize, Error> {
         diesel::delete(exercises::table)
             .filter(exercise_id.eq(exercise))
             .execute(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn update(
         exercise: i64,
         data: UpdateExercise,
-        connection: &mut DatabaseConnection,
-    ) -> Result<Exercise, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<Exercise, Error> {
         diesel::update(exercises::table)
             .filter(exercise_id.eq(exercise))
             .set(&data)
@@ -138,21 +132,21 @@ impl Exercise {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn create(
-        connection: &mut DatabaseConnection,
+        connection: &mut DBConnection,
         data: NewExercise,
-    ) -> Result<Exercise, ProteinError> {
+    ) -> Result<Exercise, Error> {
         diesel::insert_into(exercises::table)
             .values(&data)
             .get_result(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 }

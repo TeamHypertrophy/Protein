@@ -26,7 +26,7 @@ pub struct ErrorResponse {
 }
 
 #[derive(Debug, Clone)]
-pub enum ProteinError {
+pub enum Error {
     Internal(String),
 
     NotFound(String),
@@ -46,62 +46,62 @@ pub enum ProteinError {
     Webhook(String),
 }
 
-impl ProteinError {
+impl Error {
     fn get_http_status(&self) -> Status {
         match self {
-            ProteinError::Internal(_) => Status::InternalServerError,
-            ProteinError::Cache(_) => Status::InternalServerError,
-            ProteinError::Database(_) => Status::InternalServerError,
-            ProteinError::Authorization(_) => Status::Unauthorized,
-            ProteinError::NotFound(_) => Status::NotFound,
-            ProteinError::Validation(_) => Status::BadRequest,
-            ProteinError::Email(_) => Status::InternalServerError,
-            ProteinError::Webhook(_) => Status::BadRequest,
+            Error::Internal(_) => Status::InternalServerError,
+            Error::Cache(_) => Status::InternalServerError,
+            Error::Database(_) => Status::InternalServerError,
+            Error::Authorization(_) => Status::Unauthorized,
+            Error::NotFound(_) => Status::NotFound,
+            Error::Validation(_) => Status::BadRequest,
+            Error::Email(_) => Status::InternalServerError,
+            Error::Webhook(_) => Status::BadRequest,
             _ => Status::BadRequest,
         }
     }
 }
 
-impl std::fmt::Display for ProteinError {
+impl std::fmt::Display for Error {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(fmt, "Error {}.", self.get_http_status())
     }
 }
 
-impl std::error::Error for ProteinError {
+impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         None
     }
 
     fn description(&self) -> &str {
         match self {
-            ProteinError::Internal(_) => "[!] Internal Server Error",
-            ProteinError::NotFound(_) => "[!] Data Not Found",
-            ProteinError::BadRequest(_) => "[!] Bad Request Formed",
-            ProteinError::Cache(_) => "[!] Cache Error",
-            ProteinError::Authorization(_) => "[!] Authorization Error",
-            ProteinError::Validation(_) => "[!] Validation Error",
-            ProteinError::Database(_) => "[!] Database Error",
-            ProteinError::Email(_) => "[!] Email Error",
-            ProteinError::Webhook(_) => "[!] Webhook Error",
+            Error::Internal(_) => "[!] Internal Server Error",
+            Error::NotFound(_) => "[!] Data Not Found",
+            Error::BadRequest(_) => "[!] Bad Request Formed",
+            Error::Cache(_) => "[!] Cache Error",
+            Error::Authorization(_) => "[!] Authorization Error",
+            Error::Validation(_) => "[!] Validation Error",
+            Error::Database(_) => "[!] Database Error",
+            Error::Email(_) => "[!] Email Error",
+            Error::Webhook(_) => "[!] Webhook Error",
         }
     }
 }
 
-impl<'r> Responder<'r, 'static> for ProteinError {
+impl<'r> Responder<'r, 'static> for Error {
     fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
         let status_code: Status = self.get_http_status();
 
         let message = match self {
-            ProteinError::Internal(error) => error,
-            ProteinError::NotFound(error) => error,
-            ProteinError::BadRequest(error) => error,
-            ProteinError::Cache(error) => error,
-            ProteinError::Authorization(error) => error,
-            ProteinError::Validation(error) => error,
-            ProteinError::Database(error) => error,
-            ProteinError::Email(error) => error,
-            ProteinError::Webhook(error) => error,
+            Error::Internal(error) => error,
+            Error::NotFound(error) => error,
+            Error::BadRequest(error) => error,
+            Error::Cache(error) => error,
+            Error::Authorization(error) => error,
+            Error::Validation(error) => error,
+            Error::Database(error) => error,
+            Error::Email(error) => error,
+            Error::Webhook(error) => error,
         };
 
         let response = json::to_string(&ErrorResponse {

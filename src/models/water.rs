@@ -16,8 +16,8 @@ use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
 use crate::{
-    db::DatabaseConnection,
-    errors::ProteinError,
+    db::DBConnection,
+    errors::Error,
     models::user::User,
     schema::{
         water_logs,
@@ -55,8 +55,8 @@ impl WaterLog {
     pub async fn find(
         user: Uuid,
         id: i32,
-        connection: &mut DatabaseConnection,
-    ) -> Result<WaterLog, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<WaterLog, Error> {
         water_logs::table
             .filter(user_id.eq(user))
             .filter(log_id.eq(id))
@@ -65,25 +65,25 @@ impl WaterLog {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
-    pub async fn all(connection: &mut DatabaseConnection) -> Result<Vec<WaterLog>, ProteinError> {
+    pub async fn all(connection: &mut DBConnection) -> Result<Vec<WaterLog>, Error> {
         water_logs::table
             .select(WaterLog::as_select())
             .load(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn user_all(
         user: Uuid,
-        connection: &mut DatabaseConnection,
-    ) -> Result<Vec<WaterLog>, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<Vec<WaterLog>, Error> {
         water_logs::table
             .filter(user_id.eq(user))
             .select(WaterLog::as_select())
@@ -91,7 +91,7 @@ impl WaterLog {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
@@ -99,8 +99,8 @@ impl WaterLog {
         user: Uuid,
         id: i32,
         data: UpdateWaterLog,
-        connection: &mut DatabaseConnection,
-    ) -> Result<WaterLog, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<WaterLog, Error> {
         diesel::update(water_logs::table)
             .filter(user_id.eq(user))
             .filter(log_id.eq(id))
@@ -109,15 +109,15 @@ impl WaterLog {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn delete(
         user: Uuid,
         id: i32,
-        connection: &mut DatabaseConnection,
-    ) -> Result<usize, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<usize, Error> {
         diesel::delete(water_logs::table)
             .filter(user_id.eq(user))
             .filter(log_id.eq(id))
@@ -125,21 +125,21 @@ impl WaterLog {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn create(
         data: NewWaterLog,
-        connection: &mut DatabaseConnection,
-    ) -> Result<WaterLog, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<WaterLog, Error> {
         diesel::insert_into(water_logs::table)
             .values(&data)
             .get_result::<WaterLog>(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 }

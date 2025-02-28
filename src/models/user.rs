@@ -17,7 +17,7 @@ use validator::Validate;
 use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
-use crate::{db::DatabaseConnection, errors::ProteinError, schema::users, utils};
+use crate::{db::DBConnection, errors::Error, schema::users, utils};
 
 // User Model
 #[derive(
@@ -129,7 +129,7 @@ pub enum UserStatus {
 }
 
 impl User {
-    pub async fn find(id: Uuid, connection: &mut DatabaseConnection) -> Result<User, ProteinError> {
+    pub async fn find(id: Uuid, connection: &mut DBConnection) -> Result<User, Error> {
         users::table
             .find(id)
             .select(User::as_select())
@@ -137,14 +137,14 @@ impl User {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn find_by_username(
         name: String,
-        connection: &mut DatabaseConnection,
-    ) -> Result<User, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<User, Error> {
         users::table
             .filter(users::username.eq(name))
             .select(User::as_select())
@@ -152,14 +152,14 @@ impl User {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn find_by_email(
         address: String,
-        connection: &mut DatabaseConnection,
-    ) -> Result<User, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<User, Error> {
         users::table
             .filter(users::email.eq(address))
             .select(User::as_select())
@@ -167,14 +167,14 @@ impl User {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn find_by_email_verification_token(
         token: Uuid,
-        connection: &mut DatabaseConnection,
-    ) -> Result<User, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<User, Error> {
         users::table
             .filter(users::email_verification_token.eq(token))
             .select(User::as_select())
@@ -182,14 +182,14 @@ impl User {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn find_by_mfa_verification_token(
         token: Uuid,
-        connection: &mut DatabaseConnection,
-    ) -> Result<User, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<User, Error> {
         users::table
             .filter(users::mfa_verification_token.eq(token))
             .select(User::as_select())
@@ -197,39 +197,36 @@ impl User {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
-    pub async fn all(connection: &mut DatabaseConnection) -> Result<Vec<User>, ProteinError> {
+    pub async fn all(connection: &mut DBConnection) -> Result<Vec<User>, Error> {
         users::table
             .select(User::as_select())
             .load(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
-    pub async fn delete(
-        id: Uuid,
-        connection: &mut DatabaseConnection,
-    ) -> Result<User, ProteinError> {
+    pub async fn delete(id: Uuid, connection: &mut DBConnection) -> Result<User, Error> {
         diesel::delete(users::table.filter(users::user_id.eq(id)))
             .get_result::<User>(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn update(
         id: Uuid,
         data: UpdateUser,
-        connection: &mut DatabaseConnection,
-    ) -> Result<User, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<User, Error> {
         diesel::update(users::table)
             .filter(users::user_id.eq(id))
             .set(&data)
@@ -237,29 +234,26 @@ impl User {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
-    pub async fn create(
-        connection: &mut DatabaseConnection,
-        data: NewUser,
-    ) -> Result<User, ProteinError> {
+    pub async fn create(connection: &mut DBConnection, data: NewUser) -> Result<User, Error> {
         diesel::insert_into(users::table)
             .values(&data)
             .get_result::<User>(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn update_password(
         id: Uuid,
         new_password: &String,
-        connection: &mut DatabaseConnection,
-    ) -> Result<User, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<User, Error> {
         diesel::update(users::table)
             .filter(users::user_id.eq(id))
             .set((
@@ -270,7 +264,7 @@ impl User {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
@@ -278,8 +272,8 @@ impl User {
         id: Uuid,
         new_ip: &String,
         new_last_login: NaiveDateTime,
-        connection: &mut DatabaseConnection,
-    ) -> Result<User, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<User, Error> {
         diesel::update(users::table)
             .filter(users::user_id.eq(id))
             .set((
@@ -291,14 +285,11 @@ impl User {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
-    pub async fn verify_email(
-        id: Uuid,
-        connection: &mut DatabaseConnection,
-    ) -> Result<User, ProteinError> {
+    pub async fn verify_email(id: Uuid, connection: &mut DBConnection) -> Result<User, Error> {
         diesel::update(users::table)
             .filter(users::user_id.eq(id))
             .set((
@@ -310,14 +301,11 @@ impl User {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
-    pub async fn generate_mfa_code(
-        id: Uuid,
-        connection: &mut DatabaseConnection,
-    ) -> Result<User, ProteinError> {
+    pub async fn generate_mfa_code(id: Uuid, connection: &mut DBConnection) -> Result<User, Error> {
         let code = utils::password::generate_mfa_code();
         let expires_at = chrono::Utc::now().naive_utc() + chrono::Duration::minutes(10);
 
@@ -331,14 +319,11 @@ impl User {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
-    pub async fn enable_mfa(
-        id: Uuid,
-        connection: &mut DatabaseConnection,
-    ) -> Result<User, ProteinError> {
+    pub async fn enable_mfa(id: Uuid, connection: &mut DBConnection) -> Result<User, Error> {
         diesel::update(users::table)
             .filter(users::user_id.eq(id))
             .set((
@@ -351,14 +336,11 @@ impl User {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
-    pub async fn verify_mfa(
-        id: Uuid,
-        connection: &mut DatabaseConnection,
-    ) -> Result<User, ProteinError> {
+    pub async fn verify_mfa(id: Uuid, connection: &mut DBConnection) -> Result<User, Error> {
         diesel::update(users::table)
             .filter(users::user_id.eq(id))
             .set((
@@ -370,14 +352,11 @@ impl User {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
-    pub async fn reset_mfa(
-        id: Uuid,
-        connection: &mut DatabaseConnection,
-    ) -> Result<User, ProteinError> {
+    pub async fn reset_mfa(id: Uuid, connection: &mut DBConnection) -> Result<User, Error> {
         diesel::update(users::table)
             .filter(users::user_id.eq(id))
             .set((
@@ -388,14 +367,11 @@ impl User {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
-    pub async fn disable_mfa(
-        id: Uuid,
-        connection: &mut DatabaseConnection,
-    ) -> Result<User, ProteinError> {
+    pub async fn disable_mfa(id: Uuid, connection: &mut DBConnection) -> Result<User, Error> {
         diesel::update(users::table)
             .filter(users::user_id.eq(id))
             .set((
@@ -408,7 +384,7 @@ impl User {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 }

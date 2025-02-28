@@ -21,8 +21,8 @@ use rocket::{
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
     db,
-    db::DatabasePool,
-    errors::ProteinError,
+    db::DB,
+    errors::Error,
     models::keys::{APIKey, RevokeKey, UpdateAPIKey, UpdateRole},
 };
 
@@ -30,9 +30,9 @@ use crate::{
 pub async fn get_api_key(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     api_key: Uuid,
-) -> Result<Json<APIKey>, ProteinError> {
+) -> Result<Json<APIKey>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let api_key = APIKey::find(api_key, connection).await?;
@@ -44,8 +44,8 @@ pub async fn get_api_key(
 pub async fn get_all_api_keys(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
-) -> Result<Json<Vec<APIKey>>, ProteinError> {
+    pool: &State<DB>,
+) -> Result<Json<Vec<APIKey>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let api_keys = APIKey::all(connection).await?;
@@ -57,9 +57,9 @@ pub async fn get_all_api_keys(
 pub async fn get_all_user_api_keys(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
-) -> Result<Json<Vec<APIKey>>, ProteinError> {
+) -> Result<Json<Vec<APIKey>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let user_keys = APIKey::user_all(user_id, connection).await?;
@@ -71,10 +71,10 @@ pub async fn get_all_user_api_keys(
 pub async fn update_api_key(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     api_key: Uuid,
     key: Json<UpdateAPIKey>,
-) -> Result<Json<APIKey>, ProteinError> {
+) -> Result<Json<APIKey>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let result = APIKey::update(api_key, key.into_inner(), connection).await?;
@@ -86,9 +86,9 @@ pub async fn update_api_key(
 pub async fn delete_api_key(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     api_key: Uuid,
-) -> Result<status::Accepted<Value>, ProteinError> {
+) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     APIKey::delete(api_key, connection).await?;
@@ -103,10 +103,10 @@ pub async fn delete_api_key(
 pub async fn revoke_api_key(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     api_key: Uuid,
     reason: Json<RevokeKey>,
-) -> Result<Json<APIKey>, ProteinError> {
+) -> Result<Json<APIKey>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let result = APIKey::revoke(api_key, reason.into_inner(), connection).await?;
@@ -118,10 +118,10 @@ pub async fn revoke_api_key(
 pub async fn change_api_key_role(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     api_key: Uuid,
     role: Json<UpdateRole>,
-) -> Result<Json<APIKey>, ProteinError> {
+) -> Result<Json<APIKey>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let result = APIKey::change_role(api_key, role.into_inner(), connection).await?;

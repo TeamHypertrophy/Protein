@@ -19,8 +19,8 @@ use uuid::Uuid;
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
     db,
-    db::DatabasePool,
-    errors::ProteinError,
+    db::DB,
+    errors::Error,
     models::protein::{NewProteinLog, ProteinLog, UpdateProteinLog},
 };
 
@@ -28,10 +28,10 @@ use crate::{
 pub async fn get_protein_log(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
     log_id: i32,
-) -> Result<Json<ProteinLog>, ProteinError> {
+) -> Result<Json<ProteinLog>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let log = ProteinLog::find(user_id, log_id, connection).await?;
@@ -43,8 +43,8 @@ pub async fn get_protein_log(
 pub async fn get_all_protein_logs(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
-) -> Result<Json<Vec<ProteinLog>>, ProteinError> {
+    pool: &State<DB>,
+) -> Result<Json<Vec<ProteinLog>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let logs = ProteinLog::all(connection).await?;
@@ -56,9 +56,9 @@ pub async fn get_all_protein_logs(
 pub async fn get_all_user_protein_logs(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
-) -> Result<Json<Vec<ProteinLog>>, ProteinError> {
+) -> Result<Json<Vec<ProteinLog>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let logs = ProteinLog::user_all(user_id, connection).await?;
@@ -74,11 +74,11 @@ pub async fn get_all_user_protein_logs(
 pub async fn update_protein_log(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
     log_id: i32,
     log: Json<UpdateProteinLog>,
-) -> Result<Json<ProteinLog>, ProteinError> {
+) -> Result<Json<ProteinLog>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let result = ProteinLog::update(user_id, log_id, log.into_inner(), connection).await?;
@@ -91,9 +91,9 @@ pub async fn create_protein_log(
     _r: RateLimit<'_>,
     _auth: API,
     user_id: Uuid,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     log: Json<NewProteinLog>,
-) -> Result<Json<ProteinLog>, ProteinError> {
+) -> Result<Json<ProteinLog>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let result = ProteinLog::create(log.into_inner(), connection).await?;
@@ -105,10 +105,10 @@ pub async fn create_protein_log(
 pub async fn delete_protein_log(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
     log_id: i32,
-) -> Result<status::Accepted<Value>, ProteinError> {
+) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     ProteinLog::delete(user_id, log_id, connection).await?;

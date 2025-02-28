@@ -16,8 +16,8 @@ use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
 use crate::{
-    db::DatabaseConnection,
-    errors::ProteinError,
+    db::DBConnection,
+    errors::Error,
     models::user::User,
     schema::{
         protein_logs,
@@ -55,8 +55,8 @@ impl ProteinLog {
     pub async fn find(
         user: Uuid,
         id: i32,
-        connection: &mut DatabaseConnection,
-    ) -> Result<ProteinLog, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<ProteinLog, Error> {
         protein_logs::table
             .filter(user_id.eq(user))
             .filter(log_id.eq(id))
@@ -65,25 +65,25 @@ impl ProteinLog {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
-    pub async fn all(connection: &mut DatabaseConnection) -> Result<Vec<ProteinLog>, ProteinError> {
+    pub async fn all(connection: &mut DBConnection) -> Result<Vec<ProteinLog>, Error> {
         protein_logs::table
             .select(ProteinLog::as_select())
             .load(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn user_all(
         user: Uuid,
-        connection: &mut DatabaseConnection,
-    ) -> Result<Vec<ProteinLog>, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<Vec<ProteinLog>, Error> {
         protein_logs::table
             .filter(user_id.eq(user))
             .select(ProteinLog::as_select())
@@ -91,7 +91,7 @@ impl ProteinLog {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
@@ -99,8 +99,8 @@ impl ProteinLog {
         user: Uuid,
         id: i32,
         data: UpdateProteinLog,
-        connection: &mut DatabaseConnection,
-    ) -> Result<ProteinLog, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<ProteinLog, Error> {
         diesel::update(protein_logs::table)
             .filter(user_id.eq(user))
             .filter(log_id.eq(id))
@@ -109,15 +109,15 @@ impl ProteinLog {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn delete(
         user: Uuid,
         id: i32,
-        connection: &mut DatabaseConnection,
-    ) -> Result<usize, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<usize, Error> {
         diesel::delete(protein_logs::table)
             .filter(user_id.eq(user))
             .filter(log_id.eq(id))
@@ -125,21 +125,21 @@ impl ProteinLog {
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 
     pub async fn create(
         data: NewProteinLog,
-        connection: &mut DatabaseConnection,
-    ) -> Result<ProteinLog, ProteinError> {
+        connection: &mut DBConnection,
+    ) -> Result<ProteinLog, Error> {
         diesel::insert_into(protein_logs::table)
             .values(&data)
             .get_result::<ProteinLog>(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
-                ProteinError::Database(error.to_string())
+                Error::Database(error.to_string())
             })
     }
 }

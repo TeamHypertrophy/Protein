@@ -19,8 +19,8 @@ use uuid::Uuid;
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
     db,
-    db::DatabasePool,
-    errors::ProteinError,
+    db::DB,
+    errors::Error,
     models::{
         plan::{NewWorkoutPlan, UpdateWorkoutPlan, WorkoutPlan},
         user::User,
@@ -31,10 +31,10 @@ use crate::{
 pub async fn get_workout_plan(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
     plan_id: Uuid,
-) -> Result<Json<WorkoutPlan>, ProteinError> {
+) -> Result<Json<WorkoutPlan>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let user = User::find(user_id, connection).await?;
@@ -48,8 +48,8 @@ pub async fn get_workout_plan(
 pub async fn get_all_workout_plans(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
-) -> Result<Json<Vec<WorkoutPlan>>, ProteinError> {
+    pool: &State<DB>,
+) -> Result<Json<Vec<WorkoutPlan>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let plans = WorkoutPlan::all(connection).await?;
@@ -61,9 +61,9 @@ pub async fn get_all_workout_plans(
 pub async fn get_all_user_workout_plans(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
-) -> Result<Json<Vec<WorkoutPlan>>, ProteinError> {
+) -> Result<Json<Vec<WorkoutPlan>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let plans = WorkoutPlan::user_all(user_id, connection).await?;
@@ -79,11 +79,11 @@ pub async fn get_all_user_workout_plans(
 pub async fn update_workout_plan(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
     plan_id: Uuid,
     data: Json<UpdateWorkoutPlan>,
-) -> Result<Json<WorkoutPlan>, ProteinError> {
+) -> Result<Json<WorkoutPlan>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let plan = WorkoutPlan::update(user_id, plan_id, data.into_inner(), connection).await?;
@@ -95,10 +95,10 @@ pub async fn update_workout_plan(
 pub async fn create_workout_plan(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
     data: Json<NewWorkoutPlan>,
-) -> Result<Json<WorkoutPlan>, ProteinError> {
+) -> Result<Json<WorkoutPlan>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let plan = WorkoutPlan::create(data.into_inner(), connection).await?;
@@ -110,10 +110,10 @@ pub async fn create_workout_plan(
 pub async fn delete_workout_plan(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
     plan_id: Uuid,
-) -> Result<status::Accepted<Value>, ProteinError> {
+) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     WorkoutPlan::delete(user_id, plan_id, connection).await?;

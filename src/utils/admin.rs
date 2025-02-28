@@ -10,6 +10,8 @@ ______          _       _
 */
 use std::sync::LazyLock;
 
-pub struct AdminRoutes<'a> {
+// Struct Containing Admin Information
+pub struct Admin<'a> {
+    // Static Vector of Admin Routes
     pub routes: LazyLock<Vec<&'a str>>,
 }

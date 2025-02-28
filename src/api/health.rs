@@ -16,18 +16,15 @@ use rocket::{
 
 use crate::{
     auth::rate_limit::RateLimit,
-    cache::redis::{Cache, RedisPool},
+    cache::redis::{Cache, Redis},
     constants::PONG,
     db,
-    db::DatabasePool,
-    errors::ProteinError,
+    db::DB,
+    errors::Error,
 };
 
 #[get("/redis", format = "application/json")]
-pub async fn ping_redis(
-    _r: RateLimit<'_>,
-    redis: &State<RedisPool>,
-) -> Result<Value, ProteinError> {
+pub async fn ping_redis(_r: RateLimit<'_>, redis: &State<Redis>) -> Result<Value, Error> {
     // Run 'ping "PONG"'
     let ping: String = Cache::ping(redis, Some(PONG.to_owned())).await?;
 
@@ -44,10 +41,7 @@ pub async fn ping_redis(
 }
 
 #[get("/postgres", format = "application/json")]
-pub async fn ping_postgres(
-    _r: RateLimit<'_>,
-    pool: &State<DatabasePool>,
-) -> Result<Value, ProteinError> {
+pub async fn ping_postgres(_r: RateLimit<'_>, pool: &State<DB>) -> Result<Value, Error> {
     // Verify Database Connectivity
     match db::get_connection(pool).await {
         Ok(_) => Ok(json!({

@@ -19,8 +19,8 @@ use uuid::Uuid;
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
     db,
-    db::DatabasePool,
-    errors::ProteinError,
+    db::DB,
+    errors::Error,
     models::water::{NewWaterLog, UpdateWaterLog, WaterLog},
 };
 
@@ -28,10 +28,10 @@ use crate::{
 pub async fn get_water_log(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
     log_id: i32,
-) -> Result<Json<WaterLog>, ProteinError> {
+) -> Result<Json<WaterLog>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let log = WaterLog::find(user_id, log_id, connection).await?;
@@ -43,8 +43,8 @@ pub async fn get_water_log(
 pub async fn get_all_water_logs(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
-) -> Result<Json<Vec<WaterLog>>, ProteinError> {
+    pool: &State<DB>,
+) -> Result<Json<Vec<WaterLog>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let logs = WaterLog::all(connection).await?;
@@ -56,9 +56,9 @@ pub async fn get_all_water_logs(
 pub async fn get_all_user_water_logs(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
-) -> Result<Json<Vec<WaterLog>>, ProteinError> {
+) -> Result<Json<Vec<WaterLog>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let logs = WaterLog::user_all(user_id, connection).await?;
@@ -74,11 +74,11 @@ pub async fn get_all_user_water_logs(
 pub async fn update_water_log(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
     log_id: i32,
     log: Json<UpdateWaterLog>,
-) -> Result<Json<WaterLog>, ProteinError> {
+) -> Result<Json<WaterLog>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let result = WaterLog::update(user_id, log_id, log.into_inner(), connection).await?;
@@ -91,9 +91,9 @@ pub async fn create_water_log(
     _r: RateLimit<'_>,
     _auth: API,
     user_id: Uuid,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     log: Json<NewWaterLog>,
-) -> Result<Json<WaterLog>, ProteinError> {
+) -> Result<Json<WaterLog>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let result = WaterLog::create(log.into_inner(), connection).await?;
@@ -105,10 +105,10 @@ pub async fn create_water_log(
 pub async fn delete_water_log(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
     log_id: i32,
-) -> Result<status::Accepted<Value>, ProteinError> {
+) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     WaterLog::delete(user_id, log_id, connection).await?;

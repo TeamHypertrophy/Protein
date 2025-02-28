@@ -19,7 +19,7 @@ use tracing_subscriber::{filter::EnvFilter, fmt, fmt::format::FmtSpan, prelude::
 
 use crate::constants::*;
 
-pub fn setup_logging() -> Result<(WorkerGuard, ()), Box<dyn std::error::Error>> {
+pub fn setup() -> Result<(WorkerGuard, ()), Box<dyn std::error::Error>> {
     // Build Path for Logs Directory
     let path = Path::new(LOG_PATH);
 

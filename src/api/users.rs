@@ -27,14 +27,14 @@ use validator::Validate;
 use crate::{
     auth::api::API,
     auth::rate_limit::RateLimit,
-    cache::redis::{Cache, RedisPool},
+    cache::redis::{Cache, Redis},
     db,
-    db::DatabasePool,
-    errors::ProteinError,
+    db::DB,
+    errors::Error,
     models::keys::APIKey,
     models::user::{ForgotPassword, LoginUser, NewUser, Password, ProteinUser, UpdateUser, User},
     utils::email,
-    utils::email::Mailer,
+    utils::email::Email,
     utils::password,
     utils::webhook,
     utils::webhook::Webhook,
@@ -45,9 +45,9 @@ pub async fn get_user(
     _r: RateLimit<'_>,
     _auth: API,
     user_id: Uuid,
-    pool: &State<DatabasePool>,
-    redis: &State<RedisPool>,
-) -> Result<Json<User>, ProteinError> {
+    pool: &State<DB>,
+    redis: &State<Redis>,
+) -> Result<Json<User>, Error> {
     // Check Cache
     let cache: Value = Cache::get(redis, "user", user_id.to_string()).await?;
 
@@ -75,8 +75,8 @@ pub async fn get_user(
 pub async fn get_all_users(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
-) -> Result<Json<Vec<User>>, ProteinError> {
+    pool: &State<DB>,
+) -> Result<Json<Vec<User>>, Error> {
     // Creating Database Connection
     let connection = &mut db::get_connection(pool).await?;
 
@@ -89,25 +89,25 @@ pub async fn get_all_users(
 #[post("/signup", format = "application/json", data = "<user>")]
 pub async fn signup(
     _r: RateLimit<'_>,
-    pool: &State<DatabasePool>,
-    redis: &State<RedisPool>,
-    mailer: &State<Mailer>,
+    pool: &State<DB>,
+    redis: &State<Redis>,
+    mailer: &State<Email>,
     ip: &ClientRealAddr,
     user: Json<NewUser>,
-) -> Result<Json<ProteinUser>, ProteinError> {
+) -> Result<Json<ProteinUser>, Error> {
     // Generate New User Password
     let password_hash = password::generate_hashed_password(user.password.clone())?;
 
     // Validate User
     match user.clone().into_inner().validate() {
         Ok(_) => (),
-        Err(error) => return Err(ProteinError::Validation(error.to_string())),
+        Err(error) => return Err(Error::Validation(error.to_string())),
     }
 
     // Get IP Address
     let ip_address: Option<String> = match ip.get_ipv4_string() {
         Some(addr) => Some(addr),
-        None => return Err(ProteinError::Internal("Invalid IP Address".to_string())),
+        None => return Err(Error::Internal("Invalid IP Address".to_string())),
     };
 
     // Create New User Struct
@@ -158,7 +158,7 @@ pub async fn signup(
     let mail = mailer.inner().clone();
 
     rocket::tokio::task::spawn(async move {
-        match email::send_email(&mail, &receipent, "[Security] Account Verification", format!("Hello {}! \n\nWelcome To Hypertrophy!\n\nWe Hope You Enjoy The Multitude of Features Provided\n\nPlease Verify Your Email At This Link:\n\n\n{}", receipent.username, verification_link)).await {
+        match email::send(&mail, &receipent, "[Security] Account Verification", format!("Hello {}! \n\nWelcome To Hypertrophy!\n\nWe Hope You Enjoy The Multitude of Features Provided\n\nPlease Verify Your Email At This Link:\n\n\n{}", receipent.username, verification_link)).await {
             Ok(_) => tracing::info!("[Email] ✅ Sent Verification Email"),
             Err(e) => tracing::info!("[Email] ❌ Failed Sending Verification Email: {}", e),
         }
@@ -173,10 +173,11 @@ pub async fn signup(
 #[get("/email/verify?<token>")]
 pub async fn verify_email(
     _r: RateLimit<'_>,
-    pool: &State<DatabasePool>,
-    mailer: &State<Mailer>,
+    pool: &State<DB>,
+    redis: &State<Redis>,
+    mailer: &State<Email>,
     token: Uuid,
-) -> Result<Json<Value>, ProteinError> {
+) -> Result<Json<Value>, Error> {
     // Create Database Connection
     let connection = &mut db::get_connection(pool).await?;
 
@@ -186,11 +187,19 @@ pub async fn verify_email(
     if !user.email_verified {
         let verified_user = User::verify_email(user.user_id, connection).await?;
 
+        Cache::set(
+            redis,
+            "user",
+            verified_user.user_id.to_string(),
+            Cache::serialize(&verified_user)?,
+        )
+        .await?;
+
         let receipent = verified_user.clone();
         let mail = mailer.inner().clone();
 
         rocket::tokio::task::spawn(async move {
-            match email::send_email(
+            match email::send(
                 &mail,
                 &receipent,
                 "[Security] Email Successfully Verified",
@@ -214,20 +223,20 @@ pub async fn verify_email(
             "user": verified_user,
         })))
     } else {
-        Err(ProteinError::Email("Email Already Verified".to_string()))
+        Err(Error::Email("Email Already Verified".to_string()))
     }
 }
 
 #[post("/login", format = "application/json", data = "<user>")]
 pub async fn login(
     _r: RateLimit<'_>,
-    pool: &State<DatabasePool>,
-    redis: &State<RedisPool>,
+    pool: &State<DB>,
+    redis: &State<Redis>,
     os: OS<'_>,
     ip: &ClientRealAddr,
-    mailer: &State<Mailer>,
+    mailer: &State<Email>,
     user: Json<LoginUser>,
-) -> Result<Json<Value>, ProteinError> {
+) -> Result<Json<Value>, Error> {
     // Create Database Connection
     let connection = &mut db::get_connection(pool).await?;
 
@@ -251,7 +260,9 @@ pub async fn login(
     let password_matches =
         password::verify_password(result.password.clone(), user.password.clone())?;
 
+    // If Password Entered == Stored Hashed Password
     if password_matches {
+        // Grab Current API Key
         let api_key = APIKey::get(&result, connection).await?;
 
         // Set User in Cache
@@ -272,13 +283,13 @@ pub async fn login(
         )
         .await?;
 
-        // send new login email here
+        // Send New Login If IP Address != Original
         if result.last_login_ip != ip_address {
             let receipent = result.clone();
             let mail = mailer.inner().clone();
 
             // Update User With New IP Address
-            User::update_ip_info(
+            let data = User::update_ip_info(
                 result.user_id,
                 &ip_address,
                 chrono::Utc::now().naive_utc(),
@@ -286,8 +297,18 @@ pub async fn login(
             )
             .await?;
 
+            // Update Cache
+            Cache::set(
+                redis,
+                "user",
+                data.user_id.to_string(),
+                Cache::serialize(&data)?,
+            )
+            .await?;
+
+            // Send Email
             rocket::tokio::task::spawn(async move {
-                match email::send_email(&mail, &receipent, "[Security] New Login", format!("Hello {}! \n\nThis Email Serves As Confirmation That There Has Been A New Login Into Your Account.\n\n\nIf You Did NOT Request This, Please Ignore This Email\nRequest IP Address: {}\nDevice: {}", receipent.username, ip_address, device)).await {
+                match email::send(&mail, &receipent, "[Security] New Login", format!("Hello {}! \n\nThis Email Serves As Confirmation That There Has Been A New Login Into Your Account.\n\n\nIf You Did NOT Request This, Please Ignore This Email\nRequest IP Address: {}\nDevice: {}", receipent.username, ip_address, device)).await {
                     Ok(_) => tracing::info!("[Email] ✅ Sent New Login Email"),
                     Err(e) => tracing::info!("[Email] ❌ Failed Sending New Login Email: {}", e),
                 }
@@ -296,37 +317,51 @@ pub async fn login(
 
         // MFA
         if result.mfa_enabled {
-            // generate mfa code && mfa code expires at
+            // Generate MFA Code and Expiry
+            // MFA Codes Are 6 Digits: 12346
+            // Expires By Default In 10 Minutes
             let mfa_user = User::generate_mfa_code(result.user_id, connection).await?;
 
+            // Update Cache
+            Cache::set(
+                redis,
+                "user",
+                mfa_user.user_id.to_string(),
+                Cache::serialize(&mfa_user)?,
+            )
+            .await?;
+
+            // Get Successfully Generated Code
             let code = match mfa_user.mfa_code {
                 Some(ref code) => code.clone(),
-                None => return Err(ProteinError::Internal("MFA Code Not Generated".to_string())),
+                None => return Err(Error::Internal("MFA Code Not Generated".to_string())),
             };
 
-            // send mfa code email
+            // Send Email
             let mail = mailer.inner().clone();
 
             rocket::tokio::task::spawn(async move {
-                match email::send_email(&mail, &mfa_user, "[Security] MFA Code", format!("Hello {}! \n\nThis Email Serves As Your MFA Code!\n\n\n{}\n\nCode Expires In 10 Minutes!", mfa_user.username, code)).await {
+                match email::send(&mail, &mfa_user, "[Security] MFA Code", format!("Hello {}! \n\nThis Email Serves As Your MFA Code!\n\n\n{}\n\nCode Expires In 10 Minutes!", mfa_user.username, code)).await {
                     Ok(_) => tracing::info!("[Email] ✅ Sent MFA Code Email"),
                     Err(e) => tracing::info!("[Email] ❌ Failed Sending MFA Code Email: {}", e),
                 }
             });
 
-            // return mfa code required
+            // Return MFA Code Required
             return Ok(Json(json!({
+                "status": 200,
                 "message": "MFA Code Required & Sent",
             })));
         }
 
         Ok(Json(json!({
+            "status": 200,
             "message": "Successful Login!",
             "user": result,
             "api_key": api_key.api_key,
         })))
     } else {
-        Err(ProteinError::Authorization(
+        Err(Error::Authorization(
             "Invalid Username or Password".to_string(),
         ))
     }
@@ -336,22 +371,25 @@ pub async fn login(
 pub async fn delete_user(
     _r: RateLimit<'_>,
     _auth: API,
+    mailer: &State<Email>,
+    pool: &State<DB>,
+    redis: &State<Redis>,
     user_id: Uuid,
-    mailer: &State<Mailer>,
-    pool: &State<DatabasePool>,
-) -> Result<status::Accepted<Value>, ProteinError> {
+) -> Result<status::Accepted<Value>, Error> {
     // Create Database Connection
     let connection = &mut db::get_connection(pool).await?;
 
     // Delete User
     let user = User::delete(user_id, connection).await?;
 
+    Cache::delete(redis, "user", user_id.to_string()).await?;
+
     // send account deletion email here
     let receipent = user.clone();
     let mail = mailer.inner().clone();
 
     rocket::tokio::task::spawn(async move {
-        match email::send_email(&mail, &receipent, "[Security] Your Account Has Been Deleted", format!("Hello {}! \n\nThis Email Serves As Confirmation That Your Account Has Been Successfully Deleted.\n\n\nIf You Did NOT Request This, Please Contact Support Immediately", receipent.username)).await {
+        match email::send(&mail, &receipent, "[Security] Your Account Has Been Deleted", format!("Hello {}! \n\nThis Email Serves As Confirmation That Your Account Has Been Successfully Deleted.\n\n\nIf You Did NOT Request This, Please Contact Support Immediately", receipent.username)).await {
             Ok(_) => tracing::info!("[Email] ✅ Sent Account Deletion Email"),
             Err(e) => tracing::info!("[Email] ❌ Failed Sending Account Deletion Email: {}", e),
         }
@@ -359,6 +397,7 @@ pub async fn delete_user(
 
     // Return Okay Message with Deleted ID
     Ok(status::Accepted(json!({
+        "status": 200,
         "message": "User Deleted Successfully",
         "user": user,
     })))
@@ -369,11 +408,11 @@ pub async fn update_user(
     _r: RateLimit<'_>,
     _auth: API,
     user_id: Uuid,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     discord: &State<Webhook>,
-    redis: &State<RedisPool>,
+    redis: &State<Redis>,
     user: Json<UpdateUser>,
-) -> Result<Json<User>, ProteinError> {
+) -> Result<Json<User>, Error> {
     // Create Database Connection
     let connection = &mut db::get_connection(pool).await?;
 
@@ -418,11 +457,11 @@ pub async fn update_user_password(
     _auth: API,
     user_id: Uuid,
     ip: &ClientRealAddr,
-    mailer: &State<Mailer>,
-    pool: &State<DatabasePool>,
-    redis: &State<RedisPool>,
+    mailer: &State<Email>,
+    pool: &State<DB>,
+    redis: &State<Redis>,
     data: Json<Password>,
-) -> Result<Json<User>, ProteinError> {
+) -> Result<Json<User>, Error> {
     // Create Database Connection
     let connection = &mut db::get_connection(pool).await?;
 
@@ -441,7 +480,7 @@ pub async fn update_user_password(
 
     // False = Wrong Password
     if !old_password_hash {
-        return Err(ProteinError::Authorization("Invalid Password".to_string()));
+        return Err(Error::Authorization("Invalid Password".to_string()));
     }
 
     // Generate New Password Hash
@@ -464,7 +503,7 @@ pub async fn update_user_password(
     let mail = mailer.inner().clone();
 
     rocket::tokio::task::spawn(async move {
-        match email::send_email(&mail, &receipent, "[Security] Your Password Has Been Updated", format!("Hello {}! \n\nThis Email Serves As Confirmation That Your Password Has Been Successfully Updated.\n\n\nIf You Did NOT Request This, Please Contact Support Immediately\n\nIP Address: {}", receipent.username, ip_address)).await {
+        match email::send(&mail, &receipent, "[Security] Your Password Has Been Updated", format!("Hello {}! \n\nThis Email Serves As Confirmation That Your Password Has Been Successfully Updated.\n\n\nIf You Did NOT Request This, Please Contact Support Immediately\n\nIP Address: {}", receipent.username, ip_address)).await {
             Ok(_) => tracing::info!("[Email] ✅ Sent Password Update Email"),
             Err(e) => tracing::info!("[Email] ❌ Failed Sending Password Update Email: {}", e),
         }
@@ -476,12 +515,13 @@ pub async fn update_user_password(
 #[post("/email/forgot-password", format = "application/json", data = "<data>")]
 pub async fn forgot_password_email(
     _r: RateLimit<'_>,
-    mailer: &State<Mailer>,
-    pool: &State<DatabasePool>,
+    mailer: &State<Email>,
+    pool: &State<DB>,
+    redis: &State<Redis>,
     os: OS<'_>,
     ip: &ClientRealAddr,
     data: Json<ForgotPassword>,
-) -> Result<status::Accepted<Value>, ProteinError> {
+) -> Result<status::Accepted<Value>, Error> {
     // Grab Database Connection
     let connection = &mut db::get_connection(pool).await?;
 
@@ -505,20 +545,30 @@ pub async fn forgot_password_email(
     let hashed_password = password::generate_hashed_password(data.password.clone())?;
 
     // Update User Password With New Hashed Data
-    User::update_password(user.user_id, &hashed_password, connection).await?;
+    let updated_user = User::update_password(user.user_id, &hashed_password, connection).await?;
+
+    // Update Cache
+    Cache::set(
+        redis,
+        "user",
+        updated_user.user_id.to_string(),
+        Cache::serialize(&updated_user)?,
+    )
+    .await?;
 
     // Send Email
     let receipent = user.clone();
     let mail = mailer.inner().clone();
 
     rocket::tokio::task::spawn(async move {
-        match email::send_email(&mail, &receipent, "[Security] Your Password Has Been Reset", format!("Hello {}! \n\nThis Email Serves As Confirmation That Your Password Has Been Successfully Reset.\n\nNew Password: {}\n\n\nIf You Did NOT Request This, Please Ignore This Email\nRequest IP Address: {}\nDevice: {}", receipent.username, data.password, ip_address, device)).await {
+        match email::send(&mail, &receipent, "[Security] Your Password Has Been Reset", format!("Hello {}! \n\nThis Email Serves As Confirmation That Your Password Has Been Successfully Reset.\n\nNew Password: {}\n\n\nIf You Did NOT Request This, Please Ignore This Email\nRequest IP Address: {}\nDevice: {}", receipent.username, data.password, ip_address, device)).await {
             Ok(_) => tracing::info!("[Email] ✅ Sent Password Reset Email"),
             Err(e) => tracing::info!("[Email] ❌ Failed Sending Password Reset Email: {}", e),
         }
     });
 
     Ok(status::Accepted(json!({
+        "status": 200,
         "message": "Forgot Password Email Sent!",
         "user_id": user.user_id,
     })))
@@ -528,21 +578,29 @@ pub async fn forgot_password_email(
 pub async fn enable_mfa(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
-    mailer: &State<Mailer>,
+    pool: &State<DB>,
+    redis: &State<Redis>,
+    mailer: &State<Email>,
     user_id: Uuid,
-) -> Result<Json<User>, ProteinError> {
+) -> Result<Json<User>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let user = User::find(user_id, connection).await?;
 
     if user.mfa_enabled {
-        return Err(ProteinError::Authorization(
-            "MFA Already Enabled".to_string(),
-        ));
+        return Err(Error::Authorization("MFA Already Enabled".to_string()));
     }
 
     let mfa_user = User::enable_mfa(user_id, connection).await?;
+
+    // Update Cache
+    Cache::set(
+        redis,
+        "user",
+        user_id.to_string(),
+        Cache::serialize(&mfa_user)?,
+    )
+    .await?;
 
     // Send MFA Verification Link
     let host = std::env::var("HOST_URL").unwrap_or_else(|_| "http://localhost:8000/v1".to_string());
@@ -556,7 +614,7 @@ pub async fn enable_mfa(
     let mail = mailer.inner().clone();
 
     rocket::tokio::task::spawn(async move {
-        match email::send_email(&mail, &receipent, "[Security] Account MFA Verification", format!("Hello {}! \n\nThis Email Serves As Verification For Enabling MFA!\nPlease Verify MFA At This Link:\n\n\n{}", receipent.username, verification_link)).await {
+        match email::send(&mail, &receipent, "[Security] Account MFA Verification", format!("Hello {}! \n\nThis Email Serves As Verification For Enabling MFA!\nPlease Verify MFA At This Link:\n\n\n{}", receipent.username, verification_link)).await {
             Ok(_) => tracing::info!("[Email] ✅ Sent MFA Verification Email"),
             Err(e) => tracing::info!("[Email] ❌ Failed Sending MFA Verification Email: {}", e),
         }
@@ -569,28 +627,29 @@ pub async fn enable_mfa(
 pub async fn check_mfa(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
-    mailer: &State<Mailer>,
+    pool: &State<DB>,
+    redis: &State<Redis>,
+    mailer: &State<Email>,
     user_id: Uuid,
     code: &str,
-) -> Result<Json<Value>, ProteinError> {
+) -> Result<Json<Value>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let user = User::find(user_id, connection).await?;
 
     if user.mfa_enabled {
         if !user.mfa_verified {
-            return Err(ProteinError::Authorization("MFA Not Verified".to_string()));
+            return Err(Error::Authorization("MFA Not Verified".to_string()));
         }
 
         let now: i64 = chrono::Utc::now().naive_utc().and_utc().timestamp();
 
         if let Some(expired) = user.mfa_code_expires_at {
             if now > expired.and_utc().timestamp() {
-                return Err(ProteinError::Authorization("MFA Code Expired".to_string()));
+                return Err(Error::Authorization("MFA Code Expired".to_string()));
             }
         } else {
-            return Err(ProteinError::Authorization(
+            return Err(Error::Authorization(
                 "MFA Code Potentially Expired".to_string(),
             ));
         }
@@ -599,11 +658,20 @@ pub async fn check_mfa(
             if *mfa_code == code {
                 let result = User::reset_mfa(user_id, connection).await?;
 
+                // Update Cache
+                Cache::set(
+                    redis,
+                    "user",
+                    user_id.to_string(),
+                    Cache::serialize(&result)?,
+                )
+                .await?;
+
                 let receipent = result.clone();
                 let mail = mailer.inner().clone();
 
                 rocket::tokio::task::spawn(async move {
-                    match email::send_email(
+                    match email::send(
                         &mail,
                         &receipent,
                         "[Security] New Login",
@@ -623,27 +691,29 @@ pub async fn check_mfa(
 
                 return Ok(Json(json!(
                     {
+                        "status": 200,
                         "message": "MFA Code Verified",
                         "user": result
                     }
                 )));
             } else {
-                return Err(ProteinError::Authorization("Invalid MFA Code".to_string()));
+                return Err(Error::Authorization("Invalid MFA Code".to_string()));
             }
         } else {
-            return Err(ProteinError::Authorization("No MFA Code".to_string()));
+            return Err(Error::Authorization("No MFA Code".to_string()));
         }
     } else {
-        return Err(ProteinError::Authorization("MFA Not Enabled".to_string()));
+        return Err(Error::Authorization("MFA Not Enabled".to_string()));
     }
 }
 
 #[get("/mfa/verify?<token>")]
 pub async fn verify_mfa(
     _r: RateLimit<'_>,
+    pool: &State<DB>,
+    redis: &State<Redis>,
     token: Uuid,
-    pool: &State<DatabasePool>,
-) -> Result<Json<Value>, ProteinError> {
+) -> Result<Json<Value>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     // Find User By Token
@@ -652,12 +722,21 @@ pub async fn verify_mfa(
     if !user.mfa_verified && user.mfa_enabled {
         let verified_user = User::verify_mfa(user.user_id, connection).await?;
 
+        Cache::set(
+            redis,
+            "user",
+            verified_user.user_id.to_string(),
+            Cache::serialize(&verified_user)?,
+        )
+        .await?;
+
         Ok(Json(json!({
+            "status": 200,
             "message": "MFA Verified Successfully",
             "user": verified_user,
         })))
     } else {
-        Err(ProteinError::Email("MFA Already Verified".to_string()))
+        Err(Error::Email("MFA Already Verified".to_string()))
     }
 }
 
@@ -665,19 +744,22 @@ pub async fn verify_mfa(
 pub async fn disable_mfa(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
-    mailer: &State<Mailer>,
+    pool: &State<DB>,
+    redis: &State<Redis>,
+    mailer: &State<Email>,
     user_id: Uuid,
-) -> Result<Json<User>, ProteinError> {
+) -> Result<Json<User>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let user = User::disable_mfa(user_id, connection).await?;
+
+    Cache::set(redis, "user", user_id.to_string(), Cache::serialize(&user)?).await?;
 
     let receipent = user.clone();
     let mail = mailer.inner().clone();
 
     rocket::tokio::task::spawn(async move {
-        match email::send_email(&mail, &receipent, "[Security] MFA Disabled", format!("Hello {}! \n\nThis Email Serves As Notification For Disabling MFA For Your Account!", receipent.username)).await {
+        match email::send(&mail, &receipent, "[Security] MFA Disabled", format!("Hello {}! \n\nThis Email Serves As Notification For Disabling MFA For Your Account!", receipent.username)).await {
             Ok(_) => tracing::info!("[Email] ✅ Sent MFA Notification Email"),
             Err(e) => tracing::info!("[Email] ❌ Failed Sending MFA Notification Email: {}", e),
         }

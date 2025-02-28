@@ -19,8 +19,8 @@ use uuid::Uuid;
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
     db,
-    db::DatabasePool,
-    errors::ProteinError,
+    db::DB,
+    errors::Error,
     models::logs::{
         ExerciseLog, NewExerciseLog, NewWorkoutLog, UpdateExerciseLog, UpdateWorkoutLog, WorkoutLog,
     },
@@ -32,10 +32,10 @@ use crate::{
 pub async fn get_exercise_log(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     exercise_id: i32,
     user_id: Uuid,
-) -> Result<Json<ExerciseLog>, ProteinError> {
+) -> Result<Json<ExerciseLog>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let log = ExerciseLog::find(user_id, exercise_id, connection).await?;
@@ -47,8 +47,8 @@ pub async fn get_exercise_log(
 pub async fn get_all_exercise_logs(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
-) -> Result<Json<Vec<ExerciseLog>>, ProteinError> {
+    pool: &State<DB>,
+) -> Result<Json<Vec<ExerciseLog>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let logs = ExerciseLog::all(connection).await?;
@@ -60,9 +60,9 @@ pub async fn get_all_exercise_logs(
 pub async fn get_all_user_exercise_logs(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
-) -> Result<Json<Vec<ExerciseLog>>, ProteinError> {
+) -> Result<Json<Vec<ExerciseLog>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let logs = ExerciseLog::user_all(user_id, connection).await?;
@@ -78,11 +78,11 @@ pub async fn get_all_user_exercise_logs(
 pub async fn update_exercise_log(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     exercise_id: i32,
     user_id: Uuid,
     data: Json<UpdateExerciseLog>,
-) -> Result<Json<ExerciseLog>, ProteinError> {
+) -> Result<Json<ExerciseLog>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let log = ExerciseLog::update(user_id, exercise_id, data.into_inner(), connection).await?;
@@ -98,10 +98,10 @@ pub async fn update_exercise_log(
 pub async fn create_exercise_log(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
     data: Json<NewExerciseLog>,
-) -> Result<Json<ExerciseLog>, ProteinError> {
+) -> Result<Json<ExerciseLog>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let log = ExerciseLog::create(data.into_inner(), connection).await?;
@@ -116,10 +116,10 @@ pub async fn create_exercise_log(
 pub async fn delete_exercise_log(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     exercise_id: i32,
     user_id: Uuid,
-) -> Result<status::Accepted<Value>, ProteinError> {
+) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     ExerciseLog::delete(user_id, exercise_id, connection).await?;
@@ -135,10 +135,10 @@ pub async fn delete_exercise_log(
 pub async fn get_workout_log(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     workout_id: Uuid,
     user_id: Uuid,
-) -> Result<Json<WorkoutLog>, ProteinError> {
+) -> Result<Json<WorkoutLog>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let log = WorkoutLog::find(user_id, workout_id, connection).await?;
@@ -150,8 +150,8 @@ pub async fn get_workout_log(
 pub async fn get_all_workout_logs(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
-) -> Result<Json<Vec<WorkoutLog>>, ProteinError> {
+    pool: &State<DB>,
+) -> Result<Json<Vec<WorkoutLog>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let logs = WorkoutLog::all(connection).await?;
@@ -163,9 +163,9 @@ pub async fn get_all_workout_logs(
 pub async fn get_all_user_workout_logs(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
-) -> Result<Json<Vec<WorkoutLog>>, ProteinError> {
+) -> Result<Json<Vec<WorkoutLog>>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let logs = WorkoutLog::user_all(user_id, connection).await?;
@@ -181,11 +181,11 @@ pub async fn get_all_user_workout_logs(
 pub async fn update_workout_log(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     workout_id: Uuid,
     user_id: Uuid,
     data: Json<UpdateWorkoutLog>,
-) -> Result<Json<WorkoutLog>, ProteinError> {
+) -> Result<Json<WorkoutLog>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let log = WorkoutLog::update(user_id, workout_id, data.into_inner(), connection).await?;
@@ -201,10 +201,10 @@ pub async fn update_workout_log(
 pub async fn create_workout_log(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     user_id: Uuid,
     data: Json<NewWorkoutLog>,
-) -> Result<Json<WorkoutLog>, ProteinError> {
+) -> Result<Json<WorkoutLog>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     let log = WorkoutLog::create(data.into_inner(), connection).await?;
@@ -216,10 +216,10 @@ pub async fn create_workout_log(
 pub async fn delete_workout_log(
     _r: RateLimit<'_>,
     _auth: API,
-    pool: &State<DatabasePool>,
+    pool: &State<DB>,
     workout_id: Uuid,
     user_id: Uuid,
-) -> Result<status::Accepted<Value>, ProteinError> {
+) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get_connection(pool).await?;
 
     WorkoutLog::delete(user_id, workout_id, connection).await?;
