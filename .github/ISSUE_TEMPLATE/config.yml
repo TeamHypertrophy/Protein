@@ -1,7 +1,7 @@
 contact_links:
-  - name: 📚 Documentation
-    url: https://soon.com
-    about: Before Making An Issue, Make Sure To Check The Documentation
+  - name: 📚 Website FAQ
+    url: https://hypertrophy.ghouldev.tech/faq
+    about: Before Making An Issue, Make Sure To Check The FAQ
   - name: 📚 Developer Documentation
     url: https://github.com/TeamHypertrophy/Protein/blob/dev/.github/CONTRIBUTING.md
     about: Make Sure To Check The Developer Documentation If This Issue Is Focused On Code

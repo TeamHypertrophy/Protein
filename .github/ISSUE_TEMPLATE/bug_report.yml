@@ -29,11 +29,6 @@ body:
       description: Please explain the steps required to duplicate this issue.
     validations:
       required: true
-  - type: input
-    attributes:
-      label: Full Command String
-      description: Please send the command that was used
-      placeholder: -ban @User ...
   - type: textarea
     attributes:
       label: Additional Information
