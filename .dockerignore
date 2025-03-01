@@ -4,6 +4,8 @@
 /.vscode
 /scripts
 /uptime-kuma-data
+/assets
+/backups
 .env.example
 .gitattributes
 .gitignore

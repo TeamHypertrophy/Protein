@@ -23,6 +23,47 @@ services:
     profiles:
       - server
 
+  backup_db:
+    container_name: backup_db
+    image: postgres:17.2-bookworm
+    environment:
+      POSTGRES_USER: postgres
+      PGUSER: postgres
+      POSTGRES_DB: pgbackweb
+      POSTGRES_PASSWORD: password
+    user: postgres
+    volumes:
+      - backup_pgdata:/var/lib/postgresql/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+    ports:
+      - "5200:5432"
+    restart: unless-stopped
+    profiles:
+      - server
+
+  backup:
+    container_name: backup
+    image: eduardolat/pgbackweb:latest
+    ports:
+      - "8085:8085"
+    volumes:
+      - ./backups:/backups
+    environment:
+      PBW_ENCRYPTION_KEY: ${POSTGRES_BACKUP_ENCRYPTION_KEY}
+      PBW_POSTGRES_CONN_STRING: postgres://postgres:password@backup_db:5432/pgbackweb?sslmode=disable
+    depends_on:
+      backup_db:
+        condition: service_healthy
+      storage:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles:
+      - server
+
   api:
     container_name: api
     build:
@@ -104,6 +145,8 @@ services:
 
 volumes:
   pgdata: {}
+  backup_pgdata: {}
+  backups: {}
   redis_data: {}
   prometheus_data: {}
   grafana_data: {}

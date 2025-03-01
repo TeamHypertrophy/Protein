@@ -56,6 +56,7 @@ Building with docker is *so* simple!
 
     ```env
     DATABASE_URL - PostgreSQL URI, usually postgresql://username:password@host:port/database_name
+    POSTGRES_BACKUP_ENCRYPTION_KEY - Secret Key For Database Backups
 
     ROCKET_SENTRY_DSN - The Link To Where rocket-sentry can send panic!() logs to
 
@@ -117,7 +118,9 @@ Building with docker is *so* simple!
 `├──`[`.cargo`](https://github.com/TeamHypertrophy/Protein/tree/dev/.cargo) — Cargo Configuration<br>
 `├──`[`.github`](https://github.com/TeamHypertrophy/Protein/tree/dev/.github) — GitHub configuration including CI/CD workflows<br>
 `├──`[`.vscode`](https://github.com/TeamHypertrophy/Protein/tree/dev/.vscode) — VSCode Related Settings and Extension Recommendations<br>
+`├──`[`assets`](https://github.com/TeamHypertrophy/Protein/tree/dev/assets) — Images Related To Protein<br>
 `├──`[`migrations`](https://github.com/TeamHypertrophy/Protein/tree/dev/migrations) — Database Migrations<br>
 `├──`[`prometheus`](https://github.com/TeamHypertrophy/Protein/tree/dev/prometheus) — Prometheus Configuration<br>
 `├──`[`scripts`](https://github.com/TeamHypertrophy/Protein/tree/dev/scripts) — Utility Scripts<br>
 `├──`[`src`](https://github.com/TeamHypertrophy/Protein/tree/dev/src) — Source Code<br>
+`├──`[`templates`](https://github.com/TeamHypertrophy/Protein/tree/dev/templates) — HTML Templates Used For Email<br>
