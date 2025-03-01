@@ -60,7 +60,7 @@ pub async fn get_user(
     // If Cache is Null, Fetch From Database
     if cache.is_null() {
         // Crate Database Connection
-        let connection = &mut db::get_connection(pool).await?;
+        let connection = &mut db::get(pool).await?;
 
         // Grab User
         let user = User::find(user_id, connection).await?;
@@ -84,7 +84,7 @@ pub async fn get_all_users(
     pool: &State<DB>,
 ) -> Result<Json<Vec<User>>, Error> {
     // Creating Database Connection
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     // Fetch List of Users and Return
     let users = User::all(connection).await?;
@@ -102,7 +102,7 @@ pub async fn signup(
     user: Json<NewUser>,
 ) -> Result<Json<ProteinUser>, Error> {
     // Generate New User Password
-    let password_hash = password::generate_hashed_password(user.password.clone())?;
+    let password_hash = password::generate(user.password.clone())?;
 
     // Validate User
     match user.clone().into_inner().validate() {
@@ -126,7 +126,7 @@ pub async fn signup(
     };
 
     // Create Database Connection
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     // Create User and Grab Result
     let result = User::create(connection, new_user).await?;
@@ -197,7 +197,7 @@ pub async fn verify_email(
     token: Uuid,
 ) -> Result<Json<Value>, Error> {
     // Create Database Connection
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     // Find User By Token
     let user = User::find_by_email_verification_token(token, connection).await?;
@@ -258,7 +258,7 @@ pub async fn login(
     user: Json<LoginUser>,
 ) -> Result<Json<Value>, Error> {
     // Create Database Connection
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     // Get Current IP Address
     let ip_address: String = match ip.get_ipv4_string() {
@@ -277,8 +277,7 @@ pub async fn login(
     let result = User::find_by_username(user.username.clone(), connection).await?;
 
     // Verify Password
-    let password_matches =
-        password::verify_password(result.password.clone(), user.password.clone())?;
+    let password_matches = password::verify(result.password.clone(), user.password.clone())?;
 
     // If Password Entered == Stored Hashed Password
     if password_matches {
@@ -424,7 +423,7 @@ pub async fn delete_user(
     user_id: Uuid,
 ) -> Result<status::Accepted<Value>, Error> {
     // Create Database Connection
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     // Delete User
     let user = User::delete(user_id, connection).await?;
@@ -472,7 +471,7 @@ pub async fn update_user(
     user: Json<UpdateUser>,
 ) -> Result<Json<User>, Error> {
     // Create Database Connection
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     // Update User
     let updated_user = User::update(user_id, user.into_inner(), connection).await?;
@@ -491,7 +490,7 @@ pub async fn update_user(
     let dis = discord.inner().clone();
 
     rocket::tokio::task::spawn(async move {
-        webhook::send_audit_log(
+        webhook::send(
             &dis,
             "User Has Been Updated!",
             discord_user.username.as_str(),
@@ -521,7 +520,7 @@ pub async fn update_user_password(
     data: Json<Password>,
 ) -> Result<Json<User>, Error> {
     // Create Database Connection
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     // Get IP Address
     let ip_address: String = match ip.get_ipv4_string() {
@@ -533,8 +532,7 @@ pub async fn update_user_password(
     let user = User::find(user_id, connection).await?;
 
     // Verify Old Password
-    let old_password_hash =
-        password::verify_password(user.password.clone(), data.old_password.clone())?;
+    let old_password_hash = password::verify(user.password.clone(), data.old_password.clone())?;
 
     // False = Wrong Password
     if !old_password_hash {
@@ -542,7 +540,7 @@ pub async fn update_user_password(
     }
 
     // Generate New Password Hash
-    let password_hash = password::generate_hashed_password(data.new_password.clone())?;
+    let password_hash = password::generate(data.new_password.clone())?;
 
     // Update Password
     let updated_user = User::update_password(user_id, &password_hash, connection).await?;
@@ -593,7 +591,7 @@ pub async fn forgot_password_email(
     data: Json<ForgotPassword>,
 ) -> Result<status::Accepted<Value>, Error> {
     // Grab Database Connection
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     // Get Current IP Address
     let ip_address: String = match ip.get_ipv4_string() {
@@ -612,7 +610,7 @@ pub async fn forgot_password_email(
     let user = User::find_by_email(data.email.clone(), connection).await?;
 
     // Hash Generated Password
-    let hashed_password = password::generate_hashed_password(data.password.clone())?;
+    let hashed_password = password::generate(data.password.clone())?;
 
     // Update User Password With New Hashed Data
     let updated_user = User::update_password(user.user_id, &hashed_password, connection).await?;
@@ -667,7 +665,7 @@ pub async fn enable_mfa(
     mailer: &State<Email>,
     user_id: Uuid,
 ) -> Result<Json<User>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let user = User::find(user_id, connection).await?;
 
@@ -731,7 +729,7 @@ pub async fn check_mfa(
     user_id: Uuid,
     code: &str,
 ) -> Result<Json<Value>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let ip_address: String = match ip.get_ipv4_string() {
         Some(addr) => addr,
@@ -830,7 +828,7 @@ pub async fn verify_mfa(
     redis: &State<Redis>,
     token: Uuid,
 ) -> Result<Json<Value>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     // Find User By Token
     let user = User::find_by_mfa_verification_token(token, connection).await?;
@@ -865,7 +863,7 @@ pub async fn disable_mfa(
     mailer: &State<Email>,
     user_id: Uuid,
 ) -> Result<Json<User>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let user = User::disable_mfa(user_id, connection).await?;
 

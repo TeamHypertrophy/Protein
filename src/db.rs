@@ -94,7 +94,7 @@ pub async fn create() -> Result<DB, Box<dyn std::error::Error>> {
 ///
 /// # Example
 /// ```
-/// let connection = db::get_connection(pool).await?;
+/// let connection = db::get(pool).await?;
 /// let users = User::all(&mut connection).await?;
 /// ```
 ///
@@ -103,7 +103,7 @@ pub async fn create() -> Result<DB, Box<dyn std::error::Error>> {
 /// * The pool is exhausted
 /// * Connection timeout occurs
 /// * Database is unreachable
-pub async fn get_connection(pool: &State<DB>) -> Result<DBConnection, Error> {
+pub async fn get(pool: &State<DB>) -> Result<DBConnection, Error> {
     pool.get().await.map_err(|error| {
         tracing::error!("[!] PostgreSQL Error {:?}", error);
         Error::Database(error.to_string())

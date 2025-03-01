@@ -38,7 +38,7 @@ pub async fn get_profile(
     pool: &State<DB>,
 ) -> Result<Json<Profile>, Error> {
     // Create Database Connection
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     // Grab User
     let user = User::find(user_id, connection).await?;
@@ -56,7 +56,7 @@ pub async fn get_all_profiles(
     pool: &State<DB>,
 ) -> Result<Json<Vec<Profile>>, Error> {
     // Creating Database Connection
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     // Grab All Profiles
     let profiles = Profile::all(connection).await?;
@@ -73,7 +73,7 @@ pub async fn create_profile(
     profile: Json<NewProfile>,
 ) -> Result<Json<Profile>, Error> {
     // Create Database Connection
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     // Validation
     match profile.clone().into_inner().validate() {
@@ -95,7 +95,7 @@ pub async fn update_profile(
     pool: &State<DB>,
     profile: Json<UpdateProfile>,
 ) -> Result<Json<Profile>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     match profile.clone().into_inner().validate() {
         Ok(_) => (),
@@ -114,7 +114,7 @@ pub async fn delete_profile(
     user_id: Uuid,
     pool: &State<DB>,
 ) -> Result<status::Accepted<Value>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     Profile::delete(user_id, connection).await?;
 
@@ -131,7 +131,7 @@ pub async fn get_leaderboard(
     _auth: API,
     pool: &State<DB>,
 ) -> Result<Json<Vec<Profile>>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let profiles = Profile::leaderboard(connection).await?;
 

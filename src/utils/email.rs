@@ -72,7 +72,7 @@ pub async fn send(
             MultiPart::alternative().singlepart(
                 SinglePart::builder()
                     .header(ContentType::TEXT_HTML)
-                    .body(body.clone()),
+                    .body(body),
             ),
         )
         .map_err(|error| Error::Email(format!("Error Building Email: {:?}", error)))?;

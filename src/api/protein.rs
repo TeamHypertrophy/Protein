@@ -32,7 +32,7 @@ pub async fn get_protein_log(
     user_id: Uuid,
     log_id: i32,
 ) -> Result<Json<ProteinLog>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let log = ProteinLog::find(user_id, log_id, connection).await?;
 
@@ -45,7 +45,7 @@ pub async fn get_all_protein_logs(
     _auth: API,
     pool: &State<DB>,
 ) -> Result<Json<Vec<ProteinLog>>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let logs = ProteinLog::all(connection).await?;
 
@@ -59,7 +59,7 @@ pub async fn get_all_user_protein_logs(
     pool: &State<DB>,
     user_id: Uuid,
 ) -> Result<Json<Vec<ProteinLog>>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let logs = ProteinLog::user_all(user_id, connection).await?;
 
@@ -79,7 +79,7 @@ pub async fn update_protein_log(
     log_id: i32,
     log: Json<UpdateProteinLog>,
 ) -> Result<Json<ProteinLog>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let result = ProteinLog::update(user_id, log_id, log.into_inner(), connection).await?;
 
@@ -94,7 +94,7 @@ pub async fn create_protein_log(
     pool: &State<DB>,
     log: Json<NewProteinLog>,
 ) -> Result<Json<ProteinLog>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let result = ProteinLog::create(log.into_inner(), connection).await?;
 
@@ -109,7 +109,7 @@ pub async fn delete_protein_log(
     user_id: Uuid,
     log_id: i32,
 ) -> Result<status::Accepted<Value>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     ProteinLog::delete(user_id, log_id, connection).await?;
 

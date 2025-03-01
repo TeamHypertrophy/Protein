@@ -18,7 +18,7 @@ use crate::{constants::*, errors::Error};
 
 pub type Webhook = Arc<DiscordWebhook>;
 
-pub async fn send_audit_log(
+pub async fn send(
     webhook: &Webhook,
     description: &str,
     user: &str,

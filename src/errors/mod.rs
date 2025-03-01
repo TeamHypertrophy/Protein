@@ -9,8 +9,6 @@ ______          _       _
         Made with ❤️
 */
 
-use std::io::Cursor;
-
 use rocket::{
     http::{ContentType, Status},
     request::Request,
@@ -113,7 +111,7 @@ impl<'r> Responder<'r, 'static> for Error {
         Response::build()
             .status(status_code)
             .header(ContentType::JSON)
-            .sized_body(response.len(), Cursor::new(response))
+            .sized_body(response.len(), std::io::Cursor::new(response))
             .ok()
     }
 }

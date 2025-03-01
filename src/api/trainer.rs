@@ -34,7 +34,7 @@ pub async fn get_trainer(
     pool: &State<DB>,
     trainer_id: i32,
 ) -> Result<Json<Trainer>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let trainer = Trainer::find(trainer_id, connection).await?;
 
@@ -47,7 +47,7 @@ pub async fn get_all_trainers(
     _auth: API,
     pool: &State<DB>,
 ) -> Result<Json<Vec<Trainer>>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let trainers = Trainer::all(connection).await?;
 
@@ -61,7 +61,7 @@ pub async fn update_trainer(
     trainer_id: i32,
     data: Json<UpdateTrainer>,
 ) -> Result<Json<Trainer>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let trainer = Trainer::update(trainer_id, data.into_inner(), connection).await?;
 
@@ -75,7 +75,7 @@ pub async fn create_trainer(
     pool: &State<DB>,
     data: Json<NewTrainer>,
 ) -> Result<Json<Trainer>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let trainer = Trainer::create(data.into_inner(), connection).await?;
 
@@ -89,7 +89,7 @@ pub async fn delete_trainer(
     pool: &State<DB>,
     trainer_id: i32,
 ) -> Result<status::Accepted<Value>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     Trainer::delete(trainer_id, connection).await?;
 
@@ -110,7 +110,7 @@ pub async fn get_announcement(
     trainer_id: Uuid,
     announcement_id: i32,
 ) -> Result<Json<TrainerAnnouncement>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let announcement = TrainerAnnouncement::find(trainer_id, announcement_id, connection).await?;
 
@@ -123,7 +123,7 @@ pub async fn get_all_announcements(
     _auth: API,
     pool: &State<DB>,
 ) -> Result<Json<Vec<TrainerAnnouncement>>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let announcements = TrainerAnnouncement::all(connection).await?;
 
@@ -137,7 +137,7 @@ pub async fn get_all_trainer_announcements(
     pool: &State<DB>,
     trainer_id: Uuid,
 ) -> Result<Json<Vec<TrainerAnnouncement>>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let announcements = TrainerAnnouncement::trainer_all(trainer_id, connection).await?;
 
@@ -156,7 +156,7 @@ pub async fn update_announcement(
     announcement_id: i32,
     data: Json<UpdateTrainerAnnouncement>,
 ) -> Result<Json<TrainerAnnouncement>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let announcement =
         TrainerAnnouncement::update(trainer_id, announcement_id, data.into_inner(), connection)
@@ -172,7 +172,7 @@ pub async fn create_announcement(
     pool: &State<DB>,
     data: Json<NewTrainerAnnouncement>,
 ) -> Result<Json<TrainerAnnouncement>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let announcement = TrainerAnnouncement::create(data.into_inner(), connection).await?;
 
@@ -190,7 +190,7 @@ pub async fn delete_announcement(
     trainer_id: Uuid,
     announcement_id: i32,
 ) -> Result<status::Accepted<Value>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     TrainerAnnouncement::delete(trainer_id, announcement_id, connection).await?;
 

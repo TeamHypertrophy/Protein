@@ -35,7 +35,7 @@ pub async fn get_workout_plan(
     user_id: Uuid,
     plan_id: Uuid,
 ) -> Result<Json<WorkoutPlan>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let user = User::find(user_id, connection).await?;
 
@@ -50,7 +50,7 @@ pub async fn get_all_workout_plans(
     _auth: API,
     pool: &State<DB>,
 ) -> Result<Json<Vec<WorkoutPlan>>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let plans = WorkoutPlan::all(connection).await?;
 
@@ -64,7 +64,7 @@ pub async fn get_all_user_workout_plans(
     pool: &State<DB>,
     user_id: Uuid,
 ) -> Result<Json<Vec<WorkoutPlan>>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let plans = WorkoutPlan::user_all(user_id, connection).await?;
 
@@ -84,7 +84,7 @@ pub async fn update_workout_plan(
     plan_id: Uuid,
     data: Json<UpdateWorkoutPlan>,
 ) -> Result<Json<WorkoutPlan>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let plan = WorkoutPlan::update(user_id, plan_id, data.into_inner(), connection).await?;
 
@@ -99,7 +99,7 @@ pub async fn create_workout_plan(
     user_id: Uuid,
     data: Json<NewWorkoutPlan>,
 ) -> Result<Json<WorkoutPlan>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let plan = WorkoutPlan::create(data.into_inner(), connection).await?;
 
@@ -114,7 +114,7 @@ pub async fn delete_workout_plan(
     user_id: Uuid,
     plan_id: Uuid,
 ) -> Result<status::Accepted<Value>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     WorkoutPlan::delete(user_id, plan_id, connection).await?;
 

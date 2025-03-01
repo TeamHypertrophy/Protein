@@ -33,7 +33,7 @@ pub async fn get_api_key(
     pool: &State<DB>,
     api_key: Uuid,
 ) -> Result<Json<APIKey>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let api_key = APIKey::find(api_key, connection).await?;
 
@@ -46,7 +46,7 @@ pub async fn get_all_api_keys(
     _auth: API,
     pool: &State<DB>,
 ) -> Result<Json<Vec<APIKey>>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let api_keys = APIKey::all(connection).await?;
 
@@ -60,7 +60,7 @@ pub async fn get_all_user_api_keys(
     pool: &State<DB>,
     user_id: Uuid,
 ) -> Result<Json<Vec<APIKey>>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let user_keys = APIKey::user_all(user_id, connection).await?;
 
@@ -75,7 +75,7 @@ pub async fn update_api_key(
     api_key: Uuid,
     key: Json<UpdateAPIKey>,
 ) -> Result<Json<APIKey>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let result = APIKey::update(api_key, key.into_inner(), connection).await?;
 
@@ -89,7 +89,7 @@ pub async fn delete_api_key(
     pool: &State<DB>,
     api_key: Uuid,
 ) -> Result<status::Accepted<Value>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     APIKey::delete(api_key, connection).await?;
 
@@ -108,7 +108,7 @@ pub async fn revoke_api_key(
     api_key: Uuid,
     reason: Json<RevokeKey>,
 ) -> Result<Json<APIKey>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let result = APIKey::revoke(api_key, reason.into_inner(), connection).await?;
 
@@ -123,7 +123,7 @@ pub async fn change_api_key_role(
     api_key: Uuid,
     role: Json<UpdateRole>,
 ) -> Result<Json<APIKey>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let result = APIKey::change_role(api_key, role.into_inner(), connection).await?;
 

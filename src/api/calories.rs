@@ -32,7 +32,7 @@ pub async fn get_calorie_log(
     user_id: Uuid,
     log_id: i32,
 ) -> Result<Json<CalorieLog>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let log = CalorieLog::find(user_id, log_id, connection).await?;
 
@@ -45,7 +45,7 @@ pub async fn get_all_calorie_logs(
     _auth: API,
     pool: &State<DB>,
 ) -> Result<Json<Vec<CalorieLog>>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let logs = CalorieLog::all(connection).await?;
 
@@ -59,7 +59,7 @@ pub async fn get_all_user_calorie_logs(
     pool: &State<DB>,
     user_id: Uuid,
 ) -> Result<Json<Vec<CalorieLog>>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let logs = CalorieLog::user_all(user_id, connection).await?;
 
@@ -79,7 +79,7 @@ pub async fn update_calorie_log(
     log_id: i32,
     log: Json<UpdateCalorieLog>,
 ) -> Result<Json<CalorieLog>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let result = CalorieLog::update(user_id, log_id, log.into_inner(), connection).await?;
 
@@ -94,7 +94,7 @@ pub async fn create_calorie_log(
     pool: &State<DB>,
     log: Json<NewCalorieLog>,
 ) -> Result<Json<CalorieLog>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let result = CalorieLog::create(log.into_inner(), connection).await?;
 
@@ -109,7 +109,7 @@ pub async fn delete_calorie_log(
     user_id: Uuid,
     log_id: i32,
 ) -> Result<status::Accepted<Value>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     CalorieLog::delete(user_id, log_id, connection).await?;
 

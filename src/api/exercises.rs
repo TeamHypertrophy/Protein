@@ -31,7 +31,7 @@ pub async fn get_exercise(
     pool: &State<DB>,
     exercise_id: i64,
 ) -> Result<Json<Exercise>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let exercise = Exercise::find(exercise_id, connection).await?;
 
@@ -45,7 +45,7 @@ pub async fn search_exercises(
     pool: &State<DB>,
     data: Json<SearchExercise>,
 ) -> Result<Json<Vec<Exercise>>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let exercises = Exercise::search(connection, data.into_inner()).await?;
 
@@ -58,7 +58,7 @@ pub async fn get_all_exercises(
     _auth: API,
     pool: &State<DB>,
 ) -> Result<Json<Vec<Exercise>>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let exercises = Exercise::all(connection).await?;
 
@@ -73,7 +73,7 @@ pub async fn update_exercise(
     exercise_id: i64,
     data: Json<UpdateExercise>,
 ) -> Result<Json<Exercise>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     match data.clone().into_inner().validate() {
         Ok(_) => (),
@@ -92,7 +92,7 @@ pub async fn create_exercise(
     pool: &State<DB>,
     data: Json<NewExercise>,
 ) -> Result<Json<Exercise>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     match data.clone().into_inner().validate() {
         Ok(_) => (),
@@ -111,7 +111,7 @@ pub async fn delete_exercise(
     pool: &State<DB>,
     exercise_id: i64,
 ) -> Result<status::Accepted<Value>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     Exercise::delete(exercise_id, connection).await?;
 

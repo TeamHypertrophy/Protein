@@ -34,7 +34,7 @@ pub async fn get_custom_exercise(
     user_id: Uuid,
     exercise_id: i64,
 ) -> Result<Json<CustomExercise>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let exercise = CustomExercise::find(user_id, exercise_id, connection).await?;
 
@@ -48,7 +48,7 @@ pub async fn search_custom_exercises(
     pool: &State<DB>,
     data: Json<SearchCustomExercise>,
 ) -> Result<Json<Vec<CustomExercise>>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let exercises = CustomExercise::search(connection, data.into_inner()).await?;
 
@@ -61,7 +61,7 @@ pub async fn get_all_custom_exercises(
     _auth: API,
     pool: &State<DB>,
 ) -> Result<Json<Vec<CustomExercise>>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let exercises = CustomExercise::all(connection).await?;
 
@@ -75,7 +75,7 @@ pub async fn get_all_user_custom_exercises(
     pool: &State<DB>,
     user_id: Uuid,
 ) -> Result<Json<Vec<CustomExercise>>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let exercises = CustomExercise::user_all(user_id, connection).await?;
 
@@ -95,7 +95,7 @@ pub async fn update_custom_exercise(
     exercise_id: i64,
     exercise: Json<UpdateCustomExercise>,
 ) -> Result<Json<CustomExercise>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let result =
         CustomExercise::update(user_id, exercise_id, exercise.into_inner(), connection).await?;
@@ -111,7 +111,7 @@ pub async fn create_custom_exercise(
     pool: &State<DB>,
     exercise: Json<NewCustomExercise>,
 ) -> Result<Json<CustomExercise>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let result = CustomExercise::create(connection, exercise.into_inner()).await?;
 
@@ -126,7 +126,7 @@ pub async fn delete_custom_exercise(
     user_id: Uuid,
     exercise_id: i64,
 ) -> Result<status::Accepted<Value>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     CustomExercise::delete(user_id, exercise_id, connection).await?;
 

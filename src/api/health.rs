@@ -25,10 +25,10 @@ use crate::{
 
 #[get("/redis", format = "application/json")]
 pub async fn ping_redis(_r: RateLimit<'_>, redis: &State<Redis>) -> Result<Value, Error> {
-    // Run 'ping "PONG"'
+    // Run 'redis-server ping "PONG"'
     let ping: String = Cache::ping(redis, Some(PONG.to_owned())).await?;
 
-    // Compare and Return
+    // Compare Redis Response
     if ping == *PONG {
         Ok(json!({
             "status": 200,
@@ -44,8 +44,8 @@ pub async fn ping_redis(_r: RateLimit<'_>, redis: &State<Redis>) -> Result<Value
 
 #[get("/postgres", format = "application/json")]
 pub async fn ping_postgres(_r: RateLimit<'_>, pool: &State<DB>) -> Result<Value, Error> {
-    // Verify Database Connectivity
-    match db::get_connection(pool).await {
+    // Attempts To Fetech A Singular Connection From Database Pool
+    match db::get(pool).await {
         Ok(_) => Ok(json!({
             "status": 200,
             "is_healthy": true

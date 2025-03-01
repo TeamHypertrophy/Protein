@@ -14,7 +14,7 @@ use argon2::{self, Config};
 
 use crate::errors::Error;
 
-pub fn generate_hashed_password(password: String) -> Result<String, Error> {
+pub fn generate(password: String) -> Result<String, Error> {
     // Get Password Salt
     let salt: String =
         std::env::var("PASSWORD_SALT").expect("[!] PASSWORD_SALT Environment Variable Must Be Set");
@@ -29,7 +29,7 @@ pub fn generate_hashed_password(password: String) -> Result<String, Error> {
     })
 }
 
-pub fn verify_password(hashed_password: String, password: String) -> Result<bool, Error> {
+pub fn verify(hashed_password: String, password: String) -> Result<bool, Error> {
     // Verify Argon2 Password Hash
     argon2::verify_encoded(hashed_password.as_str(), password.as_bytes()).map_err(|error| {
         tracing::error!("[!] Password Verification Error: {:?}", error);
@@ -37,7 +37,7 @@ pub fn verify_password(hashed_password: String, password: String) -> Result<bool
     })
 }
 
-pub fn generate_mfa_code() -> String {
+pub fn generate_mfa() -> String {
     let mut rng = rand::rng();
 
     rng.random_range(100000..=999999).to_string()

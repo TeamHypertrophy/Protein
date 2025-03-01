@@ -32,7 +32,7 @@ pub async fn get_sleep_log(
     user_id: Uuid,
     log_id: i32,
 ) -> Result<Json<SleepLog>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let log = SleepLog::find(user_id, log_id, connection).await?;
 
@@ -45,7 +45,7 @@ pub async fn get_all_sleep_logs(
     _auth: API,
     pool: &State<DB>,
 ) -> Result<Json<Vec<SleepLog>>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let logs = SleepLog::all(connection).await?;
 
@@ -59,7 +59,7 @@ pub async fn get_all_user_sleep_logs(
     pool: &State<DB>,
     user_id: Uuid,
 ) -> Result<Json<Vec<SleepLog>>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let logs = SleepLog::user_all(user_id, connection).await?;
 
@@ -79,7 +79,7 @@ pub async fn update_sleep_log(
     log_id: i32,
     log: Json<UpdateSleepLog>,
 ) -> Result<Json<SleepLog>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let result = SleepLog::update(user_id, log_id, log.into_inner(), connection).await?;
 
@@ -93,7 +93,7 @@ pub async fn create_sleep_log(
     pool: &State<DB>,
     log: Json<NewSleepLog>,
 ) -> Result<Json<SleepLog>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     let result = SleepLog::create(log.into_inner(), connection).await?;
 
@@ -108,7 +108,7 @@ pub async fn delete_sleep_log(
     user_id: Uuid,
     log_id: i32,
 ) -> Result<status::Accepted<Value>, Error> {
-    let connection = &mut db::get_connection(pool).await?;
+    let connection = &mut db::get(pool).await?;
 
     SleepLog::delete(user_id, log_id, connection).await?;
 
