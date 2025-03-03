@@ -23,7 +23,10 @@ use crate::{
     db,
     db::DB,
     errors::Error,
-    models::keys::{APIKey, RevokeKey, UpdateAPIKey, UpdateRole},
+    models::{
+        keys::{APIKey, RevokeKey, UpdateAPIKey, UpdateRole},
+        user::Role,
+    },
 };
 
 #[get("/get/<api_key>", format = "application/json")]
@@ -53,7 +56,7 @@ pub async fn get_all_api_keys(
     Ok(Json(api_keys))
 }
 
-#[get("/all?<user_id>", format = "application/json")]
+#[get("/user/all?<user_id>", format = "application/json")]
 pub async fn get_all_user_api_keys(
     _r: RateLimit<'_>,
     _auth: API,
@@ -128,4 +131,29 @@ pub async fn change_api_key_role(
     let result = APIKey::change_role(api_key, role.into_inner(), connection).await?;
 
     Ok(Json(result))
+}
+
+#[get("/auth/is-admin?<api_key>", format = "application/json")]
+pub async fn is_admin_key(
+    _r: RateLimit<'_>,
+    pool: &State<DB>,
+    api_key: Uuid,
+) -> Result<Json<Value>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let key = APIKey::find(api_key, connection).await?;
+
+    if key.role == Role::Admin || key.role == Role::Developer {
+        Ok(Json(json!({
+            "status": 200,
+            "message": "Authorized",
+            "api_key": api_key
+        })))
+    } else {
+        Ok(Json(json!({
+            "status": 403,
+            "message": "Not Authorized",
+            "api_key": api_key
+        })))
+    }
 }

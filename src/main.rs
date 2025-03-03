@@ -294,7 +294,8 @@ async fn protein() -> _ {
                 api::keys::update_api_key,
                 api::keys::delete_api_key,
                 api::keys::revoke_api_key,
-                api::keys::change_api_key_role
+                api::keys::change_api_key_role,
+                api::keys::is_admin_key,
             ],
         )
         .mount(
