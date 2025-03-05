@@ -52,31 +52,20 @@ impl<'r> FromRequest<'r> for API {
             }
         };
 
-        // 2. Get The Master API Key From The Environment Variables
-        let master = match std::env::var("MASTER_API_KEY") {
-            Ok(key) => key,
-            Err(_) => {
+        // 2. Get The Admin Data From The Request State
+        let admin = match request.rocket().state::<Admin>() {
+            Some(admin) => admin,
+            None => {
                 return Outcome::Error((
                     Status::InternalServerError,
-                    Error::Internal("Failed Retrieving MASTER_API_KEY".to_string()),
+                    Error::Internal("Failed Retrieving Admin Data".to_string()),
                 ));
             }
         };
 
-        // 3. Get The Application Environment
-        let app_env = match std::env::var("APP_ENV") {
-            Ok(env) => env,
-            Err(_) => {
-                return Outcome::Error((
-                    Status::InternalServerError,
-                    Error::Internal("Failed Retrieving APP_ENV".to_string()),
-                ));
-            }
-        };
-
-        // 4. Check If The API Key Is The Master Key
-        if let Ok(master_key) = Uuid::parse_str(master.as_str()) {
-            if api_key == master_key && app_env == "development" {
+        // 3. Check If The API Key Is The Master Key
+        if let Ok(master) = Uuid::parse_str(admin.master_key.as_str()) {
+            if api_key == master && admin.app_env == "development" {
                 return Outcome::Success(API);
             } else {
                 return Outcome::Error((
@@ -88,7 +77,7 @@ impl<'r> FromRequest<'r> for API {
             }
         }
 
-        // 5. Get The Database Pool From The Request State
+        // 4. Get The Database Pool From The Request State
         let pool = match request.rocket().state::<db::DB>() {
             Some(pool) => pool,
             _ => {
@@ -99,7 +88,7 @@ impl<'r> FromRequest<'r> for API {
             }
         };
 
-        // 6. Get A Database Connection From The Pool
+        // 5. Get A Database Connection From The Pool
         let connection = match pool.get().await {
             Ok(connection) => connection,
             Err(_) => {
@@ -110,7 +99,7 @@ impl<'r> FromRequest<'r> for API {
             }
         };
 
-        // 7. Get The User ID From The Query Parameters
+        // 6. Get The User ID From The Query Parameters
         // https://api.hypertrophy.app/v1/users?user_id=...
         let user_id = request
             .uri()
@@ -118,7 +107,7 @@ impl<'r> FromRequest<'r> for API {
             .and_then(|q| q.as_str().strip_prefix("user_id="))
             .and_then(|id| Uuid::parse_str(id).ok());
 
-        // 8. If The User ID Exists, Verify:
+        // 7. If The User ID Exists, Verify:
         // That The Request That Is Being Performed Against The User Matches The API Key
         if let Some(uid) = user_id {
             match APIKey::verify(uid, api_key, connection).await {
@@ -134,7 +123,7 @@ impl<'r> FromRequest<'r> for API {
             };
         }
 
-        // 9. This Is The Final Check
+        // 8. This Is The Final Check
         // Checks:
         // 1. If The Key Exists In The Database == Next Step
         // 2. If The Key Is Admin/Developer == Access
@@ -166,18 +155,8 @@ impl<'r> FromRequest<'r> for API {
                     }
                 };
 
-                let routes = match request.rocket().state::<Admin>() {
-                    Some(admin) => &admin.routes,
-                    None => {
-                        return Outcome::Error((
-                            Status::InternalServerError,
-                            Error::Internal("Failed Retrieving Admin Routes".to_string()),
-                        ));
-                    }
-                };
-
                 // Admin Route Check
-                if routes.contains(&name) {
+                if admin.routes.contains(&name) {
                     if key.role == Role::Admin || key.role == Role::Developer {
                         return Outcome::Success(API);
                     } else {

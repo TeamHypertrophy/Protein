@@ -252,6 +252,10 @@ async fn protein() -> _ {
                     "get_all_workouts",
                 ]
             }),
+            master_key: std::env::var("MASTER_API_KEY")
+                .expect("[!] MASTER_API_KEY Environment Variable Must Be Set"),
+            app_env: std::env::var("APP_ENV")
+                .expect("[!] APP_ENV Environment Variable Must Be Set"),
         })
         .attach(prometheus.clone())
         .attach(fairings::cors::Cors)

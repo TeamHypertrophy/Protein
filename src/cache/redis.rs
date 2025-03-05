@@ -44,7 +44,7 @@ pub async fn create() -> Result<Pool, Error> {
             };
 
             config.tcp = TcpConfig {
-                nodelay: Some(true),
+                nodelay: Some(CACHE_TCP_CONFIG_DELAY),
                 ..Default::default()
             };
         })

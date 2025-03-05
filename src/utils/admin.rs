@@ -14,4 +14,6 @@ use std::sync::LazyLock;
 pub struct Admin<'a> {
     // Static Vector of Admin Routes
     pub routes: LazyLock<Vec<&'a str>>,
+    pub master_key: String,
+    pub app_env: String,
 }
