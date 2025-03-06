@@ -15,7 +15,7 @@ rocket-governor = { version = "0.2.0-rc.4", features = [
 ] }
 rocket_prometheus = "0.10.1"
 # -- Diesel Requirements (Database)
-diesel = { version = "2.2.7", features = [
+diesel = { version = "2.2.8", features = [
     "postgres",
     "uuid",
     "chrono",
