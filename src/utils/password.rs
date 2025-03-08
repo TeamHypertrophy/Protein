@@ -37,7 +37,7 @@ pub fn verify(hashed_password: String, password: String) -> Result<bool, Error> 
     })
 }
 
-pub fn generate_mfa() -> String {
+pub fn generate_code() -> String {
     let mut rng = rand::rng();
 
     rng.random_range(100000..=999999).to_string()

@@ -16,6 +16,7 @@ This is `Protein`, the Rust API that is used to Serve `Hypertrophy`, A Fully Fea
 - [PostgreSQL 17](https://www.postgresql.org/download/windows/)
 - [Rust](https://www.rust-lang.org/tools/install)
 - [Docker](https://www.docker.com/products/docker-desktop/)
+- [Ngrok](https://ngrok.com/downloads/windows)
 - [Pre-Commit](https://pre-commit.com/)
 
 ## Building 🏗️
@@ -102,7 +103,14 @@ Building with docker is *so* simple!
     $ protein
     ```
 
-9. Access The API At `http://127.0.0.1:8000`
+9. Start Ngrok Server (Local Mobile Access) (Optional)
+
+    ```sh
+    $ ngrok config add-authtoken YOURAUTHTOKEN
+    $ ngrok http 8000
+    ```
+
+10. Access The API at `http://127.0.0.1:8000` or `https://your-ngrok-instance.ngrok-free.app`
 
 ## Roadmap 🚚
 
@@ -118,7 +126,8 @@ Building with docker is *so* simple!
 `├──`[`.cargo`](https://github.com/TeamHypertrophy/Protein/tree/dev/.cargo) — Cargo Configuration<br>
 `├──`[`.github`](https://github.com/TeamHypertrophy/Protein/tree/dev/.github) — GitHub configuration including CI/CD workflows<br>
 `├──`[`.vscode`](https://github.com/TeamHypertrophy/Protein/tree/dev/.vscode) — VSCode Related Settings and Extension Recommendations<br>
-`├──`[`assets`](https://github.com/TeamHypertrophy/Protein/tree/dev/assets) — Images Related To Protein<br>
+`├──`[`assets`](https://github.com/TeamHypertrophy/Protein/tree/dev/assets) — User Uploaded Assets<br>
+`├──`[`images`](https://github.com/TeamHypertrophy/Protein/tree/dev/images) - Images Relating to Protein<br>
 `├──`[`migrations`](https://github.com/TeamHypertrophy/Protein/tree/dev/migrations) — Database Migrations<br>
 `├──`[`prometheus`](https://github.com/TeamHypertrophy/Protein/tree/dev/prometheus) — Prometheus Configuration<br>
 `├──`[`scripts`](https://github.com/TeamHypertrophy/Protein/tree/dev/scripts) — Utility Scripts<br>

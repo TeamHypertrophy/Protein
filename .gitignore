@@ -6,4 +6,5 @@ logs
 uptime-kuma-data
 uptime_kuma.pwd
 dist/
+assets/avatars
 .intentionally-empty-file.o

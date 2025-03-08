@@ -147,6 +147,22 @@ impl Profile {
             })
     }
 
+    pub async fn upload_avatar(
+        user: Uuid,
+        data: String,
+        connection: &mut DBConnection,
+    ) -> Result<Profile, Error> {
+        diesel::update(profiles::table)
+            .filter(profiles::user_id.eq(user))
+            .set(profiles::avatar_url.eq(data))
+            .get_result::<Profile>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
+
     pub async fn delete(user: Uuid, connection: &mut DBConnection) -> Result<usize, Error> {
         diesel::delete(profiles::table)
             .filter(profiles::user_id.eq(user))
@@ -201,7 +217,6 @@ pub struct UpdateProfile {
     pub bio: Option<String>,
     pub streak: Option<i32>,
     pub activity_level: Option<ActivityLevel>,
-    pub avatar_url: Option<String>,
     pub fitness_goal: Option<FitnessGoal>,
     pub diet: Option<Diet>,
 }

@@ -17,6 +17,7 @@ extern crate rocket;
 extern crate argon2;
 
 // Vendor Dependencies
+use rocket::fs::{FileServer, relative};
 use tokio_cron_scheduler::{Job, JobScheduler};
 use discord_webhook2::webhook::DiscordWebhook;
 use user_agent_parser::UserAgentParser;
@@ -192,10 +193,20 @@ async fn protein() -> _ {
         }
     };
 
+    // Start Job Scheduler
     match scheduler.start().await {
         Ok(_) => tracing::info!("[Scheduler] ✅ Job Scheduler Started!"),
         Err(error) => {
             tracing::error!("[Scheduler] ❌ Error Starting Job Scheduler: {:?}", error);
+            std::process::exit(1)
+        }
+    }
+
+    // Create Assets & Avatar Directory
+    match async_fs::create_dir_all("assets/avatars").await {
+        Ok(_) => tracing::info!("[+] ✅ Assets & Avatar Directory Created!"),
+        Err(error) => {
+            tracing::error!("[-] ❌ Error Creating Avatar Directory: {:?}", error);
             std::process::exit(1)
         }
     }
@@ -266,6 +277,7 @@ async fn protein() -> _ {
             |_| Box::pin(async move { drop(guard) }),
         ))
         .mount("/", routes![api::index::index])
+        .mount("/assets", FileServer::from(relative!("assets")))
         .mount("/metrics", prometheus)
         .mount(
             "/health",
@@ -413,6 +425,7 @@ async fn protein() -> _ {
                 api::profile::get_all_profiles,
                 api::profile::create_profile,
                 api::profile::update_profile,
+                api::profile::upload_avatar,
                 api::profile::delete_profile
             ],
         )

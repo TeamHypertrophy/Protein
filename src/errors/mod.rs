@@ -42,6 +42,8 @@ pub enum Error {
     Email(String),
 
     Webhook(String),
+
+    IO(String),
 }
 
 impl Error {
@@ -55,6 +57,7 @@ impl Error {
             Error::Validation(_) => Status::BadRequest,
             Error::Email(_) => Status::InternalServerError,
             Error::Webhook(_) => Status::BadRequest,
+            Error::IO(_) => Status::InternalServerError,
             _ => Status::BadRequest,
         }
     }
@@ -82,6 +85,7 @@ impl std::error::Error for Error {
             Error::Database(_) => "[!] Database Error",
             Error::Email(_) => "[!] Email Error",
             Error::Webhook(_) => "[!] Webhook Error",
+            Error::IO(_) => "[!] IO Error",
         }
     }
 }
@@ -100,6 +104,7 @@ impl<'r> Responder<'r, 'static> for Error {
             Error::Database(error) => error,
             Error::Email(error) => error,
             Error::Webhook(error) => error,
+            Error::IO(error) => error,
         };
 
         let response = json::to_string(&ErrorResponse {

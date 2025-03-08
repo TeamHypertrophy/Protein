@@ -10,7 +10,9 @@ ______          _       _
 */
 
 use rocket::{
-    State, get, post,
+    State,
+    fs::TempFile,
+    get, post,
     response::status,
     serde::{
         json::{Json, Value, json},
@@ -28,6 +30,7 @@ use crate::{
         profile::{NewProfile, Profile, UpdateProfile},
         user::User,
     },
+    utils::password,
 };
 
 #[get("/?<user_id>", format = "application/json")]
@@ -105,6 +108,47 @@ pub async fn update_profile(
     let result = Profile::update(user_id, profile.into_inner(), connection).await?;
 
     Ok(Json(result))
+}
+
+#[post("/avatar/upload?<user_id>", data = "<avatar>")]
+pub async fn upload_avatar(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DB>,
+    user_id: Uuid,
+    mut avatar: TempFile<'_>,
+) -> Result<Json<Profile>, Error> {
+    let directory = format!("assets/avatars/{}", user_id.to_string());
+
+    match async_fs::create_dir(&directory).await {
+        Ok(_) => (),
+        Err(error) => return Err(Error::IO(error.to_string())),
+    }
+
+    let avatar_id = password::generate_code();
+
+    let path = format!("assets/avatars/{}/{}.png", user_id.to_string(), avatar_id);
+
+    match avatar.persist_to(&path).await {
+        Ok(_) => (),
+        Err(error) => return Err(Error::IO(error.to_string())),
+    }
+
+    let host =
+        std::env::var("AVATAR_HOST_URL").unwrap_or_else(|_| "http://localhost:8000/".to_string());
+
+    let url = format!(
+        "{}/assets/avatars/{}/{}.png",
+        host,
+        user_id.to_string(),
+        avatar_id
+    );
+
+    let connection = &mut db::get(pool).await?;
+
+    let profile = Profile::upload_avatar(user_id, url, connection).await?;
+
+    Ok(Json(profile))
 }
 
 #[get("/delete/<user_id>", format = "application/json")]

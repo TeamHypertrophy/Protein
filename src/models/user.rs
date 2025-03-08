@@ -306,7 +306,7 @@ impl User {
     }
 
     pub async fn generate_mfa_code(id: Uuid, connection: &mut DBConnection) -> Result<User, Error> {
-        let code = utils::password::generate_mfa();
+        let code = utils::password::generate_code();
         let expires_at = chrono::Utc::now().naive_utc() + chrono::Duration::minutes(10);
 
         diesel::update(users::table)
