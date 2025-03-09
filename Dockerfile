@@ -51,6 +51,7 @@ COPY --from=build /usr/protein/regexes.yaml ./
 COPY --from=build /usr/protein/docker.env ./.env
 COPY --from=build /usr/protein/Rocket.toml ./
 COPY --from=build /usr/protein/target/release/protein ./protein
+COPY --from=build /usr/protein/assets/ ./assets/
 
 # [!] Expose Port
 EXPOSE 8000
