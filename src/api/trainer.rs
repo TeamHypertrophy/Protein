@@ -54,7 +54,7 @@ pub async fn get_all_trainers(
     Ok(Json(trainers))
 }
 
-#[post("/update/<trainer_id>", format = "application/json", data = "<data>")]
+#[post("/update?<trainer_id>", format = "application/json", data = "<data>")]
 pub async fn update_trainer(
     _r: RateLimit<'_>,
     pool: &State<DB>,
@@ -82,7 +82,7 @@ pub async fn create_trainer(
     Ok(Json(trainer))
 }
 
-#[post("/delete/<trainer_id>", format = "application/json")]
+#[post("/delete?<trainer_id>", format = "application/json")]
 pub async fn delete_trainer(
     _r: RateLimit<'_>,
     _auth: API,
@@ -100,7 +100,7 @@ pub async fn delete_trainer(
 }
 
 #[get(
-    "/announcement/<trainer_id>?<announcement_id>",
+    "/announcement/<announcement_id>?<trainer_id>",
     format = "application/json"
 )]
 pub async fn get_announcement(
@@ -145,12 +145,13 @@ pub async fn get_all_trainer_announcements(
 }
 
 #[post(
-    "/announcement/update/<trainer_id>?<announcement_id>",
+    "/announcement/update/<announcement_id>?<trainer_id>",
     format = "application/json",
     data = "<data>"
 )]
 pub async fn update_announcement(
     _r: RateLimit<'_>,
+    _auth: API,
     pool: &State<DB>,
     trainer_id: Uuid,
     announcement_id: i32,
@@ -165,12 +166,17 @@ pub async fn update_announcement(
     Ok(Json(announcement))
 }
 
-#[post("/announcement/create", format = "application/json", data = "<data>")]
+#[post(
+    "/announcement/create?<trainer_id>",
+    format = "application/json",
+    data = "<data>"
+)]
 pub async fn create_announcement(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
     data: Json<NewTrainerAnnouncement>,
+    trainer_id: i32,
 ) -> Result<Json<TrainerAnnouncement>, Error> {
     let connection = &mut db::get(pool).await?;
 
@@ -180,7 +186,7 @@ pub async fn create_announcement(
 }
 
 #[post(
-    "/announcement/delete/<trainer_id>?<announcement_id>",
+    "/announcement/delete/<announcement_id>?<trainer_id>",
     format = "application/json"
 )]
 pub async fn delete_announcement(

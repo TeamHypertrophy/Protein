@@ -123,7 +123,29 @@ impl<'r> FromRequest<'r> for API {
             };
         }
 
-        // 8. This Is The Final Check
+        // 8. Get The Trainer ID From The Query Parameters
+        let trainer_id = request
+            .uri()
+            .query()
+            .and_then(|q| q.as_str().strip_prefix("trainer_id="))
+            .and_then(|id| id.parse::<i32>().ok());
+
+        // 9. Verify Trainer Action Against API Key
+        if let Some(tid) = trainer_id {
+            match APIKey::verify_trainer(tid, api_key, connection).await {
+                Ok(_verified) => {
+                    return Outcome::Success(API);
+                }
+                Err(error) => {
+                    return Outcome::Error((
+                        Status::Unauthorized,
+                        Error::Database(error.to_string()),
+                    ));
+                }
+            };
+        }
+
+        // 10. This Is The Final Check
         // Checks:
         // 1. If The Key Exists In The Database == Next Step
         // 2. If The Key Is Admin/Developer == Access

@@ -125,7 +125,7 @@ pub async fn upload_avatar(
         Err(error) => return Err(Error::IO(error.to_string())),
     }
 
-    let avatar_id = password::generate_code();
+    let avatar_id = password::random();
 
     let path = format!("assets/avatars/{}/{}.png", user_id.to_string(), avatar_id);
 

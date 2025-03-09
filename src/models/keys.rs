@@ -20,7 +20,10 @@ use crate::{
     constants::API_QUOTA_LIMIT,
     db::DBConnection,
     errors::Error,
-    models::user::{Role, User},
+    models::{
+        trainer::Trainer,
+        user::{Role, User},
+    },
     schema::{
         api_keys,
         api_keys::dsl::{api_key, quota, revoked_reason, role, status, user_id},
@@ -242,6 +245,56 @@ impl APIKey {
     ) -> Result<bool, Error> {
         // First, Find User
         let user: User = User::find(user, &mut connection).await?;
+
+        // Next, Grab API Key
+        let verified: APIKey = APIKey::get(&user, &mut connection).await?;
+
+        // Extra Validation: Quota Check
+        if verified.quota >= API_QUOTA_LIMIT {
+            return Err(Error::Authorization(
+                "API Key Quota Limit Reached!".to_string(),
+            ));
+        }
+
+        // Extra Validation: Status Check
+        if verified.status != Status::Active {
+            return Err(Error::Authorization(
+                "API Key is Revoked OR Expired!".to_string(),
+            ));
+        }
+
+        // Extra Validation: Expiry Check
+        let now: i64 = chrono::Utc::now().naive_utc().and_utc().timestamp();
+        let expired: i64 = verified.expires_at.and_utc().timestamp();
+
+        if now > expired {
+            return Err(Error::Authorization("API Key is Expired!".to_string()));
+        }
+
+        // Most importantly, Compare API_KEY Header to Actual API Key, As well as
+        // checking for developer key/admin
+        if (verified.api_key == key && verified.user_id == user.user_id)
+            || verified.role == Role::Admin
+            || verified.role == Role::Developer
+        {
+            APIKey::increment(key, verified.quota, &mut connection).await?;
+
+            Ok(true)
+        } else {
+            Err(Error::Authorization("API Key Does Not Match!".to_string()))
+        }
+    }
+
+    pub async fn verify_trainer(
+        id: i32,
+        key: Uuid,
+        mut connection: DBConnection,
+    ) -> Result<bool, Error> {
+        // First, Find Trainer
+        let trainer = Trainer::find(id, &mut connection).await?;
+
+        // Find User Relating To Trainer
+        let user: User = User::find(trainer.user_id, &mut connection).await?;
 
         // Next, Grab API Key
         let verified: APIKey = APIKey::get(&user, &mut connection).await?;
