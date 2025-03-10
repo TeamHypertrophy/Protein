@@ -32,7 +32,7 @@ diesel_migrations = { version = "2.2.0" }
 # -- Async
 tokio-cron-scheduler = { version = "0.13.0", features = ["signal", "english"] }
 # -- Serialization
-serde = { version = "1.0.218", features = ["derive"] }
+serde = { version = "1.0.219", features = ["derive"] }
 uuid = { version = "1.15.1", features = ["fast-rng"] }
 chrono = { version = "0.4.40", features = ["serde"] }
 user-agent-parser = { version = "0.3.6", features = ["rocket"] }
