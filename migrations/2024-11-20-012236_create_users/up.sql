@@ -37,7 +37,7 @@ CREATE TYPE UserStatus AS ENUM (
 CREATE TYPE ActivityLevel AS ENUM (
     'light',
     'moderate',
-    'very'
+    'very',
     'extremely'
 );
 
