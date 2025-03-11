@@ -269,8 +269,8 @@ pub async fn login(
     // Get Current User Agent OS
     let device = format!(
         "{} {}",
-        os.name.unwrap_or_else(|| "_".to_owned().into()),
-        os.major.unwrap_or_else(|| "_".to_owned().into())
+        os.name.unwrap_or_else(|| "No".to_owned().into()),
+        os.major.unwrap_or_else(|| "Device".to_owned().into())
     );
 
     // Find User
@@ -395,7 +395,7 @@ pub async fn login(
             // Return MFA Code Required
             return Ok(Json(json!({
                 "status": 200,
-                "status": 200,
+                "user_id": result.user_id,
                 "message": "MFA Code Required & Sent",
             })));
         }
@@ -404,6 +404,7 @@ pub async fn login(
             "status": 200,
             "message": "Successful Login!",
             "user": result,
+            "user_id": result.user_id,
             "api_key": api_key.api_key,
         })))
     } else {
@@ -720,7 +721,6 @@ pub async fn enable_mfa(
 #[get("/mfa/check/<code>?<user_id>", format = "application/json")]
 pub async fn check_mfa(
     _r: RateLimit<'_>,
-    _auth: API,
     pool: &State<DB>,
     redis: &State<Redis>,
     mailer: &State<Email>,
@@ -739,11 +739,13 @@ pub async fn check_mfa(
     // Get Current User Agent OS
     let device = format!(
         "{} {}",
-        os.name.unwrap_or_else(|| "_".to_owned().into()),
-        os.major.unwrap_or_else(|| "_".to_owned().into())
+        os.name.unwrap_or_else(|| "No".to_owned().into()),
+        os.major.unwrap_or_else(|| "Device".to_owned().into())
     );
 
     let user = User::find(user_id, connection).await?;
+
+    let key = APIKey::get(&user, connection).await?;
 
     if user.mfa_enabled {
         if !user.mfa_verified {
@@ -807,7 +809,8 @@ pub async fn check_mfa(
                     {
                         "status": 200,
                         "message": "MFA Code Verified",
-                        "user": result
+                        "user": result,
+                        "api_key": key.api_key
                     }
                 )));
             } else {
