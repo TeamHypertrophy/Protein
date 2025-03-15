@@ -20,7 +20,6 @@ diesel = { version = "2.2.7", features = [
     "postgres",
     "uuid",
     "chrono",
-    "numeric",
 ] }
 diesel-derive-enum = { version = "2.1.0", features = ["postgres"] }
 diesel-async = { version = "0.5.2", features = [
@@ -56,7 +55,6 @@ discord-webhook2 = "0.4.3"
 lettre = { version = "0.11.15", features = [
     "tokio1",
     "tokio1-native-tls",
-    "serde",
 ] }
 askama = "0.12.1"
 # -- Random
