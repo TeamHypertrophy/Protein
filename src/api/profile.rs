@@ -23,6 +23,7 @@ use validator::Validate;
 
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
+    cache::redis::{Cache, Redis},
     db,
     db::DB,
     errors::Error,
@@ -39,17 +40,36 @@ pub async fn get_profile(
     _auth: API,
     user_id: Uuid,
     pool: &State<DB>,
+    redis: &State<Redis>,
 ) -> Result<Json<Profile>, Error> {
-    // Create Database Connection
-    let connection = &mut db::get(pool).await?;
+    // Check Cache
+    let cache: Value = Cache::get(redis, "profile", user_id.to_string()).await?;
 
-    // Grab User
-    let user = User::find(user_id, connection).await?;
+    if cache.is_null() {
+        // Create Database Connection
+        let connection = &mut db::get(pool).await?;
 
-    // Grab Profile
-    let profile = Profile::find(&user, connection).await?;
+        // Grab User
+        let user = User::find(user_id, connection).await?;
 
-    Ok(Json(profile))
+        // Grab Profile
+        let profile = Profile::find(&user, connection).await?;
+
+        // Cache Profile
+        Cache::set(
+            redis,
+            "profile",
+            user_id.to_string(),
+            Cache::serialize(&profile)?,
+        )
+        .await?;
+
+        Ok(Json(profile))
+    } else {
+        let profile: Profile = Cache::deserialize(cache)?;
+
+        Ok(Json(profile))
+    }
 }
 
 #[get("/all", format = "application/json")]
@@ -57,6 +77,7 @@ pub async fn get_all_profiles(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
 ) -> Result<Json<Vec<Profile>>, Error> {
     // Creating Database Connection
     let connection = &mut db::get(pool).await?;
@@ -71,9 +92,10 @@ pub async fn get_all_profiles(
 pub async fn create_profile(
     _r: RateLimit<'_>,
     _auth: API,
-    user_id: Uuid,
     pool: &State<DB>,
+    redis: &State<Redis>,
     profile: Json<NewProfile>,
+    user_id: Uuid,
 ) -> Result<Json<Profile>, Error> {
     // Create Database Connection
     let connection = &mut db::get(pool).await?;
@@ -87,6 +109,15 @@ pub async fn create_profile(
     // Create New Profile
     let result = Profile::create(profile.into_inner(), connection).await?;
 
+    // Cache Profile
+    Cache::set(
+        redis,
+        "profile",
+        user_id.to_string(),
+        Cache::serialize(&result)?,
+    )
+    .await?;
+
     Ok(Json(result))
 }
 
@@ -94,9 +125,10 @@ pub async fn create_profile(
 pub async fn update_profile(
     _r: RateLimit<'_>,
     _auth: API,
-    user_id: Uuid,
     pool: &State<DB>,
+    redis: &State<Redis>,
     profile: Json<UpdateProfile>,
+    user_id: Uuid,
 ) -> Result<Json<Profile>, Error> {
     let connection = &mut db::get(pool).await?;
 
@@ -107,6 +139,14 @@ pub async fn update_profile(
 
     let result = Profile::update(user_id, profile.into_inner(), connection).await?;
 
+    Cache::set(
+        redis,
+        "profile",
+        user_id.to_string(),
+        Cache::serialize(&result)?,
+    )
+    .await?;
+
     Ok(Json(result))
 }
 
@@ -115,8 +155,9 @@ pub async fn upload_avatar(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
-    user_id: Uuid,
+    redis: &State<Redis>,
     mut avatar: TempFile<'_>,
+    user_id: Uuid,
 ) -> Result<Json<Profile>, Error> {
     let directory = format!("assets/avatars/{}", user_id.to_string());
 
@@ -148,6 +189,14 @@ pub async fn upload_avatar(
 
     let profile = Profile::upload_avatar(user_id, url, connection).await?;
 
+    Cache::set(
+        redis,
+        "profile",
+        user_id.to_string(),
+        Cache::serialize(&profile)?,
+    )
+    .await?;
+
     Ok(Json(profile))
 }
 
@@ -155,12 +204,15 @@ pub async fn upload_avatar(
 pub async fn delete_profile(
     _r: RateLimit<'_>,
     _auth: API,
-    user_id: Uuid,
     pool: &State<DB>,
+    redis: &State<Redis>,
+    user_id: Uuid,
 ) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get(pool).await?;
 
     Profile::delete(user_id, connection).await?;
+
+    Cache::delete(redis, "profile", user_id.to_string()).await?;
 
     Ok(status::Accepted(json!({
         "status": 200,

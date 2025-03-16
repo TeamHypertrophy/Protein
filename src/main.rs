@@ -281,7 +281,11 @@ async fn protein() -> _ {
         .mount("/metrics", prometheus)
         .mount(
             "/health",
-            routes![api::health::ping_redis, api::health::ping_postgres],
+            routes![
+                api::health::ping_redis,
+                api::health::ping_postgres,
+                api::health::get_version
+            ],
         )
         .mount(
             "/v1/users",

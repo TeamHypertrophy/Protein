@@ -17,7 +17,7 @@ use rocket::{
 use crate::{
     auth::rate_limit::RateLimit,
     cache::redis::{Cache, Redis},
-    constants::PONG,
+    constants::{API_VERSION, PONG},
     db,
     db::DB,
     errors::Error,
@@ -55,4 +55,12 @@ pub async fn ping_postgres(_r: RateLimit<'_>, pool: &State<DB>) -> Result<Value,
             "is_healthy": false
         })),
     }
+}
+
+#[get("/version", format = "application/json")]
+pub async fn get_version(_r: RateLimit<'_>) -> Result<Value, Error> {
+    Ok(json!({
+        "status": 200,
+        "version": API_VERSION
+    }))
 }
