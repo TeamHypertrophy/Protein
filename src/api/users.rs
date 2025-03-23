@@ -657,6 +657,81 @@ pub async fn forgot_password_email(
     })))
 }
 
+#[get("/mfa/resend?<user_id>", format = "application/json")]
+pub async fn resend_mfa(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DB>,
+    redis: &State<Redis>,
+    mailer: &State<Email>,
+    user_id: Uuid,
+) -> Result<Json<Value>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let user = User::find(user_id, connection).await?;
+
+    if !user.mfa_enabled {
+        return Err(Error::Authorization("MFA Not Enabled".to_string()));
+    }
+
+    if !user.mfa_verified {
+        return Err(Error::Authorization("MFA Not Verified".to_string()));
+    }
+
+    match user.mfa_code_expires_at {
+        Some(expired) => {
+            let now: i64 = chrono::Utc::now().naive_utc().and_utc().timestamp();
+
+            if now > expired.and_utc().timestamp() {
+                return Err(Error::Authorization(
+                    "MFA Code Expired, Login Again".to_string(),
+                ));
+            }
+        }
+        None => {
+            return Err(Error::Authorization(
+                "MFA Code Potentially Expired".to_string(),
+            ));
+        }
+    }
+
+    let mfa_user = user.clone();
+
+    match user.mfa_code {
+        Some(code) => {
+            // Send Email
+            let mail = mailer.inner().clone();
+
+            rocket::tokio::task::spawn(async move {
+                let body = MFACode {
+                    name: &user.username,
+                    code: &code,
+                };
+
+                match email::send(
+                    &mail,
+                    &mfa_user,
+                    "[Security] MFA Code",
+                    body.render().unwrap(),
+                )
+                .await
+                {
+                    Ok(_) => tracing::info!("[Email] ✅ Sent MFA Code Email"),
+                    Err(e) => tracing::info!("[Email] ❌ Failed Sending MFA Code Email: {}", e),
+                }
+            });
+
+            // Return MFA Code Required
+            return Ok(Json(json!({
+                "status": 200,
+                "user_id": user_id,
+                "message": "MFA Code Resent",
+            })));
+        }
+        None => return Err(Error::Authorization("No MFA Code Found".to_string())),
+    }
+}
+
 #[get("/mfa/enable?<user_id>", format = "application/json")]
 pub async fn enable_mfa(
     _r: RateLimit<'_>,
@@ -756,7 +831,11 @@ pub async fn check_mfa(
 
         if let Some(expired) = user.mfa_code_expires_at {
             if now > expired.and_utc().timestamp() {
-                return Err(Error::Authorization("MFA Code Expired".to_string()));
+                User::reset_mfa(user_id, connection).await?;
+
+                return Err(Error::Authorization(
+                    "MFA Code Expired, Login Again".to_string(),
+                ));
             }
         } else {
             return Err(Error::Authorization(

@@ -29,7 +29,9 @@ pub const POSTGRES_POOL_SIZE: usize = 10; // 10 Concurrent Postgres Connections
 
 // API
 pub const API_QUOTA_LIMIT: i32 = 3000; // 5000 Requests per API Key
-pub const API_VERSION: i32 = 1; // API Version
+pub const API_VERSION: &str = "1.0"; // API Version
+pub const REDIS_VERSION: &str = "6.0"; // Redis Version
+pub const POSTGRES_VERSION: &str = "17.4"; // Postgres Version
 
 // Error Messages
 pub const DEFAULT_ERROR_MESSAGE: &str = "[!!] Error in Protein Service";

@@ -215,6 +215,7 @@ pub struct UpdateProfile {
     pub preferred_height_unit: Option<PreferredHeight>,
     pub public: Option<bool>,
     pub bio: Option<String>,
+    pub avatar_url: Option<String>,
     pub streak: Option<i32>,
     pub activity_level: Option<ActivityLevel>,
     pub fitness_goal: Option<FitnessGoal>,

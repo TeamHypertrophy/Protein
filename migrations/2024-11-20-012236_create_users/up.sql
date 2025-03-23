@@ -31,7 +31,8 @@ CREATE TYPE FitnessGoal AS ENUM (
 
 CREATE TYPE UserStatus AS ENUM (
     'active',
-    'pending'
+    'pending',
+    'pending_deletion'
 );
 
 CREATE TYPE ActivityLevel AS ENUM (

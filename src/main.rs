@@ -280,7 +280,7 @@ async fn protein() -> _ {
         .mount("/assets", FileServer::from(relative!("assets")))
         .mount("/metrics", prometheus)
         .mount(
-            "/health",
+            "/v1/health",
             routes![
                 api::health::ping_redis,
                 api::health::ping_postgres,
@@ -303,6 +303,7 @@ async fn protein() -> _ {
                 api::users::check_mfa,
                 api::users::verify_mfa,
                 api::users::disable_mfa,
+                api::users::resend_mfa,
             ],
         )
         .mount(
