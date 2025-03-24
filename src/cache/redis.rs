@@ -32,6 +32,7 @@ pub async fn create() -> Result<Pool, Error> {
         Err(error) => panic!("[!] Failed To Create Redis Config: {}", error),
     };
 
+    // Create Redis Pool
     let pool = match Builder::from_config(config)
         .with_connection_config(|config| {
             config.connection_timeout = Duration::from_secs(CACHE_CONNECTION_TIMEOUT);
@@ -73,6 +74,7 @@ pub async fn create() -> Result<Pool, Error> {
 pub struct Cache;
 
 impl Cache {
+    // Get Value From Redis Cache
     pub async fn get(pool: &State<Redis>, group: &str, key: String) -> Result<Value, Error> {
         tracing::info!(
             "[Cache] ⚙️ Fetching Key From Redis Cache: {:#?}",
@@ -87,6 +89,7 @@ impl Cache {
             })
     }
 
+    // Sets A Value In Redis Cache
     pub async fn set(
         pool: &State<Redis>,
         group: &str,
@@ -113,6 +116,7 @@ impl Cache {
         })
     }
 
+    // Deletes A Value From Redis Cache
     pub async fn delete(pool: &State<Redis>, group: &str, key: String) -> Result<(), Error> {
         tracing::info!(
             "[Cache] ⚙️ Deleting Key From Redis Cache: {:#?}",
@@ -127,6 +131,7 @@ impl Cache {
             })
     }
 
+    // Pings Redis For Health Check
     pub async fn ping(pool: &State<Redis>, message: Option<String>) -> Result<String, Error> {
         tracing::info!("[Cache] ⚙️ Pinging Redis For Health Check");
 
@@ -136,10 +141,12 @@ impl Cache {
         })
     }
 
+    // Serializes Data To JSON
     pub fn serialize<T: Serialize>(data: &T) -> Result<String, Error> {
         json::to_string(data).map_err(|error| Error::Cache(error.to_string()))
     }
 
+    // Deserializes Data From JSON
     pub fn deserialize<T: for<'de> Deserialize<'de>>(data: Value) -> Result<T, Error> {
         json::from_value(data).map_err(|error| Error::Cache(error.to_string()))
     }

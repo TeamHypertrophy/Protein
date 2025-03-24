@@ -14,6 +14,8 @@ use argon2::{self, Config};
 
 use crate::errors::Error;
 
+// Generate A Hashed Password Using Argon2
+// https://github.com/sru-systems/rust-argon2
 pub fn generate(password: String) -> Result<String, Error> {
     // Get Password Salt
     let salt: String =
@@ -29,6 +31,7 @@ pub fn generate(password: String) -> Result<String, Error> {
     })
 }
 
+// Verify A Password Against A Hashed Password
 pub fn verify(hashed_password: String, password: String) -> Result<bool, Error> {
     // Verify Argon2 Password Hash
     argon2::verify_encoded(hashed_password.as_str(), password.as_bytes()).map_err(|error| {
@@ -37,6 +40,7 @@ pub fn verify(hashed_password: String, password: String) -> Result<bool, Error> 
     })
 }
 
+// Generate A Random 6-Digit Verification Code For Multi-Factor Authentication
 pub fn random() -> String {
     let mut rng = rand::rng();
 

@@ -21,7 +21,7 @@ pub struct Cors;
 impl Fairing for Cors {
     fn info(&self) -> Info {
         Info {
-            name: "[!] Add CORS Headers",
+            name: "[!] CORS (Cross-Origin Resource Sharing) Headers",
             kind: Kind::Response,
         }
     }

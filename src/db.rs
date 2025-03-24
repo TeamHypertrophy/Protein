@@ -103,6 +103,11 @@ pub async fn create() -> Result<DB, Box<dyn std::error::Error>> {
 /// * The pool is exhausted
 /// * Connection timeout occurs
 /// * Database is unreachable
+///
+/// #[inline] is used to optimize the function call
+/// by reducing the overhead of the function call
+/// and directly inlining the function body
+#[inline]
 pub async fn get(pool: &State<DB>) -> Result<DBConnection, Error> {
     pool.get().await.map_err(|error| {
         tracing::error!("[!] PostgreSQL Error {:?}", error);

@@ -19,6 +19,7 @@ use crate::{errors::Error, models::user::User};
 
 pub type Email = AsyncSmtpTransport<Tokio1Executor>;
 
+// Setup Email Transport With SMTP Credentials
 pub async fn setup() -> Result<AsyncSmtpTransport<Tokio1Executor>, Box<dyn std::error::Error>> {
     // Get SMTP Credentials
     let username: String =
@@ -41,6 +42,7 @@ pub async fn setup() -> Result<AsyncSmtpTransport<Tokio1Executor>, Box<dyn std::
     Ok(email)
 }
 
+// Sends An Email To A User Using The Email Transport
 pub async fn send(
     mail: &Email,
     data: &User,

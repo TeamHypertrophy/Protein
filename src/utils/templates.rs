@@ -9,6 +9,10 @@ ______          _       _
         Made with ❤️
 */
 
+// These Are The HTML Templates Being Used In The Email Service
+// They Are Rendered Using The Askama Template Engine
+// https://docs.rs/askama/0.12.1/askama/
+
 use askama::Template;
 
 #[derive(Template)]

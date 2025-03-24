@@ -33,8 +33,11 @@ pub fn setup() -> Result<(WorkerGuard, ()), Box<dyn std::error::Error>> {
         Err(_) => panic!("[!] Error Building Rolling Log File"),
     };
 
+    // This Creates a Non-Blocking Appender That Writes to the Log File (So I/O Does
+    // Not Interrupt the Main Thread)
     let (non_blocking_appender, guard) = tracing_appender::non_blocking(appender);
 
+    // Get Filter From Environment Variables or Use Default
     let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| TERMINAL_FILTER.into());
 
     // Separate Layers for File and Terminal Logging

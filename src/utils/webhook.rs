@@ -16,8 +16,12 @@ use discord_webhook2::{message::Message, webhook::DiscordWebhook};
 
 use crate::{constants::*, errors::Error};
 
+// Type Alias For Discord Webhook
+// Wrapped In An Arc For Thread Safety
+// https://doc.rust-lang.org/std/sync/struct.Arc.html
 pub type Webhook = Arc<DiscordWebhook>;
 
+// Sends A Webhook Message To The Configured Discord Webhook
 pub async fn send(
     webhook: &Webhook,
     description: &str,

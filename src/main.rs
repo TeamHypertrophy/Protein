@@ -125,6 +125,7 @@ async fn protein() -> _ {
         }
     };
 
+    // Discord Webhooks
     let webhook = match DiscordWebhook::new(
         std::env::var("DISCORD_WEBHOOK_URL")
             .expect("[!] DISCORD_WEBHOOK_URL Environment Variable Must Be Set"),
@@ -211,7 +212,7 @@ async fn protein() -> _ {
         }
     }
 
-    // Prometheus
+    // Prometheus Metrics
     let prometheus = rocket_prometheus::PrometheusMetrics::new();
 
     // Rocket
@@ -269,12 +270,13 @@ async fn protein() -> _ {
                 .expect("[!] APP_ENV Environment Variable Must Be Set"),
         })
         .attach(prometheus.clone())
-        .attach(fairings::cors::Cors)
-        .attach(rocket_governor::LimitHeaderGen)
-        .attach(rocket_sentry::RocketSentry::fairing())
+        .attach(fairings::cors::Cors) // Adds CORS (Cross-Origin Resource Sharing) Headers
+        .attach(rocket_governor::LimitHeaderGen) // Generates X_RATELIMIT_LIMIT and X_RATELIMIT_REMAINING Headers
+        .attach(rocket_sentry::RocketSentry::fairing()) // Sets Up Sentry Reporting on panic!() calls
         .attach(rocket::fairing::AdHoc::on_shutdown(
             "[!] Write Logs",
-            |_| Box::pin(async move { drop(guard) }),
+            |_| Box::pin(async move { drop(guard) }), /* guard is dropped to ensure log files
+                                                       * are written on server exit */
         ))
         .mount("/", routes![api::index::index])
         .mount("/assets", FileServer::from(relative!("assets")))

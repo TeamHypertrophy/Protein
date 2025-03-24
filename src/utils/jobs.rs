@@ -17,6 +17,7 @@ use crate::{
     models::keys::{APIKey, Status, UpdateAPIKey},
 };
 
+// Verifies Expired API Keys
 pub async fn verify_api_keys(pool: &DB) -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("[+] ⏰ Beginning API Key Verification Job");
 
