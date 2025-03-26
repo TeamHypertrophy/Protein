@@ -24,14 +24,13 @@ use validator::Validate;
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
     cache::redis::{Cache, Redis},
-    db,
-    db::DB,
+    db::{self, DB},
     errors::Error,
     models::{
         profile::{NewProfile, Profile, UpdateProfile},
         user::User,
     },
-    utils::password,
+    utils::{admin::Config, password},
 };
 
 #[get("/?<user_id>", format = "application/json")]
@@ -156,6 +155,7 @@ pub async fn upload_avatar(
     _auth: API,
     pool: &State<DB>,
     redis: &State<Redis>,
+    config: &State<Config>,
     mut avatar: TempFile<'_>,
     user_id: Uuid,
 ) -> Result<Json<Profile>, Error> {
@@ -175,12 +175,9 @@ pub async fn upload_avatar(
         Err(error) => return Err(Error::IO(error.to_string())),
     }
 
-    let host =
-        std::env::var("AVATAR_HOST_URL").unwrap_or_else(|_| "http://localhost:8000/".to_string());
-
     let url = format!(
         "{}/assets/avatars/{}/{}.png",
-        host,
+        config.avatar_host_url,
         user_id.to_string(),
         avatar_id
     );

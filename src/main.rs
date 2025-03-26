@@ -223,7 +223,7 @@ async fn protein() -> _ {
         .manage(scheduler)
         .manage(webhook)
         .manage(user_agent_parser)
-        .manage(utils::admin::Admin {
+        .manage(std::sync::Arc::new(utils::admin::Admin {
             routes: std::sync::LazyLock::new(|| {
                 vec![
                     // Calorie Logs
@@ -268,7 +268,17 @@ async fn protein() -> _ {
                 .expect("[!] MASTER_API_KEY Environment Variable Must Be Set"),
             app_env: std::env::var("APP_ENV")
                 .expect("[!] APP_ENV Environment Variable Must Be Set"),
-        })
+            host_url: std::env::var("HOST_URL")
+                .expect("[!] HOST_URL Environment Variable Must Be Set"),
+            avatar_host_url: std::env::var("AVATAR_HOST_URL")
+                .expect("[!] AVATAR_HOST_URL Environment Variable Must Be Set"),
+            password_salt: std::env::var("PASSWORD_SALT")
+                .expect("[!] PASSWORD_SALT Environment Variable Must Be Set"),
+            smtp_username: std::env::var("SMTP_USERNAME")
+                .expect("[!] SMTP_USERNAME Environment Variable Must Be Set"),
+            smtp_user: std::env::var("SMTP_USER")
+                .expect("[!] SMTP_USER Environment Variable Must Be Set"),
+        }))
         .attach(prometheus.clone())
         .attach(fairings::cors::Cors) // Adds CORS (Cross-Origin Resource Sharing) Headers
         .attach(rocket_governor::LimitHeaderGen) // Generates X_RATELIMIT_LIMIT and X_RATELIMIT_REMAINING Headers

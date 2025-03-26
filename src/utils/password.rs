@@ -16,11 +16,7 @@ use crate::errors::Error;
 
 // Generate A Hashed Password Using Argon2
 // https://github.com/sru-systems/rust-argon2
-pub fn generate(password: String) -> Result<String, Error> {
-    // Get Password Salt
-    let salt: String =
-        std::env::var("PASSWORD_SALT").expect("[!] PASSWORD_SALT Environment Variable Must Be Set");
-
+pub fn generate(salt: &String, password: String) -> Result<String, Error> {
     // Create Argon2 Config
     let config = Config::default();
 

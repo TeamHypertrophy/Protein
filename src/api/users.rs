@@ -35,6 +35,7 @@ use crate::{
     errors::Error,
     models::keys::APIKey,
     models::user::{ForgotPassword, LoginUser, NewUser, Password, ProteinUser, UpdateUser, User},
+    utils::admin::Config,
     utils::email,
     utils::email::Email,
     utils::password,
@@ -98,11 +99,12 @@ pub async fn signup(
     pool: &State<DB>,
     redis: &State<Redis>,
     mailer: &State<Email>,
+    config: &State<Config>,
     ip: &ClientRealAddr,
     user: Json<NewUser>,
 ) -> Result<Json<ProteinUser>, Error> {
     // Generate New User Password
-    let password_hash = password::generate(user.password.clone())?;
+    let password_hash = password::generate(&config.password_salt, user.password.clone())?;
 
     // Validate User
     match user.clone().into_inner().validate() {
@@ -152,16 +154,14 @@ pub async fn signup(
     )
     .await?;
 
-    // Send Email Verification Link
-    let host = std::env::var("HOST_URL").unwrap_or_else(|_| "http://localhost:8000/v1".to_string());
-
     let verification_link = format!(
         "{}/users/email/verify?token={}",
-        host, result.email_verification_token
+        config.host_url, result.email_verification_token
     );
 
     let receipent = result.clone();
     let mail = mailer.inner().clone();
+    let smtp = config.inner().clone();
 
     rocket::tokio::task::spawn(async move {
         let body = Signup {
@@ -171,6 +171,7 @@ pub async fn signup(
 
         match email::send(
             &mail,
+            &smtp,
             &receipent,
             "[Security] Account Verification",
             body.render().unwrap(),
@@ -194,6 +195,7 @@ pub async fn verify_email(
     pool: &State<DB>,
     redis: &State<Redis>,
     mailer: &State<Email>,
+    config: &State<Config>,
     token: Uuid,
 ) -> Result<Json<Value>, Error> {
     // Create Database Connection
@@ -215,6 +217,7 @@ pub async fn verify_email(
 
         let receipent = verified_user.clone();
         let mail = mailer.inner().clone();
+        let smtp = config.inner().clone();
 
         rocket::tokio::task::spawn(async move {
             let body = EmailVerified {
@@ -223,6 +226,7 @@ pub async fn verify_email(
 
             match email::send(
                 &mail,
+                &smtp,
                 &receipent,
                 "[Security] Email Successfully Verified",
                 body.render().unwrap(),
@@ -252,6 +256,7 @@ pub async fn login(
     _r: RateLimit<'_>,
     pool: &State<DB>,
     redis: &State<Redis>,
+    config: &State<Config>,
     os: OS<'_>,
     ip: &ClientRealAddr,
     mailer: &State<Email>,
@@ -306,6 +311,7 @@ pub async fn login(
         if result.last_login_ip != ip_address {
             let receipent = result.clone();
             let mail = mailer.inner().clone();
+            let smtp = config.inner().clone();
 
             // Update User With New IP Address
             let data = User::update_ip_info(
@@ -336,6 +342,7 @@ pub async fn login(
 
                 match email::send(
                     &mail,
+                    &smtp,
                     &receipent,
                     "[Security] New Login",
                     body.render().unwrap(),
@@ -372,6 +379,7 @@ pub async fn login(
 
             // Send Email
             let mail = mailer.inner().clone();
+            let smtp = config.inner().clone();
 
             rocket::tokio::task::spawn(async move {
                 let body = MFACode {
@@ -381,6 +389,7 @@ pub async fn login(
 
                 match email::send(
                     &mail,
+                    &smtp,
                     &mfa_user,
                     "[Security] MFA Code",
                     body.render().unwrap(),
@@ -421,6 +430,7 @@ pub async fn delete_user(
     mailer: &State<Email>,
     pool: &State<DB>,
     redis: &State<Redis>,
+    config: &State<Config>,
     user_id: Uuid,
 ) -> Result<status::Accepted<Value>, Error> {
     // Create Database Connection
@@ -434,6 +444,7 @@ pub async fn delete_user(
     // send account deletion email here
     let receipent = user.clone();
     let mail = mailer.inner().clone();
+    let smtp = config.inner().clone();
 
     rocket::tokio::task::spawn(async move {
         let body = AccountDeleted {
@@ -442,6 +453,7 @@ pub async fn delete_user(
 
         match email::send(
             &mail,
+            &smtp,
             &receipent,
             "[Security] Your Account Has Been Deleted",
             body.render().unwrap(),
@@ -518,6 +530,7 @@ pub async fn update_user_password(
     mailer: &State<Email>,
     pool: &State<DB>,
     redis: &State<Redis>,
+    config: &State<Config>,
     data: Json<Password>,
 ) -> Result<Json<User>, Error> {
     // Create Database Connection
@@ -541,7 +554,7 @@ pub async fn update_user_password(
     }
 
     // Generate New Password Hash
-    let password_hash = password::generate(data.new_password.clone())?;
+    let password_hash = password::generate(&config.password_salt, data.new_password.clone())?;
 
     // Update Password
     let updated_user = User::update_password(user_id, &password_hash, connection).await?;
@@ -555,9 +568,10 @@ pub async fn update_user_password(
     )
     .await?;
 
-    // send email
+    // Send Email
     let receipent = updated_user.clone();
     let mail = mailer.inner().clone();
+    let smtp = config.inner().clone();
 
     rocket::tokio::task::spawn(async move {
         let body = UpdatedPassword {
@@ -567,6 +581,7 @@ pub async fn update_user_password(
 
         match email::send(
             &mail,
+            &smtp,
             &receipent,
             "[Security] Your Password Has Been Updated",
             body.render().unwrap(),
@@ -587,6 +602,7 @@ pub async fn forgot_password_email(
     mailer: &State<Email>,
     pool: &State<DB>,
     redis: &State<Redis>,
+    config: &State<Config>,
     os: OS<'_>,
     ip: &ClientRealAddr,
     data: Json<ForgotPassword>,
@@ -611,7 +627,7 @@ pub async fn forgot_password_email(
     let user = User::find_by_email(data.email.clone(), connection).await?;
 
     // Hash Generated Password
-    let hashed_password = password::generate(data.password.clone())?;
+    let hashed_password = password::generate(&config.password_salt, data.password.clone())?;
 
     // Update User Password With New Hashed Data
     let updated_user = User::update_password(user.user_id, &hashed_password, connection).await?;
@@ -628,6 +644,7 @@ pub async fn forgot_password_email(
     // Send Email
     let receipent = user.clone();
     let mail = mailer.inner().clone();
+    let smtp = config.inner().clone();
 
     rocket::tokio::task::spawn(async move {
         let body = PasswordReset {
@@ -639,6 +656,7 @@ pub async fn forgot_password_email(
 
         match email::send(
             &mail,
+            &smtp,
             &receipent,
             "[Security] Your Password Has Been Reset",
             body.render().unwrap(),
@@ -664,6 +682,7 @@ pub async fn resend_mfa(
     pool: &State<DB>,
     redis: &State<Redis>,
     mailer: &State<Email>,
+    config: &State<Config>,
     user_id: Uuid,
 ) -> Result<Json<Value>, Error> {
     let connection = &mut db::get(pool).await?;
@@ -701,6 +720,7 @@ pub async fn resend_mfa(
         Some(code) => {
             // Send Email
             let mail = mailer.inner().clone();
+            let smtp = config.inner().clone();
 
             rocket::tokio::task::spawn(async move {
                 let body = MFACode {
@@ -710,6 +730,7 @@ pub async fn resend_mfa(
 
                 match email::send(
                     &mail,
+                    &smtp,
                     &mfa_user,
                     "[Security] MFA Code",
                     body.render().unwrap(),
@@ -739,6 +760,7 @@ pub async fn enable_mfa(
     pool: &State<DB>,
     redis: &State<Redis>,
     mailer: &State<Email>,
+    config: &State<Config>,
     user_id: Uuid,
 ) -> Result<Json<User>, Error> {
     let connection = &mut db::get(pool).await?;
@@ -761,15 +783,14 @@ pub async fn enable_mfa(
     .await?;
 
     // Send MFA Verification Link
-    let host = std::env::var("HOST_URL").unwrap_or_else(|_| "http://localhost:8000/v1".to_string());
-
     let verification_link = format!(
         "{}/users/mfa/verify/?token={}",
-        host, mfa_user.mfa_verification_token
+        config.host_url, mfa_user.mfa_verification_token
     );
 
     let receipent = mfa_user.clone();
     let mail = mailer.inner().clone();
+    let smtp = config.inner().clone();
 
     rocket::tokio::task::spawn(async move {
         let body = MFAVerification {
@@ -779,6 +800,7 @@ pub async fn enable_mfa(
 
         match email::send(
             &mail,
+            &smtp,
             &receipent,
             "[Security] Account MFA Verification",
             body.render().unwrap(),
@@ -799,6 +821,7 @@ pub async fn check_mfa(
     pool: &State<DB>,
     redis: &State<Redis>,
     mailer: &State<Email>,
+    config: &State<Config>,
     ip: &ClientRealAddr,
     os: OS<'_>,
     user_id: Uuid,
@@ -859,6 +882,7 @@ pub async fn check_mfa(
                 if result.last_login_ip != ip_address {
                     let receipent = result.clone();
                     let mail = mailer.inner().clone();
+                    let smtp = config.inner().clone();
 
                     rocket::tokio::task::spawn(async move {
                         let body = Login {
@@ -870,6 +894,7 @@ pub async fn check_mfa(
 
                         match email::send(
                             &mail,
+                            &smtp,
                             &receipent,
                             "[Security] New Login",
                             body.render().unwrap(),
@@ -943,6 +968,7 @@ pub async fn disable_mfa(
     pool: &State<DB>,
     redis: &State<Redis>,
     mailer: &State<Email>,
+    config: &State<Config>,
     user_id: Uuid,
 ) -> Result<Json<User>, Error> {
     let connection = &mut db::get(pool).await?;
@@ -953,6 +979,7 @@ pub async fn disable_mfa(
 
     let receipent = user.clone();
     let mail = mailer.inner().clone();
+    let smtp = config.inner().clone();
 
     rocket::tokio::task::spawn(async move {
         let body = MFADisabled {
@@ -961,6 +988,7 @@ pub async fn disable_mfa(
 
         match email::send(
             &mail,
+            &smtp,
             &receipent,
             "[Security] MFA Disabled",
             body.render().unwrap(),

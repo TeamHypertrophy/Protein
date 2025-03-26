@@ -8,6 +8,7 @@ ______          _       _
 
         Made with ❤️
 */
+use std::sync::Arc;
 
 use rocket::{
     http::Status,
@@ -53,7 +54,7 @@ impl<'r> FromRequest<'r> for API {
         };
 
         // 2. Get The Admin Data From The Request State
-        let admin = match request.rocket().state::<Admin>() {
+        let admin = match request.rocket().state::<Arc<Admin>>() {
             Some(admin) => admin,
             None => {
                 return Outcome::Error((

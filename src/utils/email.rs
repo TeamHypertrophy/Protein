@@ -15,7 +15,7 @@ use lettre::{
     transport::smtp::{authentication::Credentials, response::Response},
 };
 
-use crate::{errors::Error, models::user::User};
+use crate::{errors::Error, models::user::User, utils::admin::Config};
 
 pub type Email = AsyncSmtpTransport<Tokio1Executor>;
 
@@ -45,18 +45,13 @@ pub async fn setup() -> Result<AsyncSmtpTransport<Tokio1Executor>, Box<dyn std::
 // Sends An Email To A User Using The Email Transport
 pub async fn send(
     mail: &Email,
+    smtp: &Config,
     data: &User,
     subject: &str,
     body: String,
 ) -> Result<Response, Error> {
-    // Get SMTP Credentials
-    let user: String =
-        std::env::var("SMTP_USER").expect("[!] SMTP_USER Environment Variable Must Be Set");
-    let username: String =
-        std::env::var("SMTP_USERNAME").expect("[!] SMTP_USERNAME Environment Variable Must Be Set");
-
     // System Mailbox
-    let from: Mailbox = format!("{} <{}>", user, username)
+    let from: Mailbox = format!("{} <{}>", smtp.smtp_user, smtp.smtp_username)
         .parse::<Mailbox>()
         .map_err(|error| Error::Email(format!("Error Parsing From Address: {:?}", error)))?;
 
