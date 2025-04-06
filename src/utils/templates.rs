@@ -78,3 +78,16 @@ pub struct EmailVerified<'a> {
 pub struct AccountDeleted<'a> {
     pub name: &'a str,
 }
+
+#[derive(Template)]
+#[template(path = "password/request.html")]
+pub struct RequestPasswordReset<'a> {
+    pub username: &'a str,
+    pub code: &'a str,
+}
+
+#[derive(Template)]
+#[template(path = "success/success.html")]
+pub struct Success<'a> {
+    pub name: &'a str,
+}

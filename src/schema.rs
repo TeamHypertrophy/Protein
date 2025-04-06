@@ -295,6 +295,16 @@ diesel::table! {
 }
 
 diesel::table! {
+    workout_plan_logs (log_id) {
+        log_id -> Int4,
+        user_id -> Uuid,
+        plan_id -> Uuid,
+        date -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::Workoutinterval;
     use super::sql_types::Fitnessgoal;
@@ -348,6 +358,8 @@ diesel::joinable!(trainers -> users (user_id));
 diesel::joinable!(water_logs -> users (user_id));
 diesel::joinable!(workout_logs -> users (user_id));
 diesel::joinable!(workout_logs -> workouts (workout_id));
+diesel::joinable!(workout_plan_logs -> users (user_id));
+diesel::joinable!(workout_plan_logs -> workout_plans (plan_id));
 diesel::joinable!(workout_plans -> users (user_id));
 diesel::joinable!(workouts -> users (user_id));
 
@@ -365,6 +377,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     users,
     water_logs,
     workout_logs,
+    workout_plan_logs,
     workout_plans,
     workouts,
 );

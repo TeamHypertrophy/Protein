@@ -17,12 +17,12 @@ CREATE TABLE IF NOT EXISTS workouts (
     "workout_id" UUID PRIMARY KEY DEFAULT (gen_random_uuid()),
     "name" VARCHAR(100) NOT NULL,
     "description" TEXT NOT NULL DEFAULT (''),
-    "duration" INT NOT NULL DEFAULT ('30'), -- MINUTES
+    "duration" INT NOT NULL DEFAULT (30), -- MINUTES
     "difficulty" Difficulty NOT NULL,
     "created_at" TIMESTAMP NOT NULL DEFAULT now(),
     "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
     "user_id" UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    "exercises" BIGINT[] NOT NULL DEFAULT ('{}')
+    "exercises" BIGINT[] NOT NULL DEFAULT '{}'
 );
 
 -- Workout Plans: Users will be able to create workout plans
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS workout_plans (
     "user_id" UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     "name" VARCHAR(100) NOT NULL,
     "description" TEXT NOT NULL DEFAULT (''),
-    "workouts" UUID[] NOT NULL DEFAULT ('{}'),
+    "workouts" UUID[] NOT NULL DEFAULT '{}',
     "created_at" TIMESTAMP NOT NULL DEFAULT (now()),
     "updated_at" TIMESTAMP NOT NULL DEFAULT (now()),
     "start_time" TIMESTAMP NOT NULL DEFAULT (now() + interval '2 days'),
@@ -39,6 +39,15 @@ CREATE TABLE IF NOT EXISTS workout_plans (
     "goal" FitnessGoal NOT NULL DEFAULT ('muscle_gain'),
     "difficulty" Difficulty NOT NULL,
     "is_public" BOOLEAN NOT NULL DEFAULT (FALSE)
+);
+
+-- Workout Plan Logs: Users will be able to log their workout plans
+CREATE TABLE IF NOT EXISTS workout_plan_logs (
+    "log_id" SERIAL PRIMARY KEY,
+    "user_id" UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    "plan_id" UUID NOT NULL REFERENCES workout_plans(plan_id) ON DELETE CASCADE,
+    "date" TIMESTAMP NOT NULL DEFAULT (now()),
+    "updated_at" TIMESTAMP NOT NULL DEFAULT (now())
 );
 
 -- Workout Logs: Users will be able to log their workouts
@@ -54,6 +63,9 @@ CREATE TRIGGER update_timestamp BEFORE UPDATE ON workouts
 FOR EACH ROW EXECUTE PROCEDURE modify_updated_at();
 
 CREATE TRIGGER update_timestamp BEFORE UPDATE ON workout_plans
+FOR EACH ROW EXECUTE PROCEDURE modify_updated_at();
+
+CREATE TRIGGER update_timestamp BEFORE UPDATE ON workout_plan_logs
 FOR EACH ROW EXECUTE PROCEDURE modify_updated_at();
 
 CREATE TRIGGER update_timestamp BEFORE UPDATE ON workout_logs

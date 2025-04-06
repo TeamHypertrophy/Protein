@@ -159,7 +159,7 @@ pub async fn upload_avatar(
     mut avatar: TempFile<'_>,
     user_id: Uuid,
 ) -> Result<Json<Profile>, Error> {
-    let directory = format!("assets/avatars/{}", user_id.to_string());
+    let directory = format!("assets/avatars/{}", user_id);
 
     match async_fs::create_dir(&directory).await {
         Ok(_) => (),
@@ -168,7 +168,7 @@ pub async fn upload_avatar(
 
     let avatar_id = password::random();
 
-    let path = format!("assets/avatars/{}/{}.png", user_id.to_string(), avatar_id);
+    let path = format!("assets/avatars/{}/{}.png", user_id, avatar_id);
 
     match avatar.persist_to(&path).await {
         Ok(_) => (),
@@ -177,9 +177,7 @@ pub async fn upload_avatar(
 
     let url = format!(
         "{}/assets/avatars/{}/{}.png",
-        config.avatar_host_url,
-        user_id.to_string(),
-        avatar_id
+        config.avatar_host_url, user_id, avatar_id
     );
 
     let connection = &mut db::get(pool).await?;

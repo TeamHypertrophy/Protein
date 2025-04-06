@@ -262,6 +262,8 @@ async fn protein() -> _ {
                     "get_all_water_logs",
                     // Workouts
                     "get_all_workouts",
+                    // Workout Plan Logs
+                    "get_all_workout_plan_logs",
                 ]
             }),
             master_key: std::env::var("MASTER_API_KEY")
@@ -308,7 +310,9 @@ async fn protein() -> _ {
                 api::users::update_user,
                 api::users::update_user_password,
                 api::users::verify_email,
-                api::users::forgot_password_email,
+                api::users::request_password_reset,
+                api::users::password_request_check_code,
+                api::users::reset_password,
                 api::users::delete_user,
                 api::users::get_all_users,
                 api::users::enable_mfa,
@@ -350,7 +354,13 @@ async fn protein() -> _ {
                 api::plan::get_all_user_workout_plans,
                 api::plan::update_workout_plan,
                 api::plan::create_workout_plan,
-                api::plan::delete_workout_plan
+                api::plan::delete_workout_plan,
+                api::plan::get_workout_plan_log,
+                api::plan::get_all_workout_plan_logs,
+                api::plan::get_all_user_workout_plan_logs,
+                api::plan::update_workout_plan_log,
+                api::plan::create_workout_plan_log,
+                api::plan::delete_workout_plan_log,
             ],
         )
         .mount(

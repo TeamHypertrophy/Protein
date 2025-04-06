@@ -13,7 +13,9 @@ ______          _       _
 use rocket_client_addr::ClientRealAddr;
 use user_agent_parser::OS;
 use rocket::{
-    State, get, post,
+    State, get,
+    http::ContentType,
+    post,
     response::status,
     serde::{
         json::{Json, Value, json},
@@ -41,7 +43,7 @@ use crate::{
     utils::password,
     utils::templates::{
         AccountDeleted, EmailVerified, Login, MFACode, MFADisabled, MFAVerification, PasswordReset,
-        Signup, UpdatedPassword,
+        RequestPasswordReset, Signup, Success, UpdatedPassword,
     },
     utils::webhook,
     utils::webhook::Webhook,
@@ -113,18 +115,15 @@ pub async fn signup(
     }
 
     // Get IP Address
-    let ip_address: Option<String> = match ip.get_ipv4_string() {
-        Some(addr) => Some(addr),
-        None => return Err(Error::Internal("Invalid IP Address".to_string())),
-    };
+    let ip_address: String = email::get_ip_address(&ip)?;
 
     // Create New User Struct
     let new_user = NewUser {
         username: user.username.clone(),
         password: password_hash,
         email: user.email.clone(),
-        last_login_ip: ip_address.clone(),
-        ip_address: ip_address.clone(),
+        last_login_ip: Some(ip_address.clone()),
+        ip_address: Some(ip_address.clone()),
     };
 
     // Create Database Connection
@@ -197,7 +196,7 @@ pub async fn verify_email(
     mailer: &State<Email>,
     config: &State<Config>,
     token: Uuid,
-) -> Result<Json<Value>, Error> {
+) -> Result<(ContentType, String), Error> {
     // Create Database Connection
     let connection = &mut db::get(pool).await?;
 
@@ -241,11 +240,11 @@ pub async fn verify_email(
             }
         });
 
-        Ok(Json(json!({
-            "status": 200,
-            "message": "Email Verified Successfully",
-            "user": verified_user,
-        })))
+        let success = Success {
+            name: &verified_user.username,
+        };
+
+        Ok((ContentType::HTML, success.render().unwrap()))
     } else {
         Err(Error::Email("Email Already Verified".to_string()))
     }
@@ -266,17 +265,10 @@ pub async fn login(
     let connection = &mut db::get(pool).await?;
 
     // Get Current IP Address
-    let ip_address: String = match ip.get_ipv4_string() {
-        Some(addr) => addr,
-        None => return Err(Error::Internal("Invalid IP Address".to_string())),
-    };
+    let ip_address: String = email::get_ip_address(&ip)?;
 
     // Get Current User Agent OS
-    let device = format!(
-        "{} {}",
-        os.name.unwrap_or_else(|| "No".to_owned().into()),
-        os.major.unwrap_or_else(|| "Device".to_owned().into())
-    );
+    let device = email::get_user_agent(&os);
 
     // Find User
     let result = User::find_by_username(user.username.clone(), connection).await?;
@@ -537,10 +529,7 @@ pub async fn update_user_password(
     let connection = &mut db::get(pool).await?;
 
     // Get IP Address
-    let ip_address: String = match ip.get_ipv4_string() {
-        Some(addr) => addr,
-        None => return Err(Error::Internal("Invalid IP Address".to_string())),
-    };
+    let ip_address: String = email::get_ip_address(&ip)?;
 
     // Grab User
     let user = User::find(user_id, connection).await?;
@@ -596,8 +585,81 @@ pub async fn update_user_password(
     Ok(Json(updated_user))
 }
 
-#[post("/email/forgot-password", format = "application/json", data = "<data>")]
-pub async fn forgot_password_email(
+#[get("/auth/request-password-reset?<email>", format = "application/json")]
+pub async fn request_password_reset(
+    _r: RateLimit<'_>,
+    _auth: API,
+    ip: &ClientRealAddr,
+    mailer: &State<Email>,
+    os: OS<'_>,
+    pool: &State<DB>,
+    redis: &State<Redis>,
+    config: &State<Config>,
+    email: String,
+) -> Result<status::Accepted<Value>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let user = User::find_by_email(email, connection).await?;
+
+    if user.mfa_enabled {
+        // Generate MFA Code and Expiry
+        // MFA Codes Are 6 Digits: 12346
+        // Expires By Default In 10 Minutes
+        let mfa_user = User::generate_mfa_code(user.user_id, connection).await?;
+
+        // Update Cache
+        Cache::set(
+            redis,
+            "user",
+            mfa_user.user_id.to_string(),
+            Cache::serialize(&mfa_user)?,
+        )
+        .await?;
+
+        // Get Successfully Generated Code
+        let code = match mfa_user.mfa_code {
+            Some(ref code) => code.clone(),
+            None => return Err(Error::Internal("MFA Code Not Generated".to_string())),
+        };
+
+        // Send Email
+        let mail = mailer.inner().clone();
+        let smtp = config.inner().clone();
+
+        rocket::tokio::task::spawn(async move {
+            let body = RequestPasswordReset {
+                username: &mfa_user.username,
+                code: &code,
+            };
+
+            match email::send(
+                &mail,
+                &smtp,
+                &mfa_user,
+                "[Security] MFA Code",
+                body.render().unwrap(),
+            )
+            .await
+            {
+                Ok(_) => tracing::info!("[Email] ✅ Sent MFA Code Email"),
+                Err(e) => tracing::info!("[Email] ❌ Failed Sending MFA Code Email: {}", e),
+            }
+        });
+
+        Ok(status::Accepted(json!({
+            "status": 200,
+            "message": "MFA Code Sent",
+            "user_id": user.user_id,
+        })))
+    } else {
+        return Err(Error::Authorization(
+            "MFA Not Enabled, Cannot Reset Password".to_string(),
+        ));
+    }
+}
+
+#[post("/auth/reset-password", format = "application/json", data = "<data>")]
+pub async fn reset_password(
     _r: RateLimit<'_>,
     mailer: &State<Email>,
     pool: &State<DB>,
@@ -611,20 +673,22 @@ pub async fn forgot_password_email(
     let connection = &mut db::get(pool).await?;
 
     // Get Current IP Address
-    let ip_address: String = match ip.get_ipv4_string() {
-        Some(addr) => addr,
-        None => String::from("unknown"),
-    };
+    let ip_address: String = email::get_ip_address(&ip)?;
 
     // Get Current User Agent OS
-    let device = format!(
-        "{} {}",
-        os.name.unwrap_or_else(|| "_".to_owned().into()),
-        os.major.unwrap_or_else(|| "_".to_owned().into())
-    );
+    let device = email::get_user_agent(&os);
 
     // Get User Profile
     let user = User::find_by_email(data.email.clone(), connection).await?;
+
+    match user.mfa_code {
+        Some(code) => {
+            return Err(Error::Authorization(
+                "MFA Code Found, Please Verify To Reset".to_string(),
+            ));
+        }
+        None => (),
+    }
 
     // Hash Generated Password
     let hashed_password = password::generate(&config.password_salt, data.password.clone())?;
@@ -815,6 +879,77 @@ pub async fn enable_mfa(
     Ok(Json(mfa_user))
 }
 
+#[get("/mfa/request/<code>?<user_id>", format = "application/json")]
+pub async fn password_request_check_code(
+    _r: RateLimit<'_>,
+    pool: &State<DB>,
+    redis: &State<Redis>,
+    mailer: &State<Email>,
+    config: &State<Config>,
+    ip: &ClientRealAddr,
+    os: OS<'_>,
+    user_id: Uuid,
+    code: &str,
+) -> Result<Json<Value>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let user = User::find(user_id, connection).await?;
+
+    let key = APIKey::get(&user, connection).await?;
+
+    if user.mfa_enabled {
+        if !user.mfa_verified {
+            return Err(Error::Authorization("MFA Not Verified".to_string()));
+        }
+
+        let now: i64 = chrono::Utc::now().naive_utc().and_utc().timestamp();
+
+        if let Some(expired) = user.mfa_code_expires_at {
+            if now > expired.and_utc().timestamp() {
+                User::reset_mfa(user_id, connection).await?;
+
+                return Err(Error::Authorization(
+                    "MFA Code Expired, Login Again".to_string(),
+                ));
+            }
+        } else {
+            return Err(Error::Authorization(
+                "MFA Code Potentially Expired".to_string(),
+            ));
+        }
+
+        if let Some(ref mfa_code) = user.mfa_code {
+            if *mfa_code == code {
+                let result = User::reset_mfa(user_id, connection).await?;
+
+                // Update Cache
+                Cache::set(
+                    redis,
+                    "user",
+                    user_id.to_string(),
+                    Cache::serialize(&result)?,
+                )
+                .await?;
+
+                return Ok(Json(json!(
+                    {
+                        "status": 200,
+                        "message": "MFA Code Verified",
+                        "user": result,
+                        "api_key": key.api_key
+                    }
+                )));
+            } else {
+                return Err(Error::Authorization("Invalid MFA Code".to_string()));
+            }
+        } else {
+            return Err(Error::Authorization("No MFA Code".to_string()));
+        }
+    } else {
+        return Err(Error::Authorization("MFA Not Enabled".to_string()));
+    }
+}
+
 #[get("/mfa/check/<code>?<user_id>", format = "application/json")]
 pub async fn check_mfa(
     _r: RateLimit<'_>,
@@ -829,17 +964,10 @@ pub async fn check_mfa(
 ) -> Result<Json<Value>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let ip_address: String = match ip.get_ipv4_string() {
-        Some(addr) => addr,
-        None => return Err(Error::Internal("Invalid IP Address".to_string())),
-    };
+    let ip_address: String = email::get_ip_address(&ip)?;
 
     // Get Current User Agent OS
-    let device = format!(
-        "{} {}",
-        os.name.unwrap_or_else(|| "No".to_owned().into()),
-        os.major.unwrap_or_else(|| "Device".to_owned().into())
-    );
+    let device = email::get_user_agent(&os);
 
     let user = User::find(user_id, connection).await?;
 
@@ -934,7 +1062,7 @@ pub async fn verify_mfa(
     pool: &State<DB>,
     redis: &State<Redis>,
     token: Uuid,
-) -> Result<Json<Value>, Error> {
+) -> Result<(ContentType, String), Error> {
     let connection = &mut db::get(pool).await?;
 
     // Find User By Token
@@ -951,11 +1079,11 @@ pub async fn verify_mfa(
         )
         .await?;
 
-        Ok(Json(json!({
-            "status": 200,
-            "message": "MFA Verified Successfully",
-            "user": verified_user,
-        })))
+        let success = Success {
+            name: &verified_user.username,
+        };
+
+        Ok((ContentType::HTML, success.render().unwrap()))
     } else {
         Err(Error::Email("MFA Already Verified".to_string()))
     }

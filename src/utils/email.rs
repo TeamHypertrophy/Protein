@@ -9,6 +9,8 @@ ______          _       _
     Made with ❤️
 */
 
+use rocket_client_addr::ClientRealAddr;
+use user_agent_parser::OS;
 use lettre::{
     AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
     message::{Mailbox, MultiPart, SinglePart, header::ContentType},
@@ -80,4 +82,20 @@ pub async fn send(
     mail.send(email)
         .await
         .map_err(|error| Error::Email(format!("Error Sending Email: {:?}", error)))
+}
+
+pub fn get_ip_address(address: &ClientRealAddr) -> Result<String, Error> {
+    match address.get_ipv4_string() {
+        Some(ip) => Ok(ip),
+        None => return Err(Error::Internal("Failed To Get IP Address".to_string())),
+    }
+}
+
+pub fn get_user_agent(os: &OS) -> String {
+    // Get User Agent
+    let name = os.name.clone().unwrap_or("No".to_owned().into());
+    let version = os.major.clone().unwrap_or("Device".to_owned().into());
+
+    let user_agent = format!("{} {}", name, version);
+    user_agent
 }
