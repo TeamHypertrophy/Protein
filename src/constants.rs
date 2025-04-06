@@ -28,6 +28,7 @@ pub const PONG: &str = "PONG"; // Redis PONG Response
 pub const POSTGRES_POOL_SIZE: usize = 10; // 10 Concurrent Postgres Connections
 
 // API
+pub const ENV_PATH: &str = ".env"; // Environment File Path
 pub const API_QUOTA_LIMIT: i32 = 3000; // 5000 Requests per API Key
 pub const API_VERSION: &str = "1.0"; // API Version
 pub const REDIS_VERSION: &str = "6.0"; // Redis Version
@@ -48,7 +49,15 @@ pub const LOG_FILE: &str = "[Protein].log";
 pub const LOG_PATH: &str = "./logs/";
 
 // Jobs
-pub const API_KEY_JOB_INTERVAL: &str = "every day"; // must follow english-cron format
+pub const API_KEY_JOB_INTERVAL: &str = "every day";
+pub const ASSET_CLEANER_JOB_INTERVAL: &str = "every sunday";
+
+// Assets
+pub const ASSETS_AVATARS_PATH: &str = "assets/avatars";
+pub const ASSETS_RETENTION_PERIOD: i64 = 30; // 30 days
+
+// User Agent Regexer
+pub const USER_AGENT_PARSER_PATH: &str = "regexes.yaml";
 
 // Embeds
 pub const EMBED_COLOR: u32 = 0x5865F2;

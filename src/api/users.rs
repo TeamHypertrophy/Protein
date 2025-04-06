@@ -279,7 +279,31 @@ pub async fn login(
     // If Password Entered == Stored Hashed Password
     if password_matches {
         // Grab Current API Key
-        let api_key = APIKey::get(&result, connection).await?;
+        let api_key = match APIKey::get_current(&result, connection).await {
+            Ok(key) => key,
+            Err(_) => {
+                tracing::info!(
+                    "[+] 🔑 No Valid API Key Found For User: {}, Generating...",
+                    result.username
+                );
+
+                let new = APIKey::generate(&result, connection).await?;
+
+                // Set API Key in Cache
+                Cache::set(
+                    redis,
+                    "api_key",
+                    new.api_key.to_string(),
+                    Cache::serialize(&new)?,
+                )
+                .await?;
+
+                return Ok(Json(json!({
+                    "status": 401,
+                    "message": "Your API Key Has Expired. A New Key Has Been Generated. Please Login Again.",
+                })));
+            }
+        };
 
         // Set User in Cache
         Cache::set(
@@ -895,7 +919,31 @@ pub async fn password_request_check_code(
 
     let user = User::find(user_id, connection).await?;
 
-    let key = APIKey::get(&user, connection).await?;
+    let key = match APIKey::get_current(&user, connection).await {
+        Ok(key) => key,
+        Err(_) => {
+            tracing::info!(
+                "[+] 🔑 No Valid API Key Found For User: {}, Generating...",
+                user.username
+            );
+
+            let new = APIKey::generate(&user, connection).await?;
+
+            // Set API Key in Cache
+            Cache::set(
+                redis,
+                "api_key",
+                new.api_key.to_string(),
+                Cache::serialize(&new)?,
+            )
+            .await?;
+
+            return Ok(Json(json!({
+                "status": 401,
+                "message": "Your API Key Has Expired. A New Key Has Been Generated. Please Login Again.",
+            })));
+        }
+    };
 
     if user.mfa_enabled {
         if !user.mfa_verified {
@@ -971,7 +1019,31 @@ pub async fn check_mfa(
 
     let user = User::find(user_id, connection).await?;
 
-    let key = APIKey::get(&user, connection).await?;
+    let key = match APIKey::get_current(&user, connection).await {
+        Ok(key) => key,
+        Err(_) => {
+            tracing::info!(
+                "[+] 🔑 No Valid API Key Found For User: {}, Generating...",
+                user.username
+            );
+
+            let new = APIKey::generate(&user, connection).await?;
+
+            // Set API Key in Cache
+            Cache::set(
+                redis,
+                "api_key",
+                new.api_key.to_string(),
+                Cache::serialize(&new)?,
+            )
+            .await?;
+
+            return Ok(Json(json!({
+                "status": 401,
+                "message": "Your API Key Has Expired. A New Key Has Been Generated. Please Login Again.",
+            })));
+        }
+    };
 
     if user.mfa_enabled {
         if !user.mfa_verified {

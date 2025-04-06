@@ -20,12 +20,13 @@ use rocket::{
 
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
+    cache::redis::{Cache, Redis},
     db,
     db::DB,
     errors::Error,
     models::{
-        keys::{APIKey, RevokeKey, UpdateAPIKey, UpdateRole},
-        user::Role,
+        keys::{APIKey, RevokeKey, Status, UpdateAPIKey, UpdateRole},
+        user::{Role, User},
     },
 };
 
@@ -34,13 +35,58 @@ pub async fn get_api_key(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     api_key: Uuid,
 ) -> Result<Json<APIKey>, Error> {
     let connection = &mut db::get(pool).await?;
 
     let api_key = APIKey::find(api_key, connection).await?;
 
+    // Store The API Key In Redis
+    Cache::set(
+        redis,
+        "api_key",
+        api_key.api_key.to_string(),
+        Cache::serialize(&api_key)?,
+    )
+    .await?;
+
     Ok(Json(api_key))
+}
+
+#[get("/create?<user_id>", format = "application/json")]
+pub async fn create_api_key(
+    _r: RateLimit<'_>,
+    pool: &State<DB>,
+    redis: &State<Redis>,
+    user_id: Uuid,
+) -> Result<Json<APIKey>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let user = User::find(user_id, connection).await?;
+
+    let all = APIKey::user_all(user.user_id, connection).await?;
+
+    for key in all {
+        if key.status == Status::Active {
+            return Err(Error::Authorization(
+                "User already has an active API key".to_string(),
+            ));
+        }
+    }
+
+    let new = APIKey::generate(&user, connection).await?;
+
+    // Store The API Key In Redis
+    Cache::set(
+        redis,
+        "api_key",
+        new.api_key.to_string(),
+        Cache::serialize(&new)?,
+    )
+    .await?;
+
+    Ok(Json(new))
 }
 
 #[get("/all", format = "application/json")]

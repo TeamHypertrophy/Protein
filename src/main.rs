@@ -55,7 +55,7 @@ pub mod errors;
 #[launch]
 async fn protein() -> _ {
     // Load Environment Variables
-    match dotenvy::from_filename(".env") {
+    match dotenvy::from_filename(constants::ENV_PATH) {
         Ok(_) => {
             tracing::info!("[+] ✅ Environment Variables Loaded!");
         }
@@ -114,7 +114,7 @@ async fn protein() -> _ {
     };
 
     // User Agent Parser
-    let user_agent_parser = match UserAgentParser::from_path("regexes.yaml") {
+    let user_agent_parser = match UserAgentParser::from_path(constants::USER_AGENT_PARSER_PATH) {
         Ok(parser) => {
             tracing::info!("[+] ✅ User Agent Parser Initialized!");
             parser
@@ -170,22 +170,64 @@ async fn protein() -> _ {
                 })
             }) {
                 Ok(job) => {
-                    tracing::info!("[Scheduler] ✅ Job Created!");
+                    tracing::info!("[Scheduler] ✅ API Key Job Created!");
                     job
                 }
                 Err(error) => {
-                    tracing::error!("[Scheduler] ❌ Error Creating Job: {:?}", error);
+                    tracing::error!("[Scheduler] ❌ Error Creating API Key Job: {:?}", error);
                     std::process::exit(1)
                 }
             };
 
+            let cleanup =
+                match Job::new_async(constants::ASSET_CLEANER_JOB_INTERVAL, move |_uuid, _l| {
+                    Box::pin({
+                        async move {
+                            match utils::jobs::clean_assets_directory().await {
+                                Ok(_) => tracing::info!("[Scheduler] ✅ Assets Directory Cleaned!"),
+                                Err(error) => tracing::error!(
+                                    "[Scheduler] ❌ Error Cleaning Up Assets Directory: {:?}",
+                                    error
+                                ),
+                            }
+                        }
+                    })
+                }) {
+                    Ok(job) => {
+                        tracing::info!("[Scheduler] ✅ Assets Cleaner Job Created!");
+                        job
+                    }
+                    Err(error) => {
+                        tracing::error!(
+                            "[Scheduler] ❌ Error Creating Asset Cleaner Job: {:?}",
+                            error
+                        );
+                        std::process::exit(1)
+                    }
+                };
+
             match scheduler.add(job).await {
-                Ok(_) => tracing::info!("[Scheduler] ✅ Job Added To Scheduler!"),
+                Ok(_) => tracing::info!("[Scheduler] ✅ API Key Job Added To Scheduler!"),
                 Err(error) => {
-                    tracing::error!("[Scheduler] ❌ Error Adding Job To Scheduler: {:?}", error);
+                    tracing::error!(
+                        "[Scheduler] ❌ Error Adding API Key Job To Scheduler: {:?}",
+                        error
+                    );
                     std::process::exit(1)
                 }
             }
+
+            match scheduler.add(cleanup).await {
+                Ok(_) => tracing::info!("[Scheduler] ✅ Cleanup Job Added To Scheduler!"),
+                Err(error) => {
+                    tracing::error!(
+                        "[Scheduler] ❌ Error Adding Cleanup Job To Scheduler: {:?}",
+                        error
+                    );
+                    std::process::exit(1)
+                }
+            }
+
             scheduler
         }
         Err(error) => {
@@ -204,7 +246,7 @@ async fn protein() -> _ {
     }
 
     // Create Assets & Avatar Directory
-    match async_fs::create_dir_all("assets/avatars").await {
+    match async_fs::create_dir_all(constants::ASSETS_AVATARS_PATH).await {
         Ok(_) => tracing::info!("[+] ✅ Assets & Avatar Directory Created!"),
         Err(error) => {
             tracing::error!("[-] ❌ Error Creating Avatar Directory: {:?}", error);
@@ -326,6 +368,7 @@ async fn protein() -> _ {
             "/v1/keys",
             routes![
                 api::keys::get_api_key,
+                api::keys::create_api_key,
                 api::keys::get_all_api_keys,
                 api::keys::get_all_user_api_keys,
                 api::keys::update_api_key,

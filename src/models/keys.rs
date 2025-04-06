@@ -101,6 +101,18 @@ impl APIKey {
             })
     }
 
+    pub async fn get_current(user: &User, connection: &mut DBConnection) -> Result<APIKey, Error> {
+        APIKey::belonging_to(user)
+            .select(APIKey::as_select())
+            .filter(status.eq(Status::Active))
+            .first(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
+
     pub async fn all(connection: &mut DBConnection) -> Result<Vec<APIKey>, Error> {
         api_keys::table
             .select(APIKey::as_select())
@@ -247,7 +259,7 @@ impl APIKey {
         let user: User = User::find(user, &mut connection).await?;
 
         // Next, Grab API Key
-        let verified: APIKey = APIKey::get(&user, &mut connection).await?;
+        let verified: APIKey = APIKey::find(key, &mut connection).await?;
 
         // Extra Validation: Quota Check
         if verified.quota >= API_QUOTA_LIMIT {
@@ -272,7 +284,7 @@ impl APIKey {
         }
 
         // Most importantly, Compare API_KEY Header to Actual API Key, As well as
-        // checking for developer key/admin
+        // Check For Developer/Admin Key
         if (verified.api_key == key && verified.user_id == user.user_id)
             || verified.role == Role::Admin
             || verified.role == Role::Developer
@@ -297,7 +309,7 @@ impl APIKey {
         let user: User = User::find(trainer.user_id, &mut connection).await?;
 
         // Next, Grab API Key
-        let verified: APIKey = APIKey::get(&user, &mut connection).await?;
+        let verified: APIKey = APIKey::find(key, &mut connection).await?;
 
         // Extra Validation: Quota Check
         if verified.quota >= API_QUOTA_LIMIT {
