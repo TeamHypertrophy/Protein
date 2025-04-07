@@ -140,6 +140,18 @@ async fn protein() -> _ {
         }
     };
 
+    // Create Assets & Avatar Directory
+    match async_fs::create_dir_all(constants::ASSETS_AVATARS_PATH).await {
+        Ok(_) => tracing::info!("[+] ✅ Assets & Avatar Directory Created!"),
+        Err(error) => {
+            tracing::error!("[-] ❌ Error Creating Avatar Directory: {:?}", error);
+            std::process::exit(1)
+        }
+    }
+
+    // Prometheus Metrics
+    let prometheus = rocket_prometheus::PrometheusMetrics::new();
+
     // Job Scheduler
     let scheduler = match JobScheduler::new().await {
         Ok(mut scheduler) => {
@@ -244,18 +256,6 @@ async fn protein() -> _ {
             std::process::exit(1)
         }
     }
-
-    // Create Assets & Avatar Directory
-    match async_fs::create_dir_all(constants::ASSETS_AVATARS_PATH).await {
-        Ok(_) => tracing::info!("[+] ✅ Assets & Avatar Directory Created!"),
-        Err(error) => {
-            tracing::error!("[-] ❌ Error Creating Avatar Directory: {:?}", error);
-            std::process::exit(1)
-        }
-    }
-
-    // Prometheus Metrics
-    let prometheus = rocket_prometheus::PrometheusMetrics::new();
 
     // Rocket
     rocket::build()
