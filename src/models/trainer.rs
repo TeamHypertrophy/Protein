@@ -108,6 +108,59 @@ impl Trainer {
             })
     }
 
+    pub async fn request(
+        data: RequestTrainer,
+        connection: &mut DBConnection,
+    ) -> Result<Trainer, Error> {
+        let trainer = NewTrainer {
+            user_id: data.user_id,
+            clients: vec![],
+            specialization: match data.specialization.as_str() {
+                "WeightLoss" => Specialization::WeightLoss,
+                "MuscleGain" => Specialization::MuscleGain,
+                "Maintenance" => Specialization::Maintenance,
+                "Endurance" => Specialization::Endurance,
+                "Strength" => Specialization::Strength,
+                _ => Specialization::MuscleGain,
+            },
+        };
+
+        diesel::insert_into(trainers::table)
+            .values(&trainer)
+            .get_result::<Trainer>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
+
+    pub async fn accept(trainer: i32, connection: &mut DBConnection) -> Result<Trainer, Error> {
+        diesel::update(trainers::table)
+            .filter(trainer_id.eq(trainer))
+            .set((
+                trainers::verified.eq(true),
+                trainers::verified_at.eq(chrono::Utc::now().naive_utc()),
+            ))
+            .get_result::<Trainer>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
+
+    pub async fn deny(trainer: i32, connection: &mut DBConnection) -> Result<Trainer, Error> {
+        diesel::delete(trainers::table)
+            .filter(trainer_id.eq(trainer))
+            .get_result::<Trainer>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
+
     pub async fn delete(trainer: i32, connection: &mut DBConnection) -> Result<usize, Error> {
         diesel::delete(trainers::table)
             .filter(trainer_id.eq(trainer))
@@ -137,4 +190,11 @@ pub struct NewTrainer {
     pub user_id: Uuid,
     pub clients: Vec<Option<Uuid>>,
     pub specialization: Specialization,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RequestTrainer {
+    pub user_id: Uuid,
+    pub specialization: String,
+    pub experience: String,
 }

@@ -24,6 +24,7 @@ use validator::Validate;
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
     cache::redis::{Cache, Redis},
+    constants::MAX_AVATAR_SIZE,
     db::{self, DB},
     errors::Error,
     models::{
@@ -159,10 +160,15 @@ pub async fn upload_avatar(
     mut avatar: TempFile<'_>,
     user_id: Uuid,
 ) -> Result<Json<Profile>, Error> {
+    if avatar.len() > MAX_AVATAR_SIZE {
+        return Err(Error::Validation("Avatar Size Exceeded".to_string()));
+    }
+
     let directory = format!("assets/avatars/{}", user_id);
 
     match async_fs::create_dir(&directory).await {
         Ok(_) => (),
+        Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => (),
         Err(error) => return Err(Error::IO(error.to_string())),
     }
 

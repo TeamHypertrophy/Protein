@@ -51,16 +51,23 @@ pub async fn send(
     data: &User,
     subject: &str,
     body: String,
+    is_admin: bool,
 ) -> Result<Response, Error> {
     // System Mailbox
     let from: Mailbox = format!("{} <{}>", smtp.smtp_user, smtp.smtp_username)
         .parse::<Mailbox>()
         .map_err(|error| Error::Email(format!("Error Parsing From Address: {:?}", error)))?;
 
-    // User Mailbox
-    let to: Mailbox = format!("{} <{}>", data.username, data.email)
-        .parse::<Mailbox>()
-        .map_err(|error| Error::Email(format!("Error Parsing To Address: {:?}", error)))?;
+    // Determine Recipient Mailbox
+    let to: Mailbox = if is_admin {
+        // Admin Emails Are Sent To The System Email
+        from.clone()
+    } else {
+        // Otherwise, Send To The User
+        format!("{} <{}>", data.username, data.email)
+            .parse::<Mailbox>()
+            .map_err(|error| Error::Email(format!("Error Parsing To Address: {:?}", error)))?
+    };
 
     // Create Email
     let email: Message = Message::builder()

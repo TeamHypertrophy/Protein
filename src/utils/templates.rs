@@ -91,3 +91,37 @@ pub struct RequestPasswordReset<'a> {
 pub struct Success<'a> {
     pub name: &'a str,
 }
+
+#[derive(Template)]
+#[template(path = "trainer/admin/application.html")]
+pub struct TrainerApplication<'a> {
+    pub name: &'a str,
+    pub specialization: &'a str,
+    pub time: &'a str,
+    pub experience: &'a str,
+    pub accept_url: &'a str,
+    pub deny_url: &'a str,
+}
+
+#[derive(Template)]
+#[template(path = "trainer/requested.html")]
+pub struct TrainerRequest<'a> {
+    pub name: &'a str,
+    pub specialization: &'a str,
+    pub time: &'a str,
+    pub experience: &'a str,
+    pub status_url: &'a str,
+}
+
+#[derive(Template)]
+#[template(path = "trainer/accepted.html")]
+pub struct TrainerAccepted<'a> {
+    pub name: &'a str,
+    pub specialization: &'a str,
+}
+
+#[derive(Template)]
+#[template(path = "trainer/denied.html")]
+pub struct TrainerDenied<'a> {
+    pub name: &'a str,
+}

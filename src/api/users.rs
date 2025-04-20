@@ -174,6 +174,7 @@ pub async fn signup(
             &receipent,
             "[Security] Account Verification",
             body.render().unwrap(),
+            false,
         )
         .await
         {
@@ -229,6 +230,7 @@ pub async fn verify_email(
                 &receipent,
                 "[Security] Email Successfully Verified",
                 body.render().unwrap(),
+                false,
             )
             .await
             {
@@ -362,6 +364,7 @@ pub async fn login(
                     &receipent,
                     "[Security] New Login",
                     body.render().unwrap(),
+                    false,
                 )
                 .await
                 {
@@ -409,6 +412,7 @@ pub async fn login(
                     &mfa_user,
                     "[Security] MFA Code",
                     body.render().unwrap(),
+                    false,
                 )
                 .await
                 {
@@ -473,6 +477,7 @@ pub async fn delete_user(
             &receipent,
             "[Security] Your Account Has Been Deleted",
             body.render().unwrap(),
+            false,
         )
         .await
         {
@@ -598,6 +603,7 @@ pub async fn update_user_password(
             &receipent,
             "[Security] Your Password Has Been Updated",
             body.render().unwrap(),
+            false,
         )
         .await
         {
@@ -662,6 +668,7 @@ pub async fn request_password_reset(
                 &mfa_user,
                 "[Security] MFA Code",
                 body.render().unwrap(),
+                false,
             )
             .await
             {
@@ -748,6 +755,7 @@ pub async fn reset_password(
             &receipent,
             "[Security] Your Password Has Been Reset",
             body.render().unwrap(),
+            false,
         )
         .await
         {
@@ -822,6 +830,7 @@ pub async fn resend_mfa(
                     &mfa_user,
                     "[Security] MFA Code",
                     body.render().unwrap(),
+                    false,
                 )
                 .await
                 {
@@ -892,6 +901,7 @@ pub async fn enable_mfa(
             &receipent,
             "[Security] Account MFA Verification",
             body.render().unwrap(),
+            false,
         )
         .await
         {
@@ -1098,6 +1108,7 @@ pub async fn check_mfa(
                             &receipent,
                             "[Security] New Login",
                             body.render().unwrap(),
+                            false,
                         )
                         .await
                         {
@@ -1192,6 +1203,7 @@ pub async fn disable_mfa(
             &receipent,
             "[Security] MFA Disabled",
             body.render().unwrap(),
+            false,
         )
         .await
         {

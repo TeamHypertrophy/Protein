@@ -50,11 +50,12 @@ pub const LOG_PATH: &str = "./logs/";
 
 // Jobs
 pub const API_KEY_JOB_INTERVAL: &str = "every day";
-pub const ASSET_CLEANER_JOB_INTERVAL: &str = "every sunday";
+pub const ASSET_CLEANER_JOB_INTERVAL: &str = "every day";
 
 // Assets
 pub const ASSETS_AVATARS_PATH: &str = "assets/avatars";
-pub const ASSETS_RETENTION_PERIOD: i64 = 30; // 30 days
+pub const ASSETS_RETENTION_PERIOD: i64 = 90; // 90 days
+pub const MAX_AVATAR_SIZE: u64 = 10 * 1024 * 1024; // 10 MB
 
 // User Agent Regexer
 pub const USER_AGENT_PARSER_PATH: &str = "regexes.yaml";

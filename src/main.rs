@@ -419,7 +419,10 @@ async fn protein() -> _ {
                 api::trainer::get_all_trainer_announcements,
                 api::trainer::update_announcement,
                 api::trainer::create_announcement,
-                api::trainer::delete_announcement
+                api::trainer::delete_announcement,
+                api::trainer::request_trainer,
+                api::trainer::accept_trainer,
+                api::trainer::deny_trainer,
             ],
         )
         .mount(
