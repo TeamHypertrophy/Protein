@@ -25,7 +25,10 @@ use crate::{
     db::DB,
     errors::Error,
     models::{
-        keys::{APIKey, RevokeKey, Status, UpdateAPIKey, UpdateRole},
+        keys::{
+            APIKey, APIKeyLog, NewAPIKeyLog, RevokeKey, Status, UpdateAPIKey, UpdateAPIKeyLog,
+            UpdateRole,
+        },
         user::{Role, User},
     },
 };
@@ -202,4 +205,79 @@ pub async fn is_admin_key(
             "api_key": api_key
         })))
     }
+}
+
+#[get("/logs/all", format = "application/json")]
+pub async fn get_all_api_key_logs(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DB>,
+) -> Result<Json<Vec<APIKeyLog>>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let logs = APIKeyLog::all(connection).await?;
+
+    Ok(Json(logs))
+}
+
+#[get("/logs/user/all?<user_id>", format = "application/json")]
+pub async fn get_all_user_api_key_logs(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DB>,
+    user_id: Uuid,
+) -> Result<Json<Vec<APIKeyLog>>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let logs = APIKeyLog::user_all(user_id, connection).await?;
+
+    Ok(Json(logs))
+}
+
+#[post("/logs/create?<user_id>", format = "application/json", data = "<log>")]
+pub async fn create_api_key_log(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DB>,
+    user_id: Uuid,
+    log: Json<NewAPIKeyLog>,
+) -> Result<Json<APIKeyLog>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let result = APIKeyLog::create(log.into_inner(), connection).await?;
+
+    Ok(Json(result))
+}
+
+#[post("/logs/update/<log_id>", format = "application/json", data = "<log>")]
+pub async fn update_api_key_log(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DB>,
+    log_id: i32,
+    log: Json<UpdateAPIKeyLog>,
+) -> Result<Json<APIKeyLog>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let result = APIKeyLog::update(log_id, log.into_inner(), connection).await?;
+
+    Ok(Json(result))
+}
+
+#[post("/logs/delete/<log_id>", format = "application/json")]
+pub async fn delete_api_key_log(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DB>,
+    log_id: i32,
+) -> Result<status::Accepted<Value>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    APIKeyLog::delete(log_id, connection).await?;
+
+    Ok(status::Accepted(json!({
+        "status": 200,
+        "message": "API Key Log Deleted",
+        "log_id": log_id
+    })))
 }

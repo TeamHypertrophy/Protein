@@ -19,8 +19,11 @@ use uuid::Uuid;
 use crate::{
     db,
     errors::Error,
-    models::{keys::APIKey, user::Role},
-    utils::admin::Admin,
+    models::{
+        keys::{APIKey, NewAPIKeyLog},
+        user::Role,
+    },
+    utils::admin,
 };
 
 pub struct API;
@@ -54,7 +57,7 @@ impl<'r> FromRequest<'r> for API {
         };
 
         // 2. Get The Admin Data From The Request State
-        let admin = match request.rocket().state::<Arc<Admin>>() {
+        let admin = match request.rocket().state::<Arc<admin::Admin>>() {
             Some(admin) => admin,
             None => {
                 return Outcome::Error((
@@ -93,7 +96,7 @@ impl<'r> FromRequest<'r> for API {
         };
 
         // 5. Get A Database Connection From The Pool
-        let connection = match pool.get().await {
+        let mut connection = match pool.get().await {
             Ok(connection) => connection,
             Err(_) => {
                 return Outcome::Error((
@@ -111,10 +114,13 @@ impl<'r> FromRequest<'r> for API {
             .and_then(|q| q.as_str().strip_prefix("user_id="))
             .and_then(|id| Uuid::parse_str(id).ok());
 
-        // 7. If The User ID Exists, Verify:
+        // 7. Get Request Info For Logging
+        let info = admin::get_request_info(request);
+
+        // 8. If The User ID Exists, Verify:
         // That The Request That Is Being Performed Against The User Matches The API Key
         if let Some(uid) = user_id {
-            match APIKey::verify(uid, api_key, connection).await {
+            match APIKey::verify(uid, api_key, connection, &info).await {
                 Ok(_verified) => {
                     return Outcome::Success(API);
                 }
@@ -127,16 +133,16 @@ impl<'r> FromRequest<'r> for API {
             };
         }
 
-        // 8. Get The Trainer ID From The Query Parameters
+        // 9. Get The Trainer ID From The Query Parameters
         let trainer_id = request
             .uri()
             .query()
             .and_then(|q| q.as_str().strip_prefix("trainer_id="))
             .and_then(|id| id.parse::<i32>().ok());
 
-        // 9. Verify Trainer Action Against API Key
+        // 10. Verify Trainer Action Against API Key
         if let Some(tid) = trainer_id {
-            match APIKey::verify_trainer(tid, api_key, connection).await {
+            match APIKey::verify_trainer(tid, api_key, connection, &info).await {
                 Ok(_verified) => {
                     return Outcome::Success(API);
                 }
@@ -149,15 +155,30 @@ impl<'r> FromRequest<'r> for API {
             };
         }
 
-        // 10. This Is The Final Check
+        // 11. This Is The Final Check
         // Checks:
         // 1. If The Key Exists In The Database == Next Step
         // 2. If The Key Is Admin/Developer == Access
         // 3. Admin Route && Admin/Developer Key == Access
         // 5. Normal API Access or Unauthorized
-        match APIKey::find_by_key(api_key, connection).await {
+        match APIKey::find_by_key(api_key, &mut connection).await {
             Ok(key) => {
+                let req = admin::get_request_info(request);
+
                 if key.role == Role::Admin || key.role == Role::Developer {
+                    match admin::generate_api_key_log(
+                        &req,
+                        connection,
+                        key.api_key,
+                        key.user_id,
+                        200,
+                    )
+                    .await
+                    {
+                        Ok(_) => tracing::info!("[API] ✅ Created API Key Log"),
+                        Err(e) => tracing::error!("[API] ❌ Failed Creating API Key Log: {}", e),
+                    }
+
                     return Outcome::Success(API);
                 }
 
@@ -184,6 +205,21 @@ impl<'r> FromRequest<'r> for API {
                 // Admin Route Check
                 if admin.routes.contains(&name) {
                     if key.role == Role::Admin || key.role == Role::Developer {
+                        match admin::generate_api_key_log(
+                            &req,
+                            connection,
+                            key.api_key,
+                            key.user_id,
+                            200,
+                        )
+                        .await
+                        {
+                            Ok(_) => tracing::info!("[API] ✅ Created API Key Log"),
+                            Err(e) => {
+                                tracing::error!("[API] ❌ Failed Creating API Key Log: {}", e)
+                            }
+                        }
+
                         return Outcome::Success(API);
                     } else {
                         return Outcome::Error((
@@ -191,6 +227,13 @@ impl<'r> FromRequest<'r> for API {
                             Error::Authorization("Unauthorized API Key!".to_string()),
                         ));
                     }
+                }
+
+                match admin::generate_api_key_log(&req, connection, key.api_key, key.user_id, 200)
+                    .await
+                {
+                    Ok(_) => tracing::info!("[API] ✅ Created API Key Log"),
+                    Err(e) => tracing::error!("[API] ❌ Failed Creating API Key Log: {}", e),
                 }
 
                 return Outcome::Success(API);

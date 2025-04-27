@@ -63,6 +63,24 @@ pub mod sql_types {
 }
 
 diesel::table! {
+    api_key_logs (log_id) {
+        log_id -> Int4,
+        user_id -> Uuid,
+        api_key -> Uuid,
+        #[max_length = 10]
+        method -> Varchar,
+        #[max_length = 255]
+        route -> Varchar,
+        status_code -> Int4,
+        #[max_length = 50]
+        ip_address -> Varchar,
+        #[max_length = 255]
+        user_agent -> Varchar,
+        created_at -> Timestamp,
+    }
+}
+
+diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::Role;
     use super::sql_types::Status;
@@ -333,6 +351,7 @@ diesel::table! {
 
     workouts (workout_id) {
         workout_id -> Uuid,
+        user_id -> Uuid,
         #[max_length = 100]
         name -> Varchar,
         description -> Text,
@@ -340,11 +359,11 @@ diesel::table! {
         difficulty -> Difficulty,
         created_at -> Timestamp,
         updated_at -> Timestamp,
-        user_id -> Uuid,
         exercises -> Array<Nullable<Int8>>,
     }
 }
 
+diesel::joinable!(api_key_logs -> users (user_id));
 diesel::joinable!(api_keys -> users (user_id));
 diesel::joinable!(calorie_logs -> users (user_id));
 diesel::joinable!(custom_exercises -> users (user_id));
@@ -364,6 +383,7 @@ diesel::joinable!(workout_plans -> users (user_id));
 diesel::joinable!(workouts -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
+    api_key_logs,
     api_keys,
     calorie_logs,
     custom_exercises,

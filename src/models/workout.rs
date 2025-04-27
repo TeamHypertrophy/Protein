@@ -53,13 +53,13 @@ pub enum Difficulty {
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Workout {
     pub workout_id: Uuid,
+    pub user_id: Uuid,
     pub name: String,
     pub description: String,
     pub duration: i32,
     pub difficulty: Difficulty,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
-    pub user_id: Uuid,
     pub exercises: Vec<Option<i64>>,
 }
 
@@ -169,10 +169,10 @@ pub struct UpdateWorkout {
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
 pub struct NewWorkout {
+    pub user_id: Uuid,
     pub name: String,
     pub description: String,
     pub duration: i32,
     pub difficulty: Difficulty,
-    pub user_id: Uuid,
     pub exercises: Vec<Option<i64>>,
 }

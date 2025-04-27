@@ -18,6 +18,7 @@ use validator::Validate;
 
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
+    cache::redis::{Cache, Redis},
     db,
     db::DB,
     errors::Error,
@@ -29,13 +30,30 @@ pub async fn get_exercise(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     exercise_id: i64,
 ) -> Result<Json<Exercise>, Error> {
-    let connection = &mut db::get(pool).await?;
+    let cache: Value = Cache::get(redis, "exercise", exercise_id.to_string()).await?;
 
-    let exercise = Exercise::find(exercise_id, connection).await?;
+    if cache.is_null() {
+        let connection = &mut db::get(pool).await?;
 
-    Ok(Json(exercise))
+        let exercise = Exercise::find(exercise_id, connection).await?;
+
+        Cache::set(
+            redis,
+            "exercise",
+            exercise_id.to_string(),
+            Cache::serialize(&exercise)?,
+        )
+        .await?;
+
+        Ok(Json(exercise))
+    } else {
+        let exercise: Exercise = Cache::deserialize(cache)?;
+
+        Ok(Json(exercise))
+    }
 }
 
 #[post("/search", format = "application/json", data = "<data>")]
@@ -70,6 +88,7 @@ pub async fn update_exercise(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     exercise_id: i64,
     data: Json<UpdateExercise>,
 ) -> Result<Json<Exercise>, Error> {
@@ -82,6 +101,14 @@ pub async fn update_exercise(
 
     let exercise = Exercise::update(exercise_id, data.into_inner(), connection).await?;
 
+    Cache::set(
+        redis,
+        "exercise",
+        exercise_id.to_string(),
+        Cache::serialize(&exercise)?,
+    )
+    .await?;
+
     Ok(Json(exercise))
 }
 
@@ -90,6 +117,7 @@ pub async fn create_exercise(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     data: Json<NewExercise>,
 ) -> Result<Json<Exercise>, Error> {
     let connection = &mut db::get(pool).await?;
@@ -101,6 +129,14 @@ pub async fn create_exercise(
 
     let exercise = Exercise::create(connection, data.into_inner()).await?;
 
+    Cache::set(
+        redis,
+        "exercise",
+        exercise.exercise_id.to_string(),
+        Cache::serialize(&exercise)?,
+    )
+    .await?;
+
     Ok(Json(exercise))
 }
 
@@ -109,11 +145,14 @@ pub async fn delete_exercise(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     exercise_id: i64,
 ) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get(pool).await?;
 
     Exercise::delete(exercise_id, connection).await?;
+
+    Cache::delete(redis, "exercise", exercise_id.to_string()).await?;
 
     Ok(status::Accepted(json!({
         "status": 200,

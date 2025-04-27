@@ -15,13 +15,13 @@ CREATE TYPE WorkoutInterval AS ENUM (
 -- Workouts: Users will be able to create their own workouts
 CREATE TABLE IF NOT EXISTS workouts (
     "workout_id" UUID PRIMARY KEY DEFAULT (gen_random_uuid()),
+    "user_id" UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     "name" VARCHAR(100) NOT NULL,
     "description" TEXT NOT NULL DEFAULT (''),
     "duration" INT NOT NULL DEFAULT (30), -- MINUTES
     "difficulty" Difficulty NOT NULL,
     "created_at" TIMESTAMP NOT NULL DEFAULT now(),
     "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
-    "user_id" UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     "exercises" BIGINT[] NOT NULL DEFAULT '{}'
 );
 

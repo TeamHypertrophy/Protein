@@ -24,10 +24,8 @@ use crate::{
         trainer::Trainer,
         user::{Role, User},
     },
-    schema::{
-        api_keys,
-        api_keys::dsl::{api_key, quota, revoked_reason, role, status, user_id},
-    },
+    schema::{api_key_logs, api_keys},
+    utils::admin::{self, RequestInfo},
 };
 
 // APIKey Model
@@ -104,7 +102,7 @@ impl APIKey {
     pub async fn get_current(user: &User, connection: &mut DBConnection) -> Result<APIKey, Error> {
         APIKey::belonging_to(user)
             .select(APIKey::as_select())
-            .filter(status.eq(Status::Active))
+            .filter(api_keys::status.eq(Status::Active))
             .first(connection)
             .await
             .map_err(|error| {
@@ -126,7 +124,7 @@ impl APIKey {
 
     pub async fn user_all(user: Uuid, connection: &mut DBConnection) -> Result<Vec<APIKey>, Error> {
         api_keys::table
-            .filter(user_id.eq(user))
+            .filter(api_keys::user_id.eq(user))
             .select(APIKey::as_select())
             .load(connection)
             .await
@@ -142,10 +140,10 @@ impl APIKey {
         connection: &mut DBConnection,
     ) -> Result<APIKey, Error> {
         diesel::update(api_keys::table)
-            .filter(api_key.eq(key))
+            .filter(api_keys::api_key.eq(key))
             .set((
-                revoked_reason.eq(data.revoked_reason),
-                status.eq(Status::Revoked),
+                api_keys::revoked_reason.eq(data.revoked_reason),
+                api_keys::status.eq(Status::Revoked),
             ))
             .get_result(connection)
             .await
@@ -157,7 +155,7 @@ impl APIKey {
 
     pub async fn generate(user: &User, connection: &mut DBConnection) -> Result<APIKey, Error> {
         diesel::insert_into(api_keys::table)
-            .values(user_id.eq(user.user_id))
+            .values(api_keys::user_id.eq(user.user_id))
             .get_result(connection)
             .await
             .map_err(|error| {
@@ -172,7 +170,7 @@ impl APIKey {
         connection: &mut DBConnection,
     ) -> Result<APIKey, Error> {
         diesel::update(api_keys::table)
-            .filter(api_key.eq(key))
+            .filter(api_keys::api_key.eq(key))
             .set(&data)
             .get_result::<APIKey>(connection)
             .await
@@ -188,8 +186,8 @@ impl APIKey {
         connection: &mut DBConnection,
     ) -> Result<APIKey, Error> {
         diesel::update(api_keys::table)
-            .filter(api_key.eq(key))
-            .set(role.eq(data.role))
+            .filter(api_keys::api_key.eq(key))
+            .set(api_keys::role.eq(data.role))
             .get_result::<APIKey>(connection)
             .await
             .map_err(|error| {
@@ -204,8 +202,8 @@ impl APIKey {
         connection: &mut DBConnection,
     ) -> Result<(), Error> {
         diesel::update(api_keys::table)
-            .filter(api_key.eq(key))
-            .set(quota.eq(original + 1))
+            .filter(api_keys::api_key.eq(key))
+            .set(api_keys::quota.eq(original + 1))
             .execute(connection)
             .await
             .map(|_| ())
@@ -217,7 +215,7 @@ impl APIKey {
 
     pub async fn delete(key: Uuid, connection: &mut DBConnection) -> Result<usize, Error> {
         diesel::delete(api_keys::table)
-            .filter(api_key.eq(key))
+            .filter(api_keys::api_key.eq(key))
             .execute(connection)
             .await
             .map_err(|error| {
@@ -228,7 +226,7 @@ impl APIKey {
 
     pub async fn find(key: Uuid, connection: &mut DBConnection) -> Result<APIKey, Error> {
         api_keys::table
-            .filter(api_key.eq(key))
+            .filter(api_keys::api_key.eq(key))
             .select(APIKey::as_select())
             .first(connection)
             .await
@@ -238,11 +236,11 @@ impl APIKey {
             })
     }
 
-    pub async fn find_by_key(key: Uuid, mut connection: DBConnection) -> Result<APIKey, Error> {
+    pub async fn find_by_key(key: Uuid, connection: &mut DBConnection) -> Result<APIKey, Error> {
         api_keys::table
-            .filter(api_key.eq(key))
+            .filter(api_keys::api_key.eq(key))
             .select(APIKey::as_select())
-            .first(&mut connection)
+            .first(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);
@@ -254,12 +252,16 @@ impl APIKey {
         user: Uuid,
         key: Uuid,
         mut connection: DBConnection,
+        request: &RequestInfo,
     ) -> Result<bool, Error> {
         // First, Find User
         let user: User = User::find(user, &mut connection).await?;
 
         // Next, Grab API Key
         let verified: APIKey = APIKey::find(key, &mut connection).await?;
+
+        let user_id = user.user_id.clone();
+        let req = request.clone();
 
         // Extra Validation: Quota Check
         if verified.quota >= API_QUOTA_LIMIT {
@@ -291,6 +293,10 @@ impl APIKey {
         {
             APIKey::increment(key, verified.quota, &mut connection).await?;
 
+            rocket::tokio::task::spawn(async move {
+                admin::generate_api_key_log(&req, connection, key, user_id, 200).await
+            });
+
             Ok(true)
         } else {
             Err(Error::Authorization("API Key Does Not Match!".to_string()))
@@ -301,6 +307,7 @@ impl APIKey {
         id: i32,
         key: Uuid,
         mut connection: DBConnection,
+        request: &RequestInfo,
     ) -> Result<bool, Error> {
         // First, Find Trainer
         let trainer = Trainer::find(id, &mut connection).await?;
@@ -341,9 +348,138 @@ impl APIKey {
         {
             APIKey::increment(key, verified.quota, &mut connection).await?;
 
+            let req = request.clone();
+            let user_id = user.user_id.clone();
+
+            rocket::tokio::task::spawn(async move {
+                admin::generate_api_key_log(&req, connection, key, user_id, 200).await
+            });
+
             Ok(true)
         } else {
             Err(Error::Authorization("API Key Does Not Match!".to_string()))
         }
+    }
+}
+
+// APIKeyLog Model
+#[derive(
+    Serialize,
+    Deserialize,
+    Queryable,
+    Identifiable,
+    Associations,
+    Selectable,
+    Insertable,
+    Debug,
+    Clone,
+    PartialEq,
+)]
+#[diesel(primary_key(log_id))]
+#[diesel(table_name = api_key_logs)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+#[diesel(belongs_to(User))]
+pub struct APIKeyLog {
+    pub log_id: i32,
+    pub user_id: Uuid,
+    pub api_key: Uuid,
+    pub method: String,
+    pub route: String,
+    pub status_code: i32,
+    pub ip_address: String,
+    pub user_agent: String,
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(AsChangeset, Serialize, Deserialize, Debug, Clone)]
+#[diesel(table_name = api_key_logs)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct UpdateAPIKeyLog {
+    pub method: String,
+    pub route: String,
+    pub ip_address: String,
+    pub user_agent: String,
+    pub status_code: i32,
+}
+
+#[derive(AsChangeset, Insertable, Serialize, Deserialize, Debug, Clone)]
+#[diesel(table_name = api_key_logs)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct NewAPIKeyLog {
+    pub user_id: Uuid,
+    pub api_key: Uuid,
+    pub method: String,
+    pub route: String,
+    pub status_code: i32,
+    pub ip_address: String,
+    pub user_agent: String,
+}
+
+impl APIKeyLog {
+    pub async fn create(
+        data: NewAPIKeyLog,
+        connection: &mut DBConnection,
+    ) -> Result<APIKeyLog, Error> {
+        diesel::insert_into(api_key_logs::table)
+            .values(&data)
+            .get_result(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
+
+    pub async fn all(connection: &mut DBConnection) -> Result<Vec<APIKeyLog>, Error> {
+        api_key_logs::table
+            .select(APIKeyLog::as_select())
+            .load(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
+
+    pub async fn user_all(
+        user: Uuid,
+        connection: &mut DBConnection,
+    ) -> Result<Vec<APIKeyLog>, Error> {
+        api_key_logs::table
+            .filter(api_key_logs::user_id.eq(user))
+            .select(APIKeyLog::as_select())
+            .load(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
+
+    pub async fn delete(key: i32, connection: &mut DBConnection) -> Result<usize, Error> {
+        diesel::delete(api_key_logs::table)
+            .filter(api_key_logs::log_id.eq(key))
+            .execute(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
+
+    pub async fn update(
+        key: i32,
+        data: UpdateAPIKeyLog,
+        connection: &mut DBConnection,
+    ) -> Result<APIKeyLog, Error> {
+        diesel::update(api_key_logs::table)
+            .filter(api_key_logs::log_id.eq(key))
+            .set(&data)
+            .get_result::<APIKeyLog>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
     }
 }

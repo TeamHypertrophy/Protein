@@ -19,5 +19,17 @@ CREATE TABLE IF NOT EXISTS api_keys (
     "quota" INT NOT NULL DEFAULT (0)
 );
 
+CREATE TABLE IF NOT EXISTS api_key_logs (
+    "log_id" SERIAL PRIMARY KEY,
+    "user_id" UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    "api_key" UUID NOT NULL REFERENCES api_keys(api_key) ON DELETE CASCADE,
+    "method" VARCHAR(10) NOT NULL DEFAULT ('GET'),
+    "route" VARCHAR(255) NOT NULL DEFAULT (''),
+    "status_code" INT NOT NULL DEFAULT (200),
+    "ip_address" VARCHAR(50) NOT NULL,
+    "user_agent" VARCHAR(255) NOT NULL DEFAULT (''),
+    "created_at" TIMESTAMP NOT NULL DEFAULT (now())
+);
+
 CREATE TRIGGER update_timestamp BEFORE UPDATE ON api_keys
 FOR EACH ROW EXECUTE PROCEDURE modify_updated_at();

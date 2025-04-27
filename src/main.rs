@@ -306,6 +306,12 @@ async fn protein() -> _ {
                     "get_all_workouts",
                     // Workout Plan Logs
                     "get_all_workout_plan_logs",
+                    // API Key Logs
+                    "get_all_api_key_logs",
+                    "get_all_user_api_key_logs",
+                    "create_api_key_log",
+                    "update_api_key_log",
+                    "delete_api_key_log",
                 ]
             }),
             master_key: std::env::var("MASTER_API_KEY")
@@ -376,6 +382,11 @@ async fn protein() -> _ {
                 api::keys::revoke_api_key,
                 api::keys::change_api_key_role,
                 api::keys::is_admin_key,
+                api::keys::get_all_api_key_logs,
+                api::keys::get_all_user_api_key_logs,
+                api::keys::create_api_key_log,
+                api::keys::update_api_key_log,
+                api::keys::delete_api_key_log,
             ],
         )
         .mount(
