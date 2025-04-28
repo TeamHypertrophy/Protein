@@ -252,7 +252,7 @@ impl APIKey {
         user: Uuid,
         key: Uuid,
         mut connection: DBConnection,
-        request: &RequestInfo,
+        request: RequestInfo,
     ) -> Result<bool, Error> {
         // First, Find User
         let user: User = User::find(user, &mut connection).await?;
@@ -294,7 +294,7 @@ impl APIKey {
             APIKey::increment(key, verified.quota, &mut connection).await?;
 
             rocket::tokio::task::spawn(async move {
-                admin::generate_api_key_log(&req, connection, key, user_id, 200).await
+                admin::generate_api_key_log(req, connection, key, user_id, 200).await
             });
 
             Ok(true)
@@ -307,7 +307,7 @@ impl APIKey {
         id: i32,
         key: Uuid,
         mut connection: DBConnection,
-        request: &RequestInfo,
+        request: RequestInfo,
     ) -> Result<bool, Error> {
         // First, Find Trainer
         let trainer = Trainer::find(id, &mut connection).await?;
@@ -352,7 +352,7 @@ impl APIKey {
             let user_id = user.user_id.clone();
 
             rocket::tokio::task::spawn(async move {
-                admin::generate_api_key_log(&req, connection, key, user_id, 200).await
+                admin::generate_api_key_log(req, connection, key, user_id, 200).await
             });
 
             Ok(true)

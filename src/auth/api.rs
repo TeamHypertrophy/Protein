@@ -114,13 +114,12 @@ impl<'r> FromRequest<'r> for API {
             .and_then(|q| q.as_str().strip_prefix("user_id="))
             .and_then(|id| Uuid::parse_str(id).ok());
 
-        // 7. Get Request Info For Logging
-        let info = admin::get_request_info(request);
-
-        // 8. If The User ID Exists, Verify:
+        // 7. If The User ID Exists, Verify:
         // That The Request That Is Being Performed Against The User Matches The API Key
         if let Some(uid) = user_id {
-            match APIKey::verify(uid, api_key, connection, &info).await {
+            let info = admin::get_request_info(request);
+
+            match APIKey::verify(uid, api_key, connection, info).await {
                 Ok(_verified) => {
                     return Outcome::Success(API);
                 }
@@ -133,16 +132,18 @@ impl<'r> FromRequest<'r> for API {
             };
         }
 
-        // 9. Get The Trainer ID From The Query Parameters
+        // 8. Get The Trainer ID From The Query Parameters
         let trainer_id = request
             .uri()
             .query()
             .and_then(|q| q.as_str().strip_prefix("trainer_id="))
             .and_then(|id| id.parse::<i32>().ok());
 
-        // 10. Verify Trainer Action Against API Key
+        // 9. Verify Trainer Action Against API Key
         if let Some(tid) = trainer_id {
-            match APIKey::verify_trainer(tid, api_key, connection, &info).await {
+            let info = admin::get_request_info(request);
+
+            match APIKey::verify_trainer(tid, api_key, connection, info).await {
                 Ok(_verified) => {
                     return Outcome::Success(API);
                 }
@@ -155,7 +156,7 @@ impl<'r> FromRequest<'r> for API {
             };
         }
 
-        // 11. This Is The Final Check
+        // 10. This Is The Final Check
         // Checks:
         // 1. If The Key Exists In The Database == Next Step
         // 2. If The Key Is Admin/Developer == Access
@@ -167,7 +168,7 @@ impl<'r> FromRequest<'r> for API {
 
                 if key.role == Role::Admin || key.role == Role::Developer {
                     match admin::generate_api_key_log(
-                        &req,
+                        req,
                         connection,
                         key.api_key,
                         key.user_id,
@@ -206,7 +207,7 @@ impl<'r> FromRequest<'r> for API {
                 if admin.routes.contains(&name) {
                     if key.role == Role::Admin || key.role == Role::Developer {
                         match admin::generate_api_key_log(
-                            &req,
+                            req,
                             connection,
                             key.api_key,
                             key.user_id,
@@ -229,7 +230,7 @@ impl<'r> FromRequest<'r> for API {
                     }
                 }
 
-                match admin::generate_api_key_log(&req, connection, key.api_key, key.user_id, 200)
+                match admin::generate_api_key_log(req, connection, key.api_key, key.user_id, 200)
                     .await
                 {
                     Ok(_) => tracing::info!("[API] ✅ Created API Key Log"),

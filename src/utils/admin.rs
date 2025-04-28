@@ -50,7 +50,7 @@ pub struct RequestInfo {
 }
 
 pub async fn generate_api_key_log(
-    request: &RequestInfo,
+    request: RequestInfo,
     mut connection: DBConnection,
     api_key: Uuid,
     user_id: Uuid,
@@ -59,11 +59,11 @@ pub async fn generate_api_key_log(
     let api_key_log = NewAPIKeyLog {
         api_key: api_key,
         user_id: user_id,
-        method: request.method.clone(),
-        route: request.route.clone(),
-        ip_address: request.ip_address.clone(),
+        method: request.method,
+        route: request.route,
+        ip_address: request.ip_address,
         status_code: status_code,
-        user_agent: request.user_agent.clone(),
+        user_agent: request.user_agent,
     };
 
     APIKeyLog::create(api_key_log, &mut connection).await?;
@@ -72,28 +72,24 @@ pub async fn generate_api_key_log(
 }
 
 pub fn get_request_info(request: &Request<'_>) -> RequestInfo {
-    let method = request.method().to_string();
+    let method = request.method().as_str();
+
     let route = request
         .route()
-        .unwrap()
-        .name
-        .as_deref()
-        .unwrap_or("Unknown")
-        .to_string();
+        .and_then(|route| route.name.as_deref())
+        .unwrap_or("Unknown");
+
     let ip_address = request
         .client_ip()
         .map(|ip| ip.to_string())
-        .unwrap_or_else(|| "Unknown".to_string());
-    let user_agent = request
-        .headers()
-        .get_one("User-Agent")
-        .unwrap_or("Unknown")
-        .to_string();
+        .unwrap_or("Unknown".to_string());
+
+    let user_agent = request.headers().get_one("User-Agent").unwrap_or("Unknown");
 
     RequestInfo {
-        method,
-        route,
-        ip_address,
-        user_agent,
+        method: method.to_string(),
+        route: route.to_string(),
+        ip_address: ip_address,
+        user_agent: user_agent.to_string(),
     }
 }
