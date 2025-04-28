@@ -40,13 +40,7 @@ pub async fn get_exercise(
 
         let exercise = Exercise::find(exercise_id, connection).await?;
 
-        Cache::set(
-            redis,
-            "exercise",
-            exercise_id.to_string(),
-            Cache::serialize(&exercise)?,
-        )
-        .await?;
+        Cache::set(redis, "exercise", exercise_id, Cache::serialize(&exercise)?).await?;
 
         Ok(Json(exercise))
     } else {
@@ -101,13 +95,7 @@ pub async fn update_exercise(
 
     let exercise = Exercise::update(exercise_id, data.into_inner(), connection).await?;
 
-    Cache::set(
-        redis,
-        "exercise",
-        exercise_id.to_string(),
-        Cache::serialize(&exercise)?,
-    )
-    .await?;
+    Cache::set(redis, "exercise", exercise_id, Cache::serialize(&exercise)?).await?;
 
     Ok(Json(exercise))
 }
@@ -132,7 +120,7 @@ pub async fn create_exercise(
     Cache::set(
         redis,
         "exercise",
-        exercise.exercise_id.to_string(),
+        exercise.exercise_id,
         Cache::serialize(&exercise)?,
     )
     .await?;
@@ -152,7 +140,7 @@ pub async fn delete_exercise(
 
     Exercise::delete(exercise_id, connection).await?;
 
-    Cache::delete(redis, "exercise", exercise_id.to_string()).await?;
+    Cache::delete(redis, "exercise", exercise_id).await?;
 
     Ok(status::Accepted(json!({
         "status": 200,

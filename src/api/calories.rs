@@ -90,8 +90,8 @@ pub async fn update_calorie_log(
 pub async fn create_calorie_log(
     _r: RateLimit<'_>,
     _auth: API,
-    user_id: Uuid,
     pool: &State<DB>,
+    user_id: Uuid,
     log: Json<NewCalorieLog>,
 ) -> Result<Json<CalorieLog>, Error> {
     let connection = &mut db::get(pool).await?;

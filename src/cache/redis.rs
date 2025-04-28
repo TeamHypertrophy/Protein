@@ -9,7 +9,7 @@ ______          _       _
         Made with ❤️
 */
 
-use std::time::Duration;
+use std::{fmt::Display, time::Duration};
 
 use rocket::{
     State,
@@ -75,7 +75,7 @@ pub struct Cache;
 
 impl Cache {
     // Get Value From Redis Cache
-    pub async fn get(pool: &State<Redis>, group: &str, key: String) -> Result<Value, Error> {
+    pub async fn get<T: Display>(pool: &State<Redis>, group: &str, key: T) -> Result<Value, Error> {
         tracing::info!(
             "[Cache] ⚙️ Fetching Key From Redis Cache: {:#?}",
             format!("{}:{}", group, key)
@@ -90,10 +90,10 @@ impl Cache {
     }
 
     // Sets A Value In Redis Cache
-    pub async fn set(
+    pub async fn set<T: Display>(
         pool: &State<Redis>,
         group: &str,
-        key: String,
+        key: T,
         value: String,
     ) -> Result<(), Error> {
         tracing::info!(
@@ -117,7 +117,7 @@ impl Cache {
     }
 
     // Deletes A Value From Redis Cache
-    pub async fn delete(pool: &State<Redis>, group: &str, key: String) -> Result<(), Error> {
+    pub async fn delete<T: Display>(pool: &State<Redis>, group: &str, key: T) -> Result<(), Error> {
         tracing::info!(
             "[Cache] ⚙️ Deleting Key From Redis Cache: {:#?}",
             format!("{}:{}", group, key)

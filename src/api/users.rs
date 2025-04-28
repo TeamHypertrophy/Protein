@@ -58,7 +58,7 @@ pub async fn get_user(
     redis: &State<Redis>,
 ) -> Result<Json<User>, Error> {
     // Check Cache
-    let cache: Value = Cache::get(redis, "user", user_id.to_string()).await?;
+    let cache: Value = Cache::get(redis, "user", user_id).await?;
 
     // If Cache is Null, Fetch From Database
     if cache.is_null() {
@@ -69,7 +69,7 @@ pub async fn get_user(
         let user = User::find(user_id, connection).await?;
 
         // Set User in Cache
-        Cache::set(redis, "user", user_id.to_string(), Cache::serialize(&user)?).await?;
+        Cache::set(redis, "user", user_id, Cache::serialize(&user)?).await?;
 
         Ok(Json(user))
     } else {
@@ -136,19 +136,13 @@ pub async fn signup(
     let api_key = APIKey::generate(&result, connection).await?;
 
     // Set New User in Cache
-    Cache::set(
-        redis,
-        "user",
-        result.user_id.to_string(),
-        Cache::serialize(&result)?,
-    )
-    .await?;
+    Cache::set(redis, "user", result.user_id, Cache::serialize(&result)?).await?;
 
     // Set API Key In Cache
     Cache::set(
         redis,
         "api_key",
-        api_key.api_key.to_string(),
+        api_key.api_key,
         Cache::serialize(&api_key)?,
     )
     .await?;
@@ -210,7 +204,7 @@ pub async fn verify_email(
         Cache::set(
             redis,
             "user",
-            verified_user.user_id.to_string(),
+            verified_user.user_id,
             Cache::serialize(&verified_user)?,
         )
         .await?;
@@ -292,13 +286,7 @@ pub async fn login(
                 let new = APIKey::generate(&result, connection).await?;
 
                 // Set API Key in Cache
-                Cache::set(
-                    redis,
-                    "api_key",
-                    new.api_key.to_string(),
-                    Cache::serialize(&new)?,
-                )
-                .await?;
+                Cache::set(redis, "api_key", new.api_key, Cache::serialize(&new)?).await?;
 
                 return Ok(Json(json!({
                     "status": 401,
@@ -308,19 +296,13 @@ pub async fn login(
         };
 
         // Set User in Cache
-        Cache::set(
-            redis,
-            "user",
-            result.user_id.to_string(),
-            Cache::serialize(&result)?,
-        )
-        .await?;
+        Cache::set(redis, "user", result.user_id, Cache::serialize(&result)?).await?;
 
         // Set API Key in Cache
         Cache::set(
             redis,
             "api_key",
-            api_key.api_key.to_string(),
+            api_key.api_key,
             Cache::serialize(&api_key)?,
         )
         .await?;
@@ -341,13 +323,7 @@ pub async fn login(
             .await?;
 
             // Update Cache
-            Cache::set(
-                redis,
-                "user",
-                data.user_id.to_string(),
-                Cache::serialize(&data)?,
-            )
-            .await?;
+            Cache::set(redis, "user", data.user_id, Cache::serialize(&data)?).await?;
 
             // Send Email
             rocket::tokio::task::spawn(async move {
@@ -385,7 +361,7 @@ pub async fn login(
             Cache::set(
                 redis,
                 "user",
-                mfa_user.user_id.to_string(),
+                mfa_user.user_id,
                 Cache::serialize(&mfa_user)?,
             )
             .await?;
@@ -459,7 +435,7 @@ pub async fn delete_user(
     // Delete User
     let user = User::delete(user_id, connection).await?;
 
-    Cache::delete(redis, "user", user_id.to_string()).await?;
+    Cache::delete(redis, "user", user_id).await?;
 
     // send account deletion email here
     let receipent = user.clone();
@@ -511,13 +487,7 @@ pub async fn update_user(
     let updated_user = User::update(user_id, user.into_inner(), connection).await?;
 
     // Update Cache With User
-    Cache::set(
-        redis,
-        "user",
-        user_id.to_string(),
-        Cache::serialize(&updated_user)?,
-    )
-    .await?;
+    Cache::set(redis, "user", user_id, Cache::serialize(&updated_user)?).await?;
 
     // Send Webhook
     let discord_user = updated_user.clone();
@@ -578,13 +548,7 @@ pub async fn update_user_password(
     let updated_user = User::update_password(user_id, &password_hash, connection).await?;
 
     // Update Cache With User
-    Cache::set(
-        redis,
-        "user",
-        user_id.to_string(),
-        Cache::serialize(&updated_user)?,
-    )
-    .await?;
+    Cache::set(redis, "user", user_id, Cache::serialize(&updated_user)?).await?;
 
     // Send Email
     let receipent = updated_user.clone();
@@ -641,7 +605,7 @@ pub async fn request_password_reset(
         Cache::set(
             redis,
             "user",
-            mfa_user.user_id.to_string(),
+            mfa_user.user_id,
             Cache::serialize(&mfa_user)?,
         )
         .await?;
@@ -731,7 +695,7 @@ pub async fn reset_password(
     Cache::set(
         redis,
         "user",
-        updated_user.user_id.to_string(),
+        updated_user.user_id,
         Cache::serialize(&updated_user)?,
     )
     .await?;
@@ -871,13 +835,7 @@ pub async fn enable_mfa(
     let mfa_user = User::enable_mfa(user_id, connection).await?;
 
     // Update Cache
-    Cache::set(
-        redis,
-        "user",
-        user_id.to_string(),
-        Cache::serialize(&mfa_user)?,
-    )
-    .await?;
+    Cache::set(redis, "user", user_id, Cache::serialize(&mfa_user)?).await?;
 
     // Send MFA Verification Link
     let verification_link = format!(
@@ -940,13 +898,7 @@ pub async fn password_request_check_code(
             let new = APIKey::generate(&user, connection).await?;
 
             // Set API Key in Cache
-            Cache::set(
-                redis,
-                "api_key",
-                new.api_key.to_string(),
-                Cache::serialize(&new)?,
-            )
-            .await?;
+            Cache::set(redis, "api_key", new.api_key, Cache::serialize(&new)?).await?;
 
             return Ok(Json(json!({
                 "status": 401,
@@ -981,13 +933,7 @@ pub async fn password_request_check_code(
                 let result = User::reset_mfa(user_id, connection).await?;
 
                 // Update Cache
-                Cache::set(
-                    redis,
-                    "user",
-                    user_id.to_string(),
-                    Cache::serialize(&result)?,
-                )
-                .await?;
+                Cache::set(redis, "user", user_id, Cache::serialize(&result)?).await?;
 
                 return Ok(Json(json!(
                     {
@@ -1040,13 +986,7 @@ pub async fn check_mfa(
             let new = APIKey::generate(&user, connection).await?;
 
             // Set API Key in Cache
-            Cache::set(
-                redis,
-                "api_key",
-                new.api_key.to_string(),
-                Cache::serialize(&new)?,
-            )
-            .await?;
+            Cache::set(redis, "api_key", new.api_key, Cache::serialize(&new)?).await?;
 
             return Ok(Json(json!({
                 "status": 401,
@@ -1081,13 +1021,7 @@ pub async fn check_mfa(
                 let result = User::reset_mfa(user_id, connection).await?;
 
                 // Update Cache
-                Cache::set(
-                    redis,
-                    "user",
-                    user_id.to_string(),
-                    Cache::serialize(&result)?,
-                )
-                .await?;
+                Cache::set(redis, "user", user_id, Cache::serialize(&result)?).await?;
 
                 if result.last_login_ip != ip_address {
                     let receipent = result.clone();
@@ -1157,7 +1091,7 @@ pub async fn verify_mfa(
         Cache::set(
             redis,
             "user",
-            verified_user.user_id.to_string(),
+            verified_user.user_id,
             Cache::serialize(&verified_user)?,
         )
         .await?;
@@ -1186,7 +1120,7 @@ pub async fn disable_mfa(
 
     let user = User::disable_mfa(user_id, connection).await?;
 
-    Cache::set(redis, "user", user_id.to_string(), Cache::serialize(&user)?).await?;
+    Cache::set(redis, "user", user_id, Cache::serialize(&user)?).await?;
 
     let receipent = user.clone();
     let mail = mailer.inner().clone();

@@ -49,7 +49,7 @@ pub async fn get_api_key(
     Cache::set(
         redis,
         "api_key",
-        api_key.api_key.to_string(),
+        api_key.api_key,
         Cache::serialize(&api_key)?,
     )
     .await?;
@@ -81,13 +81,7 @@ pub async fn create_api_key(
     let new = APIKey::generate(&user, connection).await?;
 
     // Store The API Key In Redis
-    Cache::set(
-        redis,
-        "api_key",
-        new.api_key.to_string(),
-        Cache::serialize(&new)?,
-    )
-    .await?;
+    Cache::set(redis, "api_key", new.api_key, Cache::serialize(&new)?).await?;
 
     Ok(Json(new))
 }

@@ -43,7 +43,7 @@ pub async fn get_profile(
     redis: &State<Redis>,
 ) -> Result<Json<Profile>, Error> {
     // Check Cache
-    let cache: Value = Cache::get(redis, "profile", user_id.to_string()).await?;
+    let cache: Value = Cache::get(redis, "profile", user_id).await?;
 
     if cache.is_null() {
         // Create Database Connection
@@ -56,13 +56,7 @@ pub async fn get_profile(
         let profile = Profile::find(&user, connection).await?;
 
         // Cache Profile
-        Cache::set(
-            redis,
-            "profile",
-            user_id.to_string(),
-            Cache::serialize(&profile)?,
-        )
-        .await?;
+        Cache::set(redis, "profile", user_id, Cache::serialize(&profile)?).await?;
 
         Ok(Json(profile))
     } else {
@@ -110,13 +104,7 @@ pub async fn create_profile(
     let result = Profile::create(profile.into_inner(), connection).await?;
 
     // Cache Profile
-    Cache::set(
-        redis,
-        "profile",
-        user_id.to_string(),
-        Cache::serialize(&result)?,
-    )
-    .await?;
+    Cache::set(redis, "profile", user_id, Cache::serialize(&result)?).await?;
 
     Ok(Json(result))
 }
@@ -139,13 +127,7 @@ pub async fn update_profile(
 
     let result = Profile::update(user_id, profile.into_inner(), connection).await?;
 
-    Cache::set(
-        redis,
-        "profile",
-        user_id.to_string(),
-        Cache::serialize(&result)?,
-    )
-    .await?;
+    Cache::set(redis, "profile", user_id, Cache::serialize(&result)?).await?;
 
     Ok(Json(result))
 }
@@ -190,13 +172,7 @@ pub async fn upload_avatar(
 
     let profile = Profile::upload_avatar(user_id, url, connection).await?;
 
-    Cache::set(
-        redis,
-        "profile",
-        user_id.to_string(),
-        Cache::serialize(&profile)?,
-    )
-    .await?;
+    Cache::set(redis, "profile", user_id, Cache::serialize(&profile)?).await?;
 
     Ok(Json(profile))
 }
@@ -213,7 +189,7 @@ pub async fn delete_profile(
 
     Profile::delete(user_id, connection).await?;
 
-    Cache::delete(redis, "profile", user_id.to_string()).await?;
+    Cache::delete(redis, "profile", user_id).await?;
 
     Ok(status::Accepted(json!({
         "status": 200,

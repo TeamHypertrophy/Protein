@@ -18,6 +18,7 @@ use uuid::Uuid;
 
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
+    cache::redis::{Cache, Redis},
     db,
     db::DB,
     errors::Error,
@@ -31,14 +32,25 @@ pub async fn get_custom_exercise(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     user_id: Uuid,
     exercise_id: i64,
 ) -> Result<Json<CustomExercise>, Error> {
-    let connection = &mut db::get(pool).await?;
+    let cache: Value = Cache::get(redis, "custom", exercise_id).await?;
 
-    let exercise = CustomExercise::find(user_id, exercise_id, connection).await?;
+    if cache.is_null() {
+        let connection = &mut db::get(pool).await?;
 
-    Ok(Json(exercise))
+        let exercise = CustomExercise::find(user_id, exercise_id, connection).await?;
+
+        Cache::set(redis, "custom", exercise_id, Cache::serialize(&exercise)?).await?;
+
+        Ok(Json(exercise))
+    } else {
+        let exercise: CustomExercise = Cache::deserialize(cache)?;
+
+        Ok(Json(exercise))
+    }
 }
 
 #[post("/search", format = "application/json", data = "<data>")]
@@ -91,6 +103,7 @@ pub async fn update_custom_exercise(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     user_id: Uuid,
     exercise_id: i64,
     exercise: Json<UpdateCustomExercise>,
@@ -100,6 +113,8 @@ pub async fn update_custom_exercise(
     let result =
         CustomExercise::update(user_id, exercise_id, exercise.into_inner(), connection).await?;
 
+    Cache::set(redis, "custom", exercise_id, Cache::serialize(&result)?).await?;
+
     Ok(Json(result))
 }
 
@@ -107,13 +122,22 @@ pub async fn update_custom_exercise(
 pub async fn create_custom_exercise(
     _r: RateLimit<'_>,
     _auth: API,
-    user_id: Uuid,
     pool: &State<DB>,
+    redis: &State<Redis>,
+    user_id: Uuid,
     exercise: Json<NewCustomExercise>,
 ) -> Result<Json<CustomExercise>, Error> {
     let connection = &mut db::get(pool).await?;
 
     let result = CustomExercise::create(connection, exercise.into_inner()).await?;
+
+    Cache::set(
+        redis,
+        "custom",
+        result.exercise_id,
+        Cache::serialize(&result)?,
+    )
+    .await?;
 
     Ok(Json(result))
 }
@@ -123,12 +147,15 @@ pub async fn delete_custom_exercise(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     user_id: Uuid,
     exercise_id: i64,
 ) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get(pool).await?;
 
     CustomExercise::delete(user_id, exercise_id, connection).await?;
+
+    Cache::delete(redis, "custom", exercise_id).await?;
 
     Ok(status::Accepted(json!({
         "status": 200,
