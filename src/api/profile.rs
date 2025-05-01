@@ -11,6 +11,7 @@ ______          _       _
 
 use rocket::{
     State,
+    form::Form,
     fs::TempFile,
     get, post,
     response::status,
@@ -139,7 +140,7 @@ pub async fn upload_avatar(
     pool: &State<DB>,
     redis: &State<Redis>,
     config: &State<Config>,
-    mut avatar: TempFile<'_>,
+    mut avatar: Form<TempFile<'_>>,
     user_id: Uuid,
 ) -> Result<Json<Profile>, Error> {
     if avatar.len() > MAX_AVATAR_SIZE {

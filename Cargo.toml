@@ -16,11 +16,7 @@ rocket-governor = { version = "0.2.0-rc.4", features = [
 rocket_prometheus = "0.10.1"
 async-fs = "2.1.2"
 # -- Diesel Requirements (Database)
-diesel = { version = "2.2.7", features = [
-    "postgres",
-    "uuid",
-    "chrono",
-] }
+diesel = { version = "2.2.10", features = ["postgres", "uuid", "chrono"] }
 diesel-derive-enum = { version = "2.1.0", features = ["postgres"] }
 diesel-async = { version = "0.5.2", features = [
     "postgres",
@@ -32,8 +28,8 @@ diesel_migrations = { version = "2.2.0" }
 tokio-cron-scheduler = { version = "0.13.0", features = ["signal", "english"] }
 # -- Serialization
 serde = { version = "1.0.219", features = ["derive"] }
-uuid = { version = "1.15.1", features = ["fast-rng"] }
-chrono = { version = "0.4.40", features = ["serde"] }
+uuid = { version = "1.16.0", features = ["fast-rng"] }
+chrono = { version = "0.4.41", features = ["serde"] }
 user-agent-parser = { version = "0.3.6", features = ["rocket"] }
 iso8061-timestamp = "0.1"
 # -- Validation
@@ -49,16 +45,13 @@ tracing-appender = "0.2.3"
 # -- Redis
 fred = { version = "10.1.0", features = ["serde-json", "i-keys"] }
 ## -- Communication
-rocket-sentry = "0.18.0"
+rocket-sentry = "0.19.0"
 discord-webhook2 = "0.4.3"
 ## -- Emailing
-lettre = { version = "0.11.15", features = [
-    "tokio1",
-    "tokio1-native-tls",
-] }
-askama = "0.12.1"
+askama = "0.14.0"
+lettre = { version = "0.11.15", features = ["tokio1", "tokio1-native-tls"] }
 # -- Random
-rand = "0.9.0"
+rand = "0.9.1"
 
 [workspace.metadata.typos]
 files.extend-exclude = ["regexes.yaml"]
