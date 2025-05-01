@@ -72,7 +72,6 @@ pub async fn get_all_profiles(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
-    redis: &State<Redis>,
 ) -> Result<Json<Vec<Profile>>, Error> {
     // Creating Database Connection
     let connection = &mut db::get(pool).await?;

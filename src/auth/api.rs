@@ -19,10 +19,7 @@ use uuid::Uuid;
 use crate::{
     db,
     errors::Error,
-    models::{
-        keys::{APIKey, NewAPIKeyLog},
-        user::Role,
-    },
+    models::{keys::APIKey, user::Role},
     utils::admin,
 };
 

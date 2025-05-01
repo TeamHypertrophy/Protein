@@ -583,9 +583,7 @@ pub async fn update_user_password(
 pub async fn request_password_reset(
     _r: RateLimit<'_>,
     _auth: API,
-    ip: &ClientRealAddr,
     mailer: &State<Email>,
-    os: OS<'_>,
     pool: &State<DB>,
     redis: &State<Redis>,
     config: &State<Config>,
@@ -677,7 +675,7 @@ pub async fn reset_password(
     let user = User::find_by_email(data.email.clone(), connection).await?;
 
     match user.mfa_code {
-        Some(code) => {
+        Some(_code) => {
             return Err(Error::Authorization(
                 "MFA Code Found, Please Verify To Reset".to_string(),
             ));
@@ -740,7 +738,6 @@ pub async fn resend_mfa(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
-    redis: &State<Redis>,
     mailer: &State<Email>,
     config: &State<Config>,
     user_id: Uuid,
@@ -876,10 +873,6 @@ pub async fn password_request_check_code(
     _r: RateLimit<'_>,
     pool: &State<DB>,
     redis: &State<Redis>,
-    mailer: &State<Email>,
-    config: &State<Config>,
-    ip: &ClientRealAddr,
-    os: OS<'_>,
     user_id: Uuid,
     code: &str,
 ) -> Result<Json<Value>, Error> {

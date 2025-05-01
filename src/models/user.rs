@@ -10,7 +10,7 @@ ______          _       _
 */
 
 use uuid::Uuid;
-use diesel::{debug_query, prelude::*};
+use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use diesel_async::RunQueryDsl;
 use validator::Validate;
