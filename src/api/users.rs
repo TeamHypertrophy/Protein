@@ -582,7 +582,6 @@ pub async fn update_user_password(
 #[get("/auth/request-password-reset?<email>", format = "application/json")]
 pub async fn request_password_reset(
     _r: RateLimit<'_>,
-    _auth: API,
     mailer: &State<Email>,
     pool: &State<DB>,
     redis: &State<Redis>,
@@ -1138,6 +1137,19 @@ pub async fn disable_mfa(
             Err(e) => tracing::info!("[Email] ❌ Failed Sending MFA Notification Email: {}", e),
         }
     });
+
+    Ok(Json(user))
+}
+
+#[get("/auth/email?<email>", format = "application/json")]
+pub async fn get_user_by_email(
+    _r: RateLimit<'_>,
+    pool: &State<DB>,
+    email: String,
+) -> Result<Json<User>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let user = User::find_by_email(email, connection).await?;
 
     Ok(Json(user))
 }

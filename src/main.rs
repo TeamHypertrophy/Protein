@@ -358,6 +358,7 @@ async fn protein() -> _ {
                 api::users::update_user,
                 api::users::update_user_password,
                 api::users::verify_email,
+                api::users::get_user_by_email,
                 api::users::request_password_reset,
                 api::users::password_request_check_code,
                 api::users::reset_password,
