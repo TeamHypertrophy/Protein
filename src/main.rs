@@ -300,6 +300,7 @@ async fn protein() -> _ {
                     // Users
                     "get_all_users",
                     "forgot_password_email",
+                    "elevate_user",
                     // Water Logs
                     "get_all_water_logs",
                     // Workouts
@@ -369,6 +370,7 @@ async fn protein() -> _ {
                 api::users::verify_mfa,
                 api::users::disable_mfa,
                 api::users::resend_mfa,
+                api::users::elevate_user
             ],
         )
         .mount(

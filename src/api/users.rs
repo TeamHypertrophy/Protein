@@ -1153,3 +1153,21 @@ pub async fn get_user_by_email(
 
     Ok(Json(user))
 }
+
+#[get("/auth/elevate/<user>?<user_id>", format = "application/json")]
+pub async fn elevate_user(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DB>,
+    redis: &State<Redis>,
+    user: Uuid,
+    user_id: Uuid,
+) -> Result<Json<User>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let result = User::elevate(user, connection).await?;
+
+    Cache::set(redis, "user", result.user_id, Cache::serialize(&result)?).await?;
+
+    Ok(Json(result))
+}

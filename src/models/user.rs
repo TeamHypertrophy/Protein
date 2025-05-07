@@ -387,4 +387,16 @@ impl User {
                 Error::Database(error.to_string())
             })
     }
+
+    pub async fn elevate(id: Uuid, connection: &mut DBConnection) -> Result<User, Error> {
+        diesel::update(users::table)
+            .filter(users::user_id.eq(id))
+            .set(users::role.eq(Role::Admin))
+            .get_result::<User>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
 }
