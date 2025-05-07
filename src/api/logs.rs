@@ -109,7 +109,7 @@ pub async fn create_exercise_log(
     Ok(Json(log))
 }
 
-#[post(
+#[get(
     "/exercise/delete/<exercise_id>?<user_id>",
     format = "application/json"
 )]
@@ -213,7 +213,7 @@ pub async fn create_workout_log(
     Ok(Json(log))
 }
 
-#[post("/workout/delete/<workout_id>?<user_id>", format = "application/json")]
+#[get("/workout/delete/<workout_id>?<user_id>", format = "application/json")]
 pub async fn delete_workout_log(
     _r: RateLimit<'_>,
     _auth: API,

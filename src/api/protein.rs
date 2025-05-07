@@ -101,7 +101,7 @@ pub async fn create_protein_log(
     Ok(Json(result))
 }
 
-#[post("/delete/<log_id>?<user_id>", format = "application/json")]
+#[get("/delete/<log_id>?<user_id>", format = "application/json")]
 pub async fn delete_protein_log(
     _r: RateLimit<'_>,
     _auth: API,

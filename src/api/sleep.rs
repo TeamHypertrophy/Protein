@@ -100,7 +100,7 @@ pub async fn create_sleep_log(
     Ok(Json(result))
 }
 
-#[post("/delete/<log_id>?<user_id>", format = "application/json")]
+#[get("/delete/<log_id>?<user_id>", format = "application/json")]
 pub async fn delete_sleep_log(
     _r: RateLimit<'_>,
     _auth: API,

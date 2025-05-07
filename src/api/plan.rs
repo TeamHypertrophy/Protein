@@ -109,7 +109,7 @@ pub async fn create_workout_plan(
     Ok(Json(plan))
 }
 
-#[post("/delete/<plan_id>?<user_id>", format = "application/json")]
+#[get("/delete/<plan_id>?<user_id>", format = "application/json")]
 pub async fn delete_workout_plan(
     _r: RateLimit<'_>,
     _auth: API,
@@ -206,7 +206,7 @@ pub async fn create_workout_plan_log(
     Ok(Json(log))
 }
 
-#[post("/log/delete/<plan_id>?<user_id>", format = "application/json")]
+#[get("/log/delete/<plan_id>?<user_id>", format = "application/json")]
 pub async fn delete_workout_plan_log(
     _r: RateLimit<'_>,
     _auth: API,

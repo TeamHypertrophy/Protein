@@ -118,7 +118,7 @@ pub async fn create_custom_exercise(
     Ok(Json(result))
 }
 
-#[post("/delete/<exercise_id>?<user_id>", format = "application/json")]
+#[get("/delete/<exercise_id>?<user_id>", format = "application/json")]
 pub async fn delete_custom_exercise(
     _r: RateLimit<'_>,
     _auth: API,

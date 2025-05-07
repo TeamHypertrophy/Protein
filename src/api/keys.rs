@@ -128,7 +128,7 @@ pub async fn update_api_key(
     Ok(Json(result))
 }
 
-#[post("/delete/<api_key>", format = "application/json")]
+#[get("/delete/<api_key>", format = "application/json")]
 pub async fn delete_api_key(
     _r: RateLimit<'_>,
     _auth: API,
@@ -258,7 +258,7 @@ pub async fn update_api_key_log(
     Ok(Json(result))
 }
 
-#[post("/logs/delete/<log_id>", format = "application/json")]
+#[get("/logs/delete/<log_id>", format = "application/json")]
 pub async fn delete_api_key_log(
     _r: RateLimit<'_>,
     _auth: API,

@@ -106,7 +106,7 @@ pub async fn create_workout(
     Ok(Json(workout))
 }
 
-#[post("/delete/<workout_id>?<user_id>", format = "application/json")]
+#[get("/delete/<workout_id>?<user_id>", format = "application/json")]
 pub async fn delete_workout(
     _r: RateLimit<'_>,
     _auth: API,

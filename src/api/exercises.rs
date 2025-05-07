@@ -128,7 +128,7 @@ pub async fn create_exercise(
     Ok(Json(exercise))
 }
 
-#[post("/delete/<exercise_id>", format = "application/json")]
+#[get("/delete/<exercise_id>", format = "application/json")]
 pub async fn delete_exercise(
     _r: RateLimit<'_>,
     _auth: API,

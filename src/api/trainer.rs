@@ -91,7 +91,7 @@ pub async fn create_trainer(
     Ok(Json(trainer))
 }
 
-#[post("/delete?<trainer_id>", format = "application/json")]
+#[get("/delete?<trainer_id>", format = "application/json")]
 pub async fn delete_trainer(
     _r: RateLimit<'_>,
     _auth: API,
@@ -194,7 +194,7 @@ pub async fn create_announcement(
     Ok(Json(announcement))
 }
 
-#[post(
+#[get(
     "/announcement/delete/<announcement_id>?<trainer_id>",
     format = "application/json"
 )]
