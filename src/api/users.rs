@@ -312,15 +312,10 @@ pub async fn login(
             let receipent = result.clone();
             let mail = mailer.inner().clone();
             let smtp = config.inner().clone();
+            let now = chrono::Utc::now().naive_utc();
 
             // Update User With New IP Address
-            let data = User::update_ip_info(
-                result.user_id,
-                &ip_address,
-                chrono::Utc::now().naive_utc(),
-                connection,
-            )
-            .await?;
+            let data = User::update_ip_info(result.user_id, &ip_address, &now, connection).await?;
 
             // Update Cache
             Cache::set(redis, "user", data.user_id, Cache::serialize(&data)?).await?;
@@ -329,7 +324,7 @@ pub async fn login(
             rocket::tokio::task::spawn(async move {
                 let body = Login {
                     name: &receipent.username,
-                    time: &chrono::Utc::now().naive_utc().to_string(),
+                    time: &email::format_date(&now),
                     ip_address: &ip_address,
                     device: &device,
                 };
@@ -1019,11 +1014,12 @@ pub async fn check_mfa(
                     let receipent = result.clone();
                     let mail = mailer.inner().clone();
                     let smtp = config.inner().clone();
+                    let now = chrono::Utc::now().naive_utc();
 
                     rocket::tokio::task::spawn(async move {
                         let body = Login {
                             name: &receipent.username,
-                            time: &chrono::Utc::now().naive_utc().to_string(),
+                            time: &email::format_date(&now),
                             ip_address: &ip_address,
                             device: &device,
                         };

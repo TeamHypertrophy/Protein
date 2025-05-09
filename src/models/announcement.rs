@@ -18,6 +18,7 @@ use chrono::NaiveDateTime;
 use crate::{
     db::DBConnection,
     errors::Error,
+    models::trainer::Trainer,
     schema::{
         trainer_announcements,
         trainer_announcements::dsl::{announcement_id, trainer_id},
@@ -140,6 +141,25 @@ impl TrainerAnnouncement {
                 Error::Database(error.to_string())
             })
     }
+
+    pub async fn for_user(
+        user: Uuid,
+        connection: &mut DBConnection,
+    ) -> Result<Vec<TrainerAnnouncement>, Error> {
+        let trainers = Trainer::for_user(user, connection).await?;
+
+        trainer_announcements::table
+            .filter(trainer_id.eq_any(trainers.iter().map(|t| t.user_id)))
+            .filter(trainer_announcements::visibility.eq(true))
+            .order_by(trainer_announcements::created_at.desc())
+            .select(TrainerAnnouncement::as_select())
+            .load(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
 }
 
 #[derive(AsChangeset)]
@@ -148,8 +168,9 @@ impl TrainerAnnouncement {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateTrainerAnnouncement {
     pub title: Option<String>,
+    pub visibility: Option<bool>,
     pub content: Option<String>,
-    pub updated_at: Option<NaiveDateTime>,
+    pub pinned: Option<bool>,
 }
 
 #[derive(AsChangeset)]

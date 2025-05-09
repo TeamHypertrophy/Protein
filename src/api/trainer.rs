@@ -50,6 +50,20 @@ pub async fn get_trainer(
     Ok(Json(trainer))
 }
 
+#[get("/by?<user_id>", format = "application/json")]
+pub async fn get_trainer_by_user(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DB>,
+    user_id: Uuid,
+) -> Result<Json<Trainer>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let trainer = Trainer::by_user(user_id, connection).await?;
+
+    Ok(Json(trainer))
+}
+
 #[get("/all", format = "application/json")]
 pub async fn get_all_trainers(
     _r: RateLimit<'_>,
@@ -61,6 +75,36 @@ pub async fn get_all_trainers(
     let trainers = Trainer::all(connection).await?;
 
     Ok(Json(trainers))
+}
+
+#[get("/add-client/<trainer>?<user_id>", format = "application/json")]
+pub async fn add_client(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DB>,
+    trainer: Uuid,
+    user_id: Uuid,
+) -> Result<Json<Trainer>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let trainer = Trainer::add_client(trainer, user_id, connection).await?;
+
+    Ok(Json(trainer))
+}
+
+#[get("/remove-client/<trainer>?<user_id>", format = "application/json")]
+pub async fn remove_client(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DB>,
+    trainer: Uuid,
+    user_id: Uuid,
+) -> Result<Json<Trainer>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let trainer = Trainer::remove_client(trainer, user_id, connection).await?;
+
+    Ok(Json(trainer))
 }
 
 #[post("/update?<trainer_id>", format = "application/json", data = "<data>")]
@@ -406,4 +450,51 @@ pub async fn deny_trainer(
     });
 
     Ok(Json(trainer))
+}
+
+#[get("/for?<user_id>", format = "application/json")]
+pub async fn get_trainers_for_user(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DB>,
+    user_id: Uuid,
+) -> Result<Json<Vec<Trainer>>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let trainers = Trainer::for_user(user_id, connection).await?;
+
+    Ok(Json(trainers))
+}
+
+#[get("/announcement/for?<user_id>", format = "application/json")]
+pub async fn get_announcements_for_user(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DB>,
+    user_id: Uuid,
+) -> Result<Json<Vec<TrainerAnnouncement>>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let announcements = TrainerAnnouncement::for_user(user_id, connection).await?;
+
+    Ok(Json(announcements))
+}
+
+#[get("/is-followed-by/<trainer>?<user_id>", format = "application/json")]
+pub async fn is_trainer_followed_by_user(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DB>,
+    trainer: Uuid,
+    user_id: Uuid,
+) -> Result<Json<Value>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let trainer = Trainer::is_followed_by_user(trainer, user_id, connection).await?;
+
+    Ok(Json(json!({
+        "status": 200,
+        "message": "Trainer Followed Status",
+        "followed": trainer,
+    })))
 }

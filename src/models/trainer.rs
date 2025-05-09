@@ -10,7 +10,7 @@ ______          _       _
 */
 
 use uuid::Uuid;
-use diesel::prelude::*;
+use diesel::{dsl::sql, prelude::*};
 use diesel_async::RunQueryDsl;
 use diesel_derive_enum::DbEnum;
 use rocket::serde::{Deserialize, Serialize};
@@ -165,6 +165,83 @@ impl Trainer {
         diesel::delete(trainers::table)
             .filter(trainer_id.eq(trainer))
             .execute(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
+
+    pub async fn for_user(
+        user: Uuid,
+        connection: &mut DBConnection,
+    ) -> Result<Vec<Trainer>, Error> {
+        let target = vec![Some(user)];
+
+        trainers::table
+            .filter(trainers::clients.contains(target))
+            .select(Trainer::as_select())
+            .load(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
+
+    pub async fn by_user(user: Uuid, connection: &mut DBConnection) -> Result<Trainer, Error> {
+        trainers::table
+            .filter(trainers::user_id.eq(user))
+            .first(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
+
+    pub async fn add_client(
+        trainer: Uuid,
+        user: Uuid,
+        connection: &mut DBConnection,
+    ) -> Result<Trainer, Error> {
+        diesel::update(trainers::table)
+            .filter(trainers::user_id.eq(trainer))
+            .set(trainers::clients.eq(sql(&format!("array_append(clients, '{}')", user))))
+            .get_result::<Trainer>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
+
+    pub async fn remove_client(
+        trainer: Uuid,
+        user: Uuid,
+        connection: &mut DBConnection,
+    ) -> Result<Trainer, Error> {
+        diesel::update(trainers::table)
+            .filter(trainers::user_id.eq(trainer))
+            .set(trainers::clients.eq(sql(&format!("array_remove(clients, '{}')", user))))
+            .get_result::<Trainer>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
+
+    pub async fn is_followed_by_user(
+        trainer: Uuid,
+        user: Uuid,
+        connection: &mut DBConnection,
+    ) -> Result<bool, Error> {
+        trainers::table
+            .filter(trainers::user_id.eq(trainer))
+            .filter(trainers::clients.contains(vec![Some(user)]))
+            .select(sql::<diesel::sql_types::Bool>("true"))
+            .first(connection)
             .await
             .map_err(|error| {
                 tracing::error!("[!] PostgreSQL Error: {:?}", error);

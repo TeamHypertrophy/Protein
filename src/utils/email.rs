@@ -9,6 +9,7 @@ ______          _       _
     Made with ❤️
 */
 
+use chrono::NaiveDateTime;
 use rocket_client_addr::ClientRealAddr;
 use user_agent_parser::OS;
 use lettre::{
@@ -100,9 +101,23 @@ pub fn get_ip_address(address: &ClientRealAddr) -> Result<String, Error> {
 
 pub fn get_user_agent(os: &OS) -> String {
     // Get User Agent
-    let name = os.name.clone().unwrap_or("No".to_owned().into());
-    let version = os.major.clone().unwrap_or("Device".to_owned().into());
+    let name = os.name.clone().unwrap_or("Device".to_owned().into());
+    let version = os.major.clone().unwrap_or("Not Found".to_owned().into());
 
     let user_agent = format!("{} {}", name, version);
     user_agent
+}
+
+pub fn format_date(date: &NaiveDateTime) -> String {
+    // %A = Day of the week
+    // %B = Month of the year
+    // %d = Day of the month
+    // %Y = Year
+    // %H = Hour
+    // %M = Minute
+    // %S = Second
+    // %p = AM/PM
+    // For Example:
+    // Sunday, January 01 2026 at 12:00:00 AM
+    date.format("%A, %B %d %Y at %H:%M:%S %p").to_string()
 }

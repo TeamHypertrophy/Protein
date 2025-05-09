@@ -271,7 +271,7 @@ impl User {
     pub async fn update_ip_info(
         id: Uuid,
         new_ip: &String,
-        new_last_login: NaiveDateTime,
+        new_last_login: &NaiveDateTime,
         connection: &mut DBConnection,
     ) -> Result<User, Error> {
         diesel::update(users::table)
