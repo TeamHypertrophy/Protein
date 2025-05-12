@@ -218,6 +218,38 @@ async fn protein() -> _ {
                     }
                 };
 
+            let db = pool.clone();
+            let cache = redis.clone();
+
+            let cacher =
+                match Job::new_async(constants::EXERCISE_CACHE_JOB_INTERVAL, move |_uuid, _l| {
+                    Box::pin({
+                        let db = db.clone();
+                        let cache = cache.clone();
+                        async move {
+                            match utils::jobs::cache_exercises(&db, &cache).await {
+                                Ok(_) => tracing::info!("[Scheduler] ✅ Exercises Cached!"),
+                                Err(error) => tracing::error!(
+                                    "[Scheduler] ❌ Error Caching Exercises: {:?}",
+                                    error
+                                ),
+                            }
+                        }
+                    })
+                }) {
+                    Ok(job) => {
+                        tracing::info!("[Scheduler] ✅ Cache Exercises Job Created!");
+                        job
+                    }
+                    Err(error) => {
+                        tracing::error!(
+                            "[Scheduler] ❌ Error Creating Cache Exercises Job: {:?}",
+                            error
+                        );
+                        std::process::exit(1)
+                    }
+                };
+
             match scheduler.add(job).await {
                 Ok(_) => tracing::info!("[Scheduler] ✅ API Key Job Added To Scheduler!"),
                 Err(error) => {
@@ -234,6 +266,17 @@ async fn protein() -> _ {
                 Err(error) => {
                     tracing::error!(
                         "[Scheduler] ❌ Error Adding Cleanup Job To Scheduler: {:?}",
+                        error
+                    );
+                    std::process::exit(1)
+                }
+            }
+
+            match scheduler.add(cacher).await {
+                Ok(_) => tracing::info!("[Scheduler] ✅ Cache Exercises Job Added To Scheduler!"),
+                Err(error) => {
+                    tracing::error!(
+                        "[Scheduler] ❌ Error Adding Cache Exercises Job To Scheduler: {:?}",
                         error
                     );
                     std::process::exit(1)

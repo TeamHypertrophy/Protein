@@ -17,7 +17,7 @@ use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
 use crate::{
-    db::DBConnection,
+    db::Conn,
     errors::Error,
     models::user::User,
     schema::{
@@ -64,11 +64,7 @@ pub struct Workout {
 }
 
 impl Workout {
-    pub async fn find(
-        user: &User,
-        id: Uuid,
-        connection: &mut DBConnection,
-    ) -> Result<Workout, Error> {
+    pub async fn find(user: &User, id: Uuid, connection: &mut Conn) -> Result<Workout, Error> {
         Workout::belonging_to(user)
             .select(Workout::as_select())
             .filter(workout_id.eq(id))
@@ -80,7 +76,7 @@ impl Workout {
             })
     }
 
-    pub async fn all(connection: &mut DBConnection) -> Result<Vec<Workout>, Error> {
+    pub async fn all(connection: &mut Conn) -> Result<Vec<Workout>, Error> {
         workouts::table
             .select(Workout::as_select())
             .load(connection)
@@ -91,10 +87,7 @@ impl Workout {
             })
     }
 
-    pub async fn user_all(
-        user: Uuid,
-        connection: &mut DBConnection,
-    ) -> Result<Vec<Workout>, Error> {
+    pub async fn user_all(user: Uuid, connection: &mut Conn) -> Result<Vec<Workout>, Error> {
         workouts::table
             .filter(user_id.eq(user))
             .select(Workout::as_select())
@@ -110,7 +103,7 @@ impl Workout {
         user: Uuid,
         id: Uuid,
         data: UpdateWorkout,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<Workout, Error> {
         diesel::update(workouts::table)
             .filter(user_id.eq(user))
@@ -124,11 +117,7 @@ impl Workout {
             })
     }
 
-    pub async fn delete(
-        user: Uuid,
-        id: Uuid,
-        connection: &mut DBConnection,
-    ) -> Result<usize, Error> {
+    pub async fn delete(user: Uuid, id: Uuid, connection: &mut Conn) -> Result<usize, Error> {
         diesel::delete(workouts::table)
             .filter(user_id.eq(user))
             .filter(workout_id.eq(id))
@@ -140,7 +129,7 @@ impl Workout {
             })
     }
 
-    pub async fn create(data: NewWorkout, connection: &mut DBConnection) -> Result<Workout, Error> {
+    pub async fn create(data: NewWorkout, connection: &mut Conn) -> Result<Workout, Error> {
         diesel::insert_into(workouts::table)
             .values(&data)
             .get_result::<Workout>(connection)

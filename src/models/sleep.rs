@@ -16,7 +16,7 @@ use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
 use crate::{
-    db::DBConnection,
+    db::Conn,
     errors::Error,
     models::user::User,
     schema::{
@@ -53,11 +53,7 @@ pub struct SleepLog {
 }
 
 impl SleepLog {
-    pub async fn find(
-        user: Uuid,
-        id: i32,
-        connection: &mut DBConnection,
-    ) -> Result<SleepLog, Error> {
+    pub async fn find(user: Uuid, id: i32, connection: &mut Conn) -> Result<SleepLog, Error> {
         sleep_logs::table
             .filter(user_id.eq(user))
             .filter(log_id.eq(id))
@@ -70,7 +66,7 @@ impl SleepLog {
             })
     }
 
-    pub async fn all(connection: &mut DBConnection) -> Result<Vec<SleepLog>, Error> {
+    pub async fn all(connection: &mut Conn) -> Result<Vec<SleepLog>, Error> {
         sleep_logs::table
             .select(SleepLog::as_select())
             .load(connection)
@@ -81,10 +77,7 @@ impl SleepLog {
             })
     }
 
-    pub async fn user_all(
-        user: Uuid,
-        connection: &mut DBConnection,
-    ) -> Result<Vec<SleepLog>, Error> {
+    pub async fn user_all(user: Uuid, connection: &mut Conn) -> Result<Vec<SleepLog>, Error> {
         sleep_logs::table
             .filter(user_id.eq(user))
             .select(SleepLog::as_select())
@@ -100,7 +93,7 @@ impl SleepLog {
         user: Uuid,
         id: i32,
         data: UpdateSleepLog,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<SleepLog, Error> {
         diesel::update(sleep_logs::table)
             .filter(user_id.eq(user))
@@ -114,11 +107,7 @@ impl SleepLog {
             })
     }
 
-    pub async fn delete(
-        user: Uuid,
-        id: i32,
-        connection: &mut DBConnection,
-    ) -> Result<usize, Error> {
+    pub async fn delete(user: Uuid, id: i32, connection: &mut Conn) -> Result<usize, Error> {
         diesel::delete(sleep_logs::table)
             .filter(user_id.eq(user))
             .filter(log_id.eq(id))
@@ -130,10 +119,7 @@ impl SleepLog {
             })
     }
 
-    pub async fn create(
-        data: NewSleepLog,
-        connection: &mut DBConnection,
-    ) -> Result<SleepLog, Error> {
+    pub async fn create(data: NewSleepLog, connection: &mut Conn) -> Result<SleepLog, Error> {
         diesel::insert_into(sleep_logs::table)
             .values(&data)
             .get_result::<SleepLog>(connection)

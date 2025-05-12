@@ -14,7 +14,7 @@ use uuid::Uuid;
 use rocket::request::Request;
 
 use crate::{
-    db::DBConnection,
+    db::Conn,
     errors::Error,
     models::keys::{APIKeyLog, NewAPIKeyLog},
 };
@@ -51,7 +51,7 @@ pub struct RequestInfo {
 
 pub async fn generate_api_key_log(
     request: RequestInfo,
-    mut connection: DBConnection,
+    mut connection: Conn,
     api_key: Uuid,
     user_id: Uuid,
     status_code: i32,

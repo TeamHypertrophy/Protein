@@ -18,7 +18,7 @@ use chrono::NaiveDateTime;
 
 use crate::{
     constants::API_QUOTA_LIMIT,
-    db::DBConnection,
+    db::Conn,
     errors::Error,
     models::{
         trainer::Trainer,
@@ -88,7 +88,7 @@ pub struct UpdateRole {
 }
 
 impl APIKey {
-    pub async fn get(user: &User, connection: &mut DBConnection) -> Result<APIKey, Error> {
+    pub async fn get(user: &User, connection: &mut Conn) -> Result<APIKey, Error> {
         APIKey::belonging_to(user)
             .select(APIKey::as_select())
             .first(connection)
@@ -99,7 +99,7 @@ impl APIKey {
             })
     }
 
-    pub async fn get_current(user: &User, connection: &mut DBConnection) -> Result<APIKey, Error> {
+    pub async fn get_current(user: &User, connection: &mut Conn) -> Result<APIKey, Error> {
         APIKey::belonging_to(user)
             .select(APIKey::as_select())
             .filter(api_keys::status.eq(Status::Active))
@@ -111,7 +111,7 @@ impl APIKey {
             })
     }
 
-    pub async fn all(connection: &mut DBConnection) -> Result<Vec<APIKey>, Error> {
+    pub async fn all(connection: &mut Conn) -> Result<Vec<APIKey>, Error> {
         api_keys::table
             .select(APIKey::as_select())
             .load(connection)
@@ -122,7 +122,7 @@ impl APIKey {
             })
     }
 
-    pub async fn user_all(user: Uuid, connection: &mut DBConnection) -> Result<Vec<APIKey>, Error> {
+    pub async fn user_all(user: Uuid, connection: &mut Conn) -> Result<Vec<APIKey>, Error> {
         api_keys::table
             .filter(api_keys::user_id.eq(user))
             .select(APIKey::as_select())
@@ -137,7 +137,7 @@ impl APIKey {
     pub async fn revoke(
         key: Uuid,
         data: RevokeKey,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<APIKey, Error> {
         diesel::update(api_keys::table)
             .filter(api_keys::api_key.eq(key))
@@ -153,7 +153,7 @@ impl APIKey {
             })
     }
 
-    pub async fn generate(user: &User, connection: &mut DBConnection) -> Result<APIKey, Error> {
+    pub async fn generate(user: &User, connection: &mut Conn) -> Result<APIKey, Error> {
         diesel::insert_into(api_keys::table)
             .values(api_keys::user_id.eq(user.user_id))
             .get_result(connection)
@@ -167,7 +167,7 @@ impl APIKey {
     pub async fn update(
         key: Uuid,
         data: UpdateAPIKey,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<APIKey, Error> {
         diesel::update(api_keys::table)
             .filter(api_keys::api_key.eq(key))
@@ -183,7 +183,7 @@ impl APIKey {
     pub async fn change_role(
         key: Uuid,
         data: UpdateRole,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<APIKey, Error> {
         diesel::update(api_keys::table)
             .filter(api_keys::api_key.eq(key))
@@ -196,11 +196,7 @@ impl APIKey {
             })
     }
 
-    pub async fn increment(
-        key: Uuid,
-        original: i32,
-        connection: &mut DBConnection,
-    ) -> Result<(), Error> {
+    pub async fn increment(key: Uuid, original: i32, connection: &mut Conn) -> Result<(), Error> {
         diesel::update(api_keys::table)
             .filter(api_keys::api_key.eq(key))
             .set(api_keys::quota.eq(original + 1))
@@ -213,7 +209,7 @@ impl APIKey {
             })
     }
 
-    pub async fn delete(key: Uuid, connection: &mut DBConnection) -> Result<usize, Error> {
+    pub async fn delete(key: Uuid, connection: &mut Conn) -> Result<usize, Error> {
         diesel::delete(api_keys::table)
             .filter(api_keys::api_key.eq(key))
             .execute(connection)
@@ -224,7 +220,7 @@ impl APIKey {
             })
     }
 
-    pub async fn find(key: Uuid, connection: &mut DBConnection) -> Result<APIKey, Error> {
+    pub async fn find(key: Uuid, connection: &mut Conn) -> Result<APIKey, Error> {
         api_keys::table
             .filter(api_keys::api_key.eq(key))
             .select(APIKey::as_select())
@@ -236,7 +232,7 @@ impl APIKey {
             })
     }
 
-    pub async fn find_by_key(key: Uuid, connection: &mut DBConnection) -> Result<APIKey, Error> {
+    pub async fn find_by_key(key: Uuid, connection: &mut Conn) -> Result<APIKey, Error> {
         api_keys::table
             .filter(api_keys::api_key.eq(key))
             .select(APIKey::as_select())
@@ -251,7 +247,7 @@ impl APIKey {
     pub async fn verify(
         user: Uuid,
         key: Uuid,
-        mut connection: DBConnection,
+        mut connection: Conn,
         request: RequestInfo,
     ) -> Result<bool, Error> {
         // First, Find User
@@ -306,7 +302,7 @@ impl APIKey {
     pub async fn verify_trainer(
         id: i32,
         key: Uuid,
-        mut connection: DBConnection,
+        mut connection: Conn,
         request: RequestInfo,
     ) -> Result<bool, Error> {
         // First, Find Trainer
@@ -416,10 +412,7 @@ pub struct NewAPIKeyLog {
 }
 
 impl APIKeyLog {
-    pub async fn create(
-        data: NewAPIKeyLog,
-        connection: &mut DBConnection,
-    ) -> Result<APIKeyLog, Error> {
+    pub async fn create(data: NewAPIKeyLog, connection: &mut Conn) -> Result<APIKeyLog, Error> {
         diesel::insert_into(api_key_logs::table)
             .values(&data)
             .get_result(connection)
@@ -430,7 +423,7 @@ impl APIKeyLog {
             })
     }
 
-    pub async fn all(connection: &mut DBConnection) -> Result<Vec<APIKeyLog>, Error> {
+    pub async fn all(connection: &mut Conn) -> Result<Vec<APIKeyLog>, Error> {
         api_key_logs::table
             .select(APIKeyLog::as_select())
             .load(connection)
@@ -441,10 +434,7 @@ impl APIKeyLog {
             })
     }
 
-    pub async fn user_all(
-        user: Uuid,
-        connection: &mut DBConnection,
-    ) -> Result<Vec<APIKeyLog>, Error> {
+    pub async fn user_all(user: Uuid, connection: &mut Conn) -> Result<Vec<APIKeyLog>, Error> {
         api_key_logs::table
             .filter(api_key_logs::user_id.eq(user))
             .select(APIKeyLog::as_select())
@@ -456,7 +446,7 @@ impl APIKeyLog {
             })
     }
 
-    pub async fn delete(key: i32, connection: &mut DBConnection) -> Result<usize, Error> {
+    pub async fn delete(key: i32, connection: &mut Conn) -> Result<usize, Error> {
         diesel::delete(api_key_logs::table)
             .filter(api_key_logs::log_id.eq(key))
             .execute(connection)
@@ -470,7 +460,7 @@ impl APIKeyLog {
     pub async fn update(
         key: i32,
         data: UpdateAPIKeyLog,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<APIKeyLog, Error> {
         diesel::update(api_key_logs::table)
             .filter(api_key_logs::log_id.eq(key))

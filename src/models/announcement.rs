@@ -16,7 +16,7 @@ use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
 use crate::{
-    db::DBConnection,
+    db::Conn,
     errors::Error,
     models::trainer::Trainer,
     schema::{
@@ -55,7 +55,7 @@ impl TrainerAnnouncement {
     pub async fn find(
         trainer: Uuid,
         announcement: i32,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<TrainerAnnouncement, Error> {
         trainer_announcements::table
             .filter(trainer_id.eq(trainer))
@@ -68,7 +68,7 @@ impl TrainerAnnouncement {
             })
     }
 
-    pub async fn all(connection: &mut DBConnection) -> Result<Vec<TrainerAnnouncement>, Error> {
+    pub async fn all(connection: &mut Conn) -> Result<Vec<TrainerAnnouncement>, Error> {
         trainer_announcements::table
             .select(TrainerAnnouncement::as_select())
             .load(connection)
@@ -81,7 +81,7 @@ impl TrainerAnnouncement {
 
     pub async fn trainer_all(
         trainer: Uuid,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<Vec<TrainerAnnouncement>, Error> {
         trainer_announcements::table
             .filter(trainer_id.eq(trainer))
@@ -98,7 +98,7 @@ impl TrainerAnnouncement {
         trainer: Uuid,
         announcement: i32,
         data: UpdateTrainerAnnouncement,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<TrainerAnnouncement, Error> {
         diesel::update(trainer_announcements::table)
             .filter(trainer_id.eq(trainer))
@@ -115,7 +115,7 @@ impl TrainerAnnouncement {
     pub async fn delete(
         trainer: Uuid,
         announcement: i32,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<usize, Error> {
         diesel::delete(trainer_announcements::table)
             .filter(trainer_id.eq(trainer))
@@ -130,7 +130,7 @@ impl TrainerAnnouncement {
 
     pub async fn create(
         data: NewTrainerAnnouncement,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<TrainerAnnouncement, Error> {
         diesel::insert_into(trainer_announcements::table)
             .values(&data)
@@ -144,7 +144,7 @@ impl TrainerAnnouncement {
 
     pub async fn for_user(
         user: Uuid,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<Vec<TrainerAnnouncement>, Error> {
         let trainers = Trainer::for_user(user, connection).await?;
 

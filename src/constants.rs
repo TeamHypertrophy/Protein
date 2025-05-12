@@ -51,6 +51,7 @@ pub const LOG_PATH: &str = "./logs/";
 // Jobs
 pub const API_KEY_JOB_INTERVAL: &str = "every day";
 pub const ASSET_CLEANER_JOB_INTERVAL: &str = "every day";
+pub const EXERCISE_CACHE_JOB_INTERVAL: &str = "every day";
 
 // Assets
 pub const ASSETS_AVATARS_PATH: &str = "assets/avatars";

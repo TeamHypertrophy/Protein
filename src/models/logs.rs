@@ -16,7 +16,7 @@ use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
 use crate::{
-    db::DBConnection,
+    db::Conn,
     errors::Error,
     models::user::User,
     schema::{exercise_logs, workout_logs},
@@ -51,11 +51,7 @@ pub struct ExerciseLog {
 }
 
 impl ExerciseLog {
-    pub async fn find(
-        user: Uuid,
-        id: i32,
-        connection: &mut DBConnection,
-    ) -> Result<ExerciseLog, Error> {
+    pub async fn find(user: Uuid, id: i32, connection: &mut Conn) -> Result<ExerciseLog, Error> {
         exercise_logs::table
             .filter(exercise_logs::dsl::user_id.eq(user))
             .filter(exercise_logs::log_id.eq(id))
@@ -68,7 +64,7 @@ impl ExerciseLog {
             })
     }
 
-    pub async fn all(connection: &mut DBConnection) -> Result<Vec<ExerciseLog>, Error> {
+    pub async fn all(connection: &mut Conn) -> Result<Vec<ExerciseLog>, Error> {
         exercise_logs::table
             .select(ExerciseLog::as_select())
             .load(connection)
@@ -79,10 +75,7 @@ impl ExerciseLog {
             })
     }
 
-    pub async fn user_all(
-        user: Uuid,
-        connection: &mut DBConnection,
-    ) -> Result<Vec<ExerciseLog>, Error> {
+    pub async fn user_all(user: Uuid, connection: &mut Conn) -> Result<Vec<ExerciseLog>, Error> {
         exercise_logs::table
             .filter(exercise_logs::dsl::user_id.eq(user))
             .select(ExerciseLog::as_select())
@@ -98,7 +91,7 @@ impl ExerciseLog {
         user: Uuid,
         id: i32,
         data: UpdateExerciseLog,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<ExerciseLog, Error> {
         diesel::update(exercise_logs::table)
             .filter(exercise_logs::user_id.eq(user))
@@ -112,11 +105,7 @@ impl ExerciseLog {
             })
     }
 
-    pub async fn delete(
-        user: Uuid,
-        id: i32,
-        connection: &mut DBConnection,
-    ) -> Result<usize, Error> {
+    pub async fn delete(user: Uuid, id: i32, connection: &mut Conn) -> Result<usize, Error> {
         diesel::delete(exercise_logs::table)
             .filter(exercise_logs::user_id.eq(user))
             .filter(exercise_logs::log_id.eq(id))
@@ -128,10 +117,7 @@ impl ExerciseLog {
             })
     }
 
-    pub async fn create(
-        data: NewExerciseLog,
-        connection: &mut DBConnection,
-    ) -> Result<ExerciseLog, Error> {
+    pub async fn create(data: NewExerciseLog, connection: &mut Conn) -> Result<ExerciseLog, Error> {
         diesel::insert_into(exercise_logs::table)
             .values(&data)
             .get_result::<ExerciseLog>(connection)
@@ -190,11 +176,7 @@ pub struct WorkoutLog {
 }
 
 impl WorkoutLog {
-    pub async fn find(
-        user: Uuid,
-        id: Uuid,
-        connection: &mut DBConnection,
-    ) -> Result<WorkoutLog, Error> {
+    pub async fn find(user: Uuid, id: Uuid, connection: &mut Conn) -> Result<WorkoutLog, Error> {
         workout_logs::table
             .filter(workout_logs::user_id.eq(user))
             .filter(workout_logs::workout_id.eq(id))
@@ -207,7 +189,7 @@ impl WorkoutLog {
             })
     }
 
-    pub async fn all(connection: &mut DBConnection) -> Result<Vec<WorkoutLog>, Error> {
+    pub async fn all(connection: &mut Conn) -> Result<Vec<WorkoutLog>, Error> {
         workout_logs::table
             .select(WorkoutLog::as_select())
             .load(connection)
@@ -218,10 +200,7 @@ impl WorkoutLog {
             })
     }
 
-    pub async fn user_all(
-        user: Uuid,
-        connection: &mut DBConnection,
-    ) -> Result<Vec<WorkoutLog>, Error> {
+    pub async fn user_all(user: Uuid, connection: &mut Conn) -> Result<Vec<WorkoutLog>, Error> {
         workout_logs::table
             .filter(workout_logs::user_id.eq(user))
             .select(WorkoutLog::as_select())
@@ -237,7 +216,7 @@ impl WorkoutLog {
         user: Uuid,
         id: Uuid,
         data: UpdateWorkoutLog,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<WorkoutLog, Error> {
         diesel::update(workout_logs::table)
             .filter(workout_logs::user_id.eq(user))
@@ -251,11 +230,7 @@ impl WorkoutLog {
             })
     }
 
-    pub async fn delete(
-        user: Uuid,
-        id: Uuid,
-        connection: &mut DBConnection,
-    ) -> Result<usize, Error> {
+    pub async fn delete(user: Uuid, id: Uuid, connection: &mut Conn) -> Result<usize, Error> {
         diesel::delete(workout_logs::table)
             .filter(workout_logs::user_id.eq(user))
             .filter(workout_logs::workout_id.eq(id))
@@ -267,10 +242,7 @@ impl WorkoutLog {
             })
     }
 
-    pub async fn create(
-        data: NewWorkoutLog,
-        connection: &mut DBConnection,
-    ) -> Result<WorkoutLog, Error> {
+    pub async fn create(data: NewWorkoutLog, connection: &mut Conn) -> Result<WorkoutLog, Error> {
         diesel::insert_into(workout_logs::table)
             .values(&data)
             .get_result::<WorkoutLog>(connection)

@@ -19,7 +19,7 @@ use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 
 use crate::{constants, errors::Error};
 
-pub type DBConnection = deadpool::Object<AsyncPgConnection>;
+pub type Conn = deadpool::Object<AsyncPgConnection>;
 pub type DB = Pool<AsyncPgConnection>;
 
 pub async fn create() -> Result<DB, Box<dyn std::error::Error>> {
@@ -44,11 +44,10 @@ pub async fn create() -> Result<DB, Box<dyn std::error::Error>> {
     pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
     // Get Database Connection
-    let connection: DBConnection = pool.clone().get().await?;
+    let connection: Conn = pool.clone().get().await?;
 
     // Run Migrations
-    let mut wrapper: AsyncConnectionWrapper<DBConnection> =
-        AsyncConnectionWrapper::from(connection);
+    let mut wrapper: AsyncConnectionWrapper<Conn> = AsyncConnectionWrapper::from(connection);
 
     rocket::tokio::task::spawn_blocking(move || match wrapper.run_pending_migrations(MIGRATIONS) {
         Ok(_) => (),
@@ -61,7 +60,7 @@ pub async fn create() -> Result<DB, Box<dyn std::error::Error>> {
 }
 
 #[inline]
-pub async fn get(pool: &State<DB>) -> Result<DBConnection, Error> {
+pub async fn get(pool: &State<DB>) -> Result<Conn, Error> {
     pool.get().await.map_err(|error| {
         tracing::error!("[!] PostgreSQL Error {:?}", error);
         Error::Database(error.to_string())

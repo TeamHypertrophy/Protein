@@ -16,7 +16,7 @@ use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
 use crate::{
-    db::DBConnection,
+    db::Conn,
     errors::Error,
     models::user::User,
     schema::{
@@ -52,11 +52,7 @@ pub struct WaterLog {
 }
 
 impl WaterLog {
-    pub async fn find(
-        user: Uuid,
-        id: i32,
-        connection: &mut DBConnection,
-    ) -> Result<WaterLog, Error> {
+    pub async fn find(user: Uuid, id: i32, connection: &mut Conn) -> Result<WaterLog, Error> {
         water_logs::table
             .filter(user_id.eq(user))
             .filter(log_id.eq(id))
@@ -69,7 +65,7 @@ impl WaterLog {
             })
     }
 
-    pub async fn all(connection: &mut DBConnection) -> Result<Vec<WaterLog>, Error> {
+    pub async fn all(connection: &mut Conn) -> Result<Vec<WaterLog>, Error> {
         water_logs::table
             .select(WaterLog::as_select())
             .load(connection)
@@ -80,10 +76,7 @@ impl WaterLog {
             })
     }
 
-    pub async fn user_all(
-        user: Uuid,
-        connection: &mut DBConnection,
-    ) -> Result<Vec<WaterLog>, Error> {
+    pub async fn user_all(user: Uuid, connection: &mut Conn) -> Result<Vec<WaterLog>, Error> {
         water_logs::table
             .filter(user_id.eq(user))
             .select(WaterLog::as_select())
@@ -99,7 +92,7 @@ impl WaterLog {
         user: Uuid,
         id: i32,
         data: UpdateWaterLog,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<WaterLog, Error> {
         diesel::update(water_logs::table)
             .filter(user_id.eq(user))
@@ -113,11 +106,7 @@ impl WaterLog {
             })
     }
 
-    pub async fn delete(
-        user: Uuid,
-        id: i32,
-        connection: &mut DBConnection,
-    ) -> Result<usize, Error> {
+    pub async fn delete(user: Uuid, id: i32, connection: &mut Conn) -> Result<usize, Error> {
         diesel::delete(water_logs::table)
             .filter(user_id.eq(user))
             .filter(log_id.eq(id))
@@ -129,10 +118,7 @@ impl WaterLog {
             })
     }
 
-    pub async fn create(
-        data: NewWaterLog,
-        connection: &mut DBConnection,
-    ) -> Result<WaterLog, Error> {
+    pub async fn create(data: NewWaterLog, connection: &mut Conn) -> Result<WaterLog, Error> {
         diesel::insert_into(water_logs::table)
             .values(&data)
             .get_result::<WaterLog>(connection)

@@ -12,11 +12,14 @@ ______          _       _
 // Current Jobs:
 // 1. Check If An API Key Expired
 // 2. Clean Assets Directory Of Old Avatas
+// 3. Cache All Exercises
 
 use crate::{
+    cache::redis::{Cache, Redis},
     constants,
     db::DB,
     models::{
+        exercise::Exercise,
         keys::{APIKey, Status, UpdateAPIKey},
         user::User,
     },
@@ -169,6 +172,61 @@ pub async fn clean_assets_directory() -> Result<(), Box<dyn std::error::Error>> 
     tracing::info!(
         "[+] 🧹 Cleaned {} Old Avatar(s) From The Assets Directory",
         count
+    );
+    Ok(())
+}
+
+pub async fn cache_exercises(pool: &DB, redis: &Redis) -> Result<(), Box<dyn std::error::Error>> {
+    tracing::info!("[+] 🗄️ Caching Exercises");
+
+    let mut cached = 0;
+    let mut skipped = 0;
+
+    let group = "exercise";
+
+    let connection = &mut pool.get().await?;
+
+    let exercises = Exercise::all(connection).await?;
+
+    if exercises.is_empty() {
+        tracing::warn!("[+] 🗄️ No Exercises Found");
+        return Ok(());
+    }
+
+    for exercise in exercises {
+        let exists = Cache::exists(redis, group, exercise.exercise_id).await?;
+
+        if exists {
+            tracing::info!(
+                "[+] 🗄️ Skipping Caching Exercise {}: {}",
+                exercise.exercise_id,
+                exercise.name
+            );
+            skipped += 1;
+            continue;
+        } else {
+            tracing::info!(
+                "[+] 🗄️ Caching Exercise {}: {}",
+                exercise.exercise_id,
+                exercise.name
+            );
+
+            Cache::job_set(
+                redis,
+                group,
+                exercise.exercise_id,
+                Cache::serialize(&exercise)?,
+            )
+            .await?;
+
+            cached += 1;
+        }
+    }
+
+    tracing::info!(
+        "[+] 🗄️ Caching Completed. Set {} New Exercises, {} Already Cached.",
+        cached,
+        skipped
     );
     Ok(())
 }

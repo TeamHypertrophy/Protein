@@ -16,7 +16,7 @@ use chrono::NaiveDateTime;
 use uuid::Uuid;
 
 use crate::{
-    db::DBConnection,
+    db::Conn,
     errors::Error,
     models::{
         exercise::{Equipment, ExerciseType, MuscleGroup},
@@ -57,11 +57,7 @@ pub struct CustomExercise {
 }
 
 impl CustomExercise {
-    pub async fn find(
-        user: Uuid,
-        id: i64,
-        connection: &mut DBConnection,
-    ) -> Result<CustomExercise, Error> {
+    pub async fn find(user: Uuid, id: i64, connection: &mut Conn) -> Result<CustomExercise, Error> {
         custom_exercises::table
             .filter(exercise_id.eq(id))
             .filter(custom_exercises::user_id.eq(user))
@@ -75,7 +71,7 @@ impl CustomExercise {
     }
 
     pub async fn search(
-        connection: &mut DBConnection,
+        connection: &mut Conn,
         data: SearchCustomExercise,
     ) -> Result<Vec<CustomExercise>, Error> {
         let mut query = custom_exercises::table.into_boxed();
@@ -109,7 +105,7 @@ impl CustomExercise {
             })
     }
 
-    pub async fn all(connection: &mut DBConnection) -> Result<Vec<CustomExercise>, Error> {
+    pub async fn all(connection: &mut Conn) -> Result<Vec<CustomExercise>, Error> {
         custom_exercises::table
             .select(CustomExercise::as_select())
             .load(connection)
@@ -120,10 +116,7 @@ impl CustomExercise {
             })
     }
 
-    pub async fn user_all(
-        user: Uuid,
-        connection: &mut DBConnection,
-    ) -> Result<Vec<CustomExercise>, Error> {
+    pub async fn user_all(user: Uuid, connection: &mut Conn) -> Result<Vec<CustomExercise>, Error> {
         custom_exercises::table
             .filter(custom_exercises::user_id.eq(user))
             .select(CustomExercise::as_select())
@@ -135,11 +128,7 @@ impl CustomExercise {
             })
     }
 
-    pub async fn delete(
-        user: Uuid,
-        exercise: i64,
-        connection: &mut DBConnection,
-    ) -> Result<usize, Error> {
+    pub async fn delete(user: Uuid, exercise: i64, connection: &mut Conn) -> Result<usize, Error> {
         diesel::delete(custom_exercises::table)
             .filter(exercise_id.eq(exercise))
             .filter(custom_exercises::user_id.eq(user))
@@ -155,7 +144,7 @@ impl CustomExercise {
         user: Uuid,
         exercise: i64,
         data: UpdateCustomExercise,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<CustomExercise, Error> {
         diesel::update(custom_exercises::table)
             .filter(custom_exercises::user_id.eq(user))
@@ -170,7 +159,7 @@ impl CustomExercise {
     }
 
     pub async fn create(
-        connection: &mut DBConnection,
+        connection: &mut Conn,
         data: NewCustomExercise,
     ) -> Result<CustomExercise, Error> {
         diesel::insert_into(custom_exercises::table)

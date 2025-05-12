@@ -17,7 +17,7 @@ use validator::Validate;
 use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
-use crate::{db::DBConnection, errors::Error, schema::users, utils};
+use crate::{db::Conn, errors::Error, schema::users, utils};
 
 // User Model
 #[derive(
@@ -129,7 +129,7 @@ pub enum UserStatus {
 }
 
 impl User {
-    pub async fn find(id: Uuid, connection: &mut DBConnection) -> Result<User, Error> {
+    pub async fn find(id: Uuid, connection: &mut Conn) -> Result<User, Error> {
         users::table
             .find(id)
             .select(User::as_select())
@@ -141,10 +141,7 @@ impl User {
             })
     }
 
-    pub async fn find_by_username(
-        name: String,
-        connection: &mut DBConnection,
-    ) -> Result<User, Error> {
+    pub async fn find_by_username(name: String, connection: &mut Conn) -> Result<User, Error> {
         users::table
             .filter(users::username.eq(name))
             .select(User::as_select())
@@ -156,10 +153,7 @@ impl User {
             })
     }
 
-    pub async fn find_by_email(
-        address: String,
-        connection: &mut DBConnection,
-    ) -> Result<User, Error> {
+    pub async fn find_by_email(address: String, connection: &mut Conn) -> Result<User, Error> {
         users::table
             .filter(users::email.eq(address))
             .select(User::as_select())
@@ -173,7 +167,7 @@ impl User {
 
     pub async fn find_by_email_verification_token(
         token: Uuid,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<User, Error> {
         users::table
             .filter(users::email_verification_token.eq(token))
@@ -188,7 +182,7 @@ impl User {
 
     pub async fn find_by_mfa_verification_token(
         token: Uuid,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<User, Error> {
         users::table
             .filter(users::mfa_verification_token.eq(token))
@@ -201,7 +195,7 @@ impl User {
             })
     }
 
-    pub async fn all(connection: &mut DBConnection) -> Result<Vec<User>, Error> {
+    pub async fn all(connection: &mut Conn) -> Result<Vec<User>, Error> {
         users::table
             .select(User::as_select())
             .load(connection)
@@ -212,7 +206,7 @@ impl User {
             })
     }
 
-    pub async fn delete(id: Uuid, connection: &mut DBConnection) -> Result<User, Error> {
+    pub async fn delete(id: Uuid, connection: &mut Conn) -> Result<User, Error> {
         diesel::delete(users::table.filter(users::user_id.eq(id)))
             .get_result::<User>(connection)
             .await
@@ -222,11 +216,7 @@ impl User {
             })
     }
 
-    pub async fn update(
-        id: Uuid,
-        data: UpdateUser,
-        connection: &mut DBConnection,
-    ) -> Result<User, Error> {
+    pub async fn update(id: Uuid, data: UpdateUser, connection: &mut Conn) -> Result<User, Error> {
         diesel::update(users::table)
             .filter(users::user_id.eq(id))
             .set(&data)
@@ -238,7 +228,7 @@ impl User {
             })
     }
 
-    pub async fn create(connection: &mut DBConnection, data: NewUser) -> Result<User, Error> {
+    pub async fn create(connection: &mut Conn, data: NewUser) -> Result<User, Error> {
         diesel::insert_into(users::table)
             .values(&data)
             .get_result::<User>(connection)
@@ -252,7 +242,7 @@ impl User {
     pub async fn update_password(
         id: Uuid,
         new_password: &String,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<User, Error> {
         diesel::update(users::table)
             .filter(users::user_id.eq(id))
@@ -272,7 +262,7 @@ impl User {
         id: Uuid,
         new_ip: &String,
         new_last_login: &NaiveDateTime,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<User, Error> {
         diesel::update(users::table)
             .filter(users::user_id.eq(id))
@@ -289,7 +279,7 @@ impl User {
             })
     }
 
-    pub async fn verify_email(id: Uuid, connection: &mut DBConnection) -> Result<User, Error> {
+    pub async fn verify_email(id: Uuid, connection: &mut Conn) -> Result<User, Error> {
         diesel::update(users::table)
             .filter(users::user_id.eq(id))
             .set((
@@ -305,7 +295,7 @@ impl User {
             })
     }
 
-    pub async fn generate_mfa_code(id: Uuid, connection: &mut DBConnection) -> Result<User, Error> {
+    pub async fn generate_mfa_code(id: Uuid, connection: &mut Conn) -> Result<User, Error> {
         let code = utils::password::random();
         let expires_at = chrono::Utc::now().naive_utc() + chrono::Duration::minutes(10);
 
@@ -323,7 +313,7 @@ impl User {
             })
     }
 
-    pub async fn enable_mfa(id: Uuid, connection: &mut DBConnection) -> Result<User, Error> {
+    pub async fn enable_mfa(id: Uuid, connection: &mut Conn) -> Result<User, Error> {
         diesel::update(users::table)
             .filter(users::user_id.eq(id))
             .set((
@@ -340,7 +330,7 @@ impl User {
             })
     }
 
-    pub async fn verify_mfa(id: Uuid, connection: &mut DBConnection) -> Result<User, Error> {
+    pub async fn verify_mfa(id: Uuid, connection: &mut Conn) -> Result<User, Error> {
         diesel::update(users::table)
             .filter(users::user_id.eq(id))
             .set((
@@ -356,7 +346,7 @@ impl User {
             })
     }
 
-    pub async fn reset_mfa(id: Uuid, connection: &mut DBConnection) -> Result<User, Error> {
+    pub async fn reset_mfa(id: Uuid, connection: &mut Conn) -> Result<User, Error> {
         diesel::update(users::table)
             .filter(users::user_id.eq(id))
             .set((
@@ -371,7 +361,7 @@ impl User {
             })
     }
 
-    pub async fn disable_mfa(id: Uuid, connection: &mut DBConnection) -> Result<User, Error> {
+    pub async fn disable_mfa(id: Uuid, connection: &mut Conn) -> Result<User, Error> {
         diesel::update(users::table)
             .filter(users::user_id.eq(id))
             .set((
@@ -388,7 +378,7 @@ impl User {
             })
     }
 
-    pub async fn elevate(id: Uuid, connection: &mut DBConnection) -> Result<User, Error> {
+    pub async fn elevate(id: Uuid, connection: &mut Conn) -> Result<User, Error> {
         diesel::update(users::table)
             .filter(users::user_id.eq(id))
             .set(users::role.eq(Role::Admin))

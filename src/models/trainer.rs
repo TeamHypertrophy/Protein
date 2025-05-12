@@ -17,7 +17,7 @@ use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
 use crate::{
-    db::DBConnection,
+    db::Conn,
     errors::Error,
     schema::{trainers, trainers::dsl::trainer_id},
 };
@@ -59,7 +59,7 @@ pub enum Specialization {
 }
 
 impl Trainer {
-    pub async fn find(trainer: i32, connection: &mut DBConnection) -> Result<Trainer, Error> {
+    pub async fn find(trainer: i32, connection: &mut Conn) -> Result<Trainer, Error> {
         trainers::table
             .filter(trainer_id.eq(trainer))
             .first(connection)
@@ -70,7 +70,7 @@ impl Trainer {
             })
     }
 
-    pub async fn all(connection: &mut DBConnection) -> Result<Vec<Trainer>, Error> {
+    pub async fn all(connection: &mut Conn) -> Result<Vec<Trainer>, Error> {
         trainers::table
             .select(Trainer::as_select())
             .load(connection)
@@ -84,7 +84,7 @@ impl Trainer {
     pub async fn update(
         trainer: i32,
         data: UpdateTrainer,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<Trainer, Error> {
         diesel::update(trainers::table)
             .filter(trainer_id.eq(trainer))
@@ -97,7 +97,7 @@ impl Trainer {
             })
     }
 
-    pub async fn create(data: NewTrainer, connection: &mut DBConnection) -> Result<Trainer, Error> {
+    pub async fn create(data: NewTrainer, connection: &mut Conn) -> Result<Trainer, Error> {
         diesel::insert_into(trainers::table)
             .values(&data)
             .get_result::<Trainer>(connection)
@@ -108,10 +108,7 @@ impl Trainer {
             })
     }
 
-    pub async fn request(
-        data: RequestTrainer,
-        connection: &mut DBConnection,
-    ) -> Result<Trainer, Error> {
+    pub async fn request(data: RequestTrainer, connection: &mut Conn) -> Result<Trainer, Error> {
         let trainer = NewTrainer {
             user_id: data.user_id,
             clients: vec![],
@@ -135,7 +132,7 @@ impl Trainer {
             })
     }
 
-    pub async fn accept(trainer: i32, connection: &mut DBConnection) -> Result<Trainer, Error> {
+    pub async fn accept(trainer: i32, connection: &mut Conn) -> Result<Trainer, Error> {
         diesel::update(trainers::table)
             .filter(trainer_id.eq(trainer))
             .set((
@@ -150,7 +147,7 @@ impl Trainer {
             })
     }
 
-    pub async fn deny(trainer: i32, connection: &mut DBConnection) -> Result<Trainer, Error> {
+    pub async fn deny(trainer: i32, connection: &mut Conn) -> Result<Trainer, Error> {
         diesel::delete(trainers::table)
             .filter(trainer_id.eq(trainer))
             .get_result::<Trainer>(connection)
@@ -161,7 +158,7 @@ impl Trainer {
             })
     }
 
-    pub async fn delete(trainer: i32, connection: &mut DBConnection) -> Result<usize, Error> {
+    pub async fn delete(trainer: i32, connection: &mut Conn) -> Result<usize, Error> {
         diesel::delete(trainers::table)
             .filter(trainer_id.eq(trainer))
             .execute(connection)
@@ -172,10 +169,7 @@ impl Trainer {
             })
     }
 
-    pub async fn for_user(
-        user: Uuid,
-        connection: &mut DBConnection,
-    ) -> Result<Vec<Trainer>, Error> {
+    pub async fn for_user(user: Uuid, connection: &mut Conn) -> Result<Vec<Trainer>, Error> {
         let target = vec![Some(user)];
 
         trainers::table
@@ -189,7 +183,7 @@ impl Trainer {
             })
     }
 
-    pub async fn by_user(user: Uuid, connection: &mut DBConnection) -> Result<Trainer, Error> {
+    pub async fn by_user(user: Uuid, connection: &mut Conn) -> Result<Trainer, Error> {
         trainers::table
             .filter(trainers::user_id.eq(user))
             .first(connection)
@@ -203,7 +197,7 @@ impl Trainer {
     pub async fn add_client(
         trainer: Uuid,
         user: Uuid,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<Trainer, Error> {
         diesel::update(trainers::table)
             .filter(trainers::user_id.eq(trainer))
@@ -219,7 +213,7 @@ impl Trainer {
     pub async fn remove_client(
         trainer: Uuid,
         user: Uuid,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<Trainer, Error> {
         diesel::update(trainers::table)
             .filter(trainers::user_id.eq(trainer))
@@ -235,7 +229,7 @@ impl Trainer {
     pub async fn is_followed_by_user(
         trainer: Uuid,
         user: Uuid,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<bool, Error> {
         trainers::table
             .filter(trainers::user_id.eq(trainer))

@@ -17,7 +17,7 @@ use diesel_async::RunQueryDsl;
 use chrono::NaiveDateTime;
 use rocket::serde::{Deserialize, Serialize};
 
-use crate::{db::DBConnection, errors::Error, models::user::User, schema::profiles};
+use crate::{db::Conn, errors::Error, models::user::User, schema::profiles};
 
 // Profile Model
 #[derive(
@@ -109,7 +109,7 @@ pub enum Diet {
 }
 
 impl Profile {
-    pub async fn find(user: &User, connection: &mut DBConnection) -> Result<Profile, Error> {
+    pub async fn find(user: &User, connection: &mut Conn) -> Result<Profile, Error> {
         Profile::belonging_to(user)
             .select(Profile::as_select())
             .first(connection)
@@ -120,7 +120,7 @@ impl Profile {
             })
     }
 
-    pub async fn all(connection: &mut DBConnection) -> Result<Vec<Profile>, Error> {
+    pub async fn all(connection: &mut Conn) -> Result<Vec<Profile>, Error> {
         profiles::table
             .select(Profile::as_select())
             .load(connection)
@@ -134,7 +134,7 @@ impl Profile {
     pub async fn update(
         user: Uuid,
         data: UpdateProfile,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<Profile, Error> {
         diesel::update(profiles::table)
             .filter(profiles::user_id.eq(user))
@@ -150,7 +150,7 @@ impl Profile {
     pub async fn upload_avatar(
         user: Uuid,
         data: String,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<Profile, Error> {
         diesel::update(profiles::table)
             .filter(profiles::user_id.eq(user))
@@ -163,7 +163,7 @@ impl Profile {
             })
     }
 
-    pub async fn delete(user: Uuid, connection: &mut DBConnection) -> Result<usize, Error> {
+    pub async fn delete(user: Uuid, connection: &mut Conn) -> Result<usize, Error> {
         diesel::delete(profiles::table)
             .filter(profiles::user_id.eq(user))
             .execute(connection)
@@ -174,7 +174,7 @@ impl Profile {
             })
     }
 
-    pub async fn create(data: NewProfile, connection: &mut DBConnection) -> Result<Profile, Error> {
+    pub async fn create(data: NewProfile, connection: &mut Conn) -> Result<Profile, Error> {
         diesel::insert_into(profiles::table)
             .values(&data)
             .get_result::<Profile>(connection)
@@ -185,7 +185,7 @@ impl Profile {
             })
     }
 
-    pub async fn leaderboard(connection: &mut DBConnection) -> Result<Vec<Profile>, Error> {
+    pub async fn leaderboard(connection: &mut Conn) -> Result<Vec<Profile>, Error> {
         profiles::table
             .select(Profile::as_select())
             .order_by(profiles::streak.desc())

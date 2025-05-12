@@ -16,7 +16,7 @@ use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
 use crate::{
-    db::DBConnection,
+    db::Conn,
     errors::Error,
     models::user::User,
     schema::{
@@ -52,11 +52,7 @@ pub struct CalorieLog {
 }
 
 impl CalorieLog {
-    pub async fn find(
-        user: Uuid,
-        id: i32,
-        connection: &mut DBConnection,
-    ) -> Result<CalorieLog, Error> {
+    pub async fn find(user: Uuid, id: i32, connection: &mut Conn) -> Result<CalorieLog, Error> {
         calorie_logs::table
             .filter(user_id.eq(user))
             .filter(log_id.eq(id))
@@ -69,7 +65,7 @@ impl CalorieLog {
             })
     }
 
-    pub async fn all(connection: &mut DBConnection) -> Result<Vec<CalorieLog>, Error> {
+    pub async fn all(connection: &mut Conn) -> Result<Vec<CalorieLog>, Error> {
         calorie_logs::table
             .select(CalorieLog::as_select())
             .load(connection)
@@ -80,10 +76,7 @@ impl CalorieLog {
             })
     }
 
-    pub async fn user_all(
-        user: Uuid,
-        connection: &mut DBConnection,
-    ) -> Result<Vec<CalorieLog>, Error> {
+    pub async fn user_all(user: Uuid, connection: &mut Conn) -> Result<Vec<CalorieLog>, Error> {
         calorie_logs::table
             .filter(user_id.eq(user))
             .select(CalorieLog::as_select())
@@ -99,7 +92,7 @@ impl CalorieLog {
         user: Uuid,
         id: i32,
         data: UpdateCalorieLog,
-        connection: &mut DBConnection,
+        connection: &mut Conn,
     ) -> Result<CalorieLog, Error> {
         diesel::update(calorie_logs::table)
             .filter(user_id.eq(user))
@@ -113,11 +106,7 @@ impl CalorieLog {
             })
     }
 
-    pub async fn delete(
-        user: Uuid,
-        id: i32,
-        connection: &mut DBConnection,
-    ) -> Result<usize, Error> {
+    pub async fn delete(user: Uuid, id: i32, connection: &mut Conn) -> Result<usize, Error> {
         diesel::delete(calorie_logs::table)
             .filter(user_id.eq(user))
             .filter(log_id.eq(id))
@@ -129,10 +118,7 @@ impl CalorieLog {
             })
     }
 
-    pub async fn create(
-        data: NewCalorieLog,
-        connection: &mut DBConnection,
-    ) -> Result<CalorieLog, Error> {
+    pub async fn create(data: NewCalorieLog, connection: &mut Conn) -> Result<CalorieLog, Error> {
         diesel::insert_into(calorie_logs::table)
             .values(&data)
             .get_result::<CalorieLog>(connection)
