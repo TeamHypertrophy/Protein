@@ -211,7 +211,7 @@ pub async fn cache_exercises(pool: &DB, redis: &Redis) -> Result<(), Box<dyn std
                 exercise.name
             );
 
-            Cache::job_set(
+            Cache::set(
                 redis,
                 group,
                 exercise.exercise_id,

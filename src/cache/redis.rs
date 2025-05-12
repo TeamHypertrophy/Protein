@@ -91,32 +91,6 @@ impl Cache {
 
     // Sets A Value In Redis Cache
     pub async fn set<T: Display>(
-        pool: &State<Redis>,
-        group: &str,
-        key: T,
-        value: String,
-    ) -> Result<(), Error> {
-        tracing::info!(
-            "[Cache] ⚙️ Setting Key In Redis Cache: {:#?} With Values: {:#?}",
-            format!("{}:{}", group, key),
-            value
-        );
-
-        pool.set(
-            format!("{}:{}", group, key),
-            value,
-            Some(Expiration::EX(CACHE_EXPIRATION_TIME)),
-            None,
-            false,
-        )
-        .await
-        .map_err(|error| {
-            tracing::error!("[!] Redis Error: {:?}", error);
-            Error::Cache(error.to_string())
-        })
-    }
-
-    pub async fn job_set<T: Display>(
         pool: &Redis,
         group: &str,
         key: T,
