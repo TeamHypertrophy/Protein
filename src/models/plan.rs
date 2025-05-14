@@ -10,7 +10,7 @@ ______          _       _
 */
 
 use uuid::Uuid;
-use diesel::prelude::*;
+use diesel::{dsl::sql, prelude::*};
 use diesel_derive_enum::DbEnum;
 use diesel_async::RunQueryDsl;
 use rocket::serde::{Deserialize, Serialize};
@@ -61,6 +61,11 @@ pub struct WorkoutPlan {
     pub goal: FitnessGoal,
     pub difficulty: Difficulty,
     pub is_public: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkoutID {
+    pub workout_id: Uuid,
 }
 
 impl WorkoutPlan {
@@ -136,6 +141,48 @@ impl WorkoutPlan {
     pub async fn create(data: NewWorkoutPlan, connection: &mut Conn) -> Result<WorkoutPlan, Error> {
         diesel::insert_into(workout_plans::table)
             .values(&data)
+            .get_result::<WorkoutPlan>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
+
+    pub async fn add_workout(
+        user: Uuid,
+        plan: Uuid,
+        workout: WorkoutID,
+        connection: &mut Conn,
+    ) -> Result<WorkoutPlan, Error> {
+        diesel::update(workout_plans::table)
+            .filter(workout_plans::user_id.eq(user))
+            .filter(workout_plans::plan_id.eq(plan))
+            .set(workout_plans::workouts.eq(sql(&format!(
+                "array_append(workouts, '{}')",
+                workout.workout_id
+            ))))
+            .get_result::<WorkoutPlan>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
+
+    pub async fn remove_workout(
+        user: Uuid,
+        plan: Uuid,
+        workout: WorkoutID,
+        connection: &mut Conn,
+    ) -> Result<WorkoutPlan, Error> {
+        diesel::update(workout_plans::table)
+            .filter(workout_plans::user_id.eq(user))
+            .filter(workout_plans::plan_id.eq(plan))
+            .set(workout_plans::workouts.eq(sql(&format!(
+                "array_remove(workouts, '{}')",
+                workout.workout_id
+            ))))
             .get_result::<WorkoutPlan>(connection)
             .await
             .map_err(|error| {

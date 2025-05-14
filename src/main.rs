@@ -443,7 +443,9 @@ async fn protein() -> _ {
                 api::workouts::get_all_user_workouts,
                 api::workouts::update_workout,
                 api::workouts::create_workout,
-                api::workouts::delete_workout
+                api::workouts::delete_workout,
+                api::workouts::add_exercise,
+                api::workouts::remove_exercise,
             ],
         )
         .mount(
@@ -461,6 +463,8 @@ async fn protein() -> _ {
                 api::plan::update_workout_plan_log,
                 api::plan::create_workout_plan_log,
                 api::plan::delete_workout_plan_log,
+                api::plan::add_workout,
+                api::plan::remove_workout,
             ],
         )
         .mount(

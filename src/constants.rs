@@ -29,7 +29,7 @@ pub const POSTGRES_POOL_SIZE: usize = 10; // 10 Concurrent Postgres Connections
 
 // API
 pub const ENV_PATH: &str = ".env"; // Environment File Path
-pub const API_QUOTA_LIMIT: i32 = 3000; // 5000 Requests per API Key
+pub const API_QUOTA_LIMIT: i32 = 100000; // 20000 Requests per API Key
 pub const API_VERSION: &str = "1.0"; // API Version
 pub const REDIS_VERSION: &str = "6.0"; // Redis Version
 pub const POSTGRES_VERSION: &str = "17.4"; // Postgres Version

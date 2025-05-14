@@ -120,10 +120,10 @@ impl<'r> FromRequest<'r> for API {
                 Ok(_verified) => {
                     return Outcome::Success(API);
                 }
-                Err(error) => {
+                Err(_) => {
                     return Outcome::Error((
                         Status::Unauthorized,
-                        Error::Database(error.to_string()),
+                        Error::Authorization("Unauthorized API Key!".to_string()),
                     ));
                 }
             };

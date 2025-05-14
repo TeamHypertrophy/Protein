@@ -147,7 +147,6 @@ pub struct NewExerciseLog {
     pub exercise_id: i64,
     pub sets_completed: i32,
     pub reps_completed: i32,
-    pub updated_at: NaiveDateTime,
 }
 
 #[derive(

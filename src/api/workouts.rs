@@ -23,7 +23,7 @@ use crate::{
     errors::Error,
     models::{
         user::User,
-        workout::{NewWorkout, UpdateWorkout, Workout},
+        workout::{ExerciseID, NewWorkout, UpdateWorkout, Workout},
     },
 };
 
@@ -122,4 +122,46 @@ pub async fn delete_workout(
         "status": 200,
         "message": "Log Deleted Successfully",
     })))
+}
+
+#[post(
+    "/add-exercise/<workout_id>?<user_id>",
+    format = "application/json",
+    data = "<exercise>"
+)]
+pub async fn add_exercise(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DB>,
+    user_id: Uuid,
+    workout_id: Uuid,
+    exercise: Json<ExerciseID>,
+) -> Result<Json<Workout>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let workout =
+        Workout::add_exercise(user_id, workout_id, exercise.into_inner(), connection).await?;
+
+    Ok(Json(workout))
+}
+
+#[post(
+    "/remove-exercise/<workout_id>?<user_id>",
+    format = "application/json",
+    data = "<exercise>"
+)]
+pub async fn remove_exercise(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DB>,
+    user_id: Uuid,
+    workout_id: Uuid,
+    exercise: Json<ExerciseID>,
+) -> Result<Json<Workout>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let workout =
+        Workout::remove_exercise(user_id, workout_id, exercise.into_inner(), connection).await?;
+
+    Ok(Json(workout))
 }

@@ -10,7 +10,7 @@ ______          _       _
 */
 
 use uuid::Uuid;
-use diesel::prelude::*;
+use diesel::{dsl::sql, prelude::*};
 use diesel_derive_enum::DbEnum;
 use diesel_async::RunQueryDsl;
 use rocket::serde::{Deserialize, Serialize};
@@ -63,6 +63,11 @@ pub struct Workout {
     pub exercises: Vec<Option<i64>>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExerciseID {
+    pub exercise_id: i64,
+}
+
 impl Workout {
     pub async fn find(user: &User, id: Uuid, connection: &mut Conn) -> Result<Workout, Error> {
         Workout::belonging_to(user)
@@ -109,6 +114,48 @@ impl Workout {
             .filter(user_id.eq(user))
             .filter(workout_id.eq(id))
             .set(&data)
+            .get_result::<Workout>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
+
+    pub async fn add_exercise(
+        user: Uuid,
+        id: Uuid,
+        exercise: ExerciseID,
+        connection: &mut Conn,
+    ) -> Result<Workout, Error> {
+        diesel::update(workouts::table)
+            .filter(user_id.eq(user))
+            .filter(workout_id.eq(id))
+            .set(workouts::exercises.eq(sql(&format!(
+                "array_append(exercises, '{}')",
+                exercise.exercise_id
+            ))))
+            .get_result::<Workout>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
+
+    pub async fn remove_exercise(
+        user: Uuid,
+        id: Uuid,
+        exercise: ExerciseID,
+        connection: &mut Conn,
+    ) -> Result<Workout, Error> {
+        diesel::update(workouts::table)
+            .filter(user_id.eq(user))
+            .filter(workout_id.eq(id))
+            .set(workouts::exercises.eq(sql(&format!(
+                "array_remove(exercises, '{}')",
+                exercise.exercise_id
+            ))))
             .get_result::<Workout>(connection)
             .await
             .map_err(|error| {
