@@ -58,7 +58,7 @@ services:
     depends_on:
       backup_db:
         condition: service_healthy
-      storage:
+      db:
         condition: service_healthy
     restart: unless-stopped
     profiles:

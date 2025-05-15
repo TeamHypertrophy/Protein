@@ -8,7 +8,7 @@ edition = "2024"
 [dependencies]
 # -- Base API Requirement
 rocket = { version = "0.5.1", features = ["json", "uuid"] }
-rocket-client-addr = { git = "https://github.com/guenhter/rocket-client-addr", version = "*" }
+rocket-client-addr = { git = "https://github.com/Frauscher-Sensortechnology/rocket-client-addr", version = "*" }
 rocket-governor = { version = "0.2.0-rc.4", features = [
     "logger",
     "limit_info",
@@ -16,7 +16,12 @@ rocket-governor = { version = "0.2.0-rc.4", features = [
 rocket_prometheus = "0.10.1"
 async-fs = "2.1.2"
 # -- Diesel Requirements (Database)
-diesel = { version = "2.2.10", features = ["postgres", "uuid", "chrono", "postgres_backend"] }
+diesel = { version = "2.2.10", features = [
+    "postgres",
+    "uuid",
+    "chrono",
+    "postgres_backend",
+] }
 diesel-derive-enum = { version = "2.1.0", features = ["postgres"] }
 diesel-async = { version = "0.5.2", features = [
     "postgres",
@@ -49,7 +54,7 @@ rocket-sentry = "0.19.0"
 discord-webhook2 = "0.4.3"
 ## -- Emailing
 askama = "0.14.0"
-lettre = { version = "0.11.15", features = ["tokio1", "tokio1-native-tls"] }
+lettre = { version = "0.11.16", features = ["tokio1", "tokio1-native-tls"] }
 # -- Random
 rand = "0.9.1"
 

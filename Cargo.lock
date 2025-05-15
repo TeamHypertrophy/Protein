@@ -2456,7 +2456,7 @@ dependencies = [
 [[package]]
 name = "rocket-client-addr"
 version = "0.5.4"
-source = "git+https://github.com/guenhter/rocket-client-addr#3aa6af038b72ba82807b77c02bbe9874cf145178"
+source = "git+https://github.com/Frauscher-Sensortechnology/rocket-client-addr#3aa6af038b72ba82807b77c02bbe9874cf145178"
 dependencies = [
  "rocket",
 ]
