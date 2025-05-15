@@ -566,7 +566,10 @@ async fn protein() -> _ {
                 api::profile::create_profile,
                 api::profile::update_profile,
                 api::profile::upload_avatar,
-                api::profile::delete_profile
+                api::profile::delete_profile,
+                api::profile::increment_streak,
+                api::profile::reset_streak,
+                api::profile::get_leaderboard
             ],
         )
         .mount(

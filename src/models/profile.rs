@@ -197,6 +197,30 @@ impl Profile {
                 Error::Database(error.to_string())
             })
     }
+
+    pub async fn increment_streak(user_id: Uuid, connection: &mut Conn) -> Result<Profile, Error> {
+        diesel::update(profiles::table)
+            .filter(profiles::user_id.eq(user_id))
+            .set(profiles::streak.eq(profiles::streak + 1))
+            .get_result::<Profile>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
+
+    pub async fn reset_streak(user_id: Uuid, connection: &mut Conn) -> Result<Profile, Error> {
+        diesel::update(profiles::table)
+            .filter(profiles::user_id.eq(user_id))
+            .set(profiles::streak.eq(1))
+            .get_result::<Profile>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                Error::Database(error.to_string())
+            })
+    }
 }
 
 #[derive(AsChangeset)]

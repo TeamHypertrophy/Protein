@@ -173,7 +173,7 @@ pub async fn get_workout_plan_log(
     _auth: API,
     pool: &State<DB>,
     user_id: Uuid,
-    plan_id: Uuid,
+    plan_id: i32,
 ) -> Result<Json<WorkoutPlanLog>, Error> {
     let connection = &mut db::get(pool).await?;
 
@@ -221,7 +221,7 @@ pub async fn update_workout_plan_log(
     _auth: API,
     pool: &State<DB>,
     user_id: Uuid,
-    plan_id: Uuid,
+    plan_id: i32,
     data: Json<UpdateWorkoutPlanLog>,
 ) -> Result<Json<WorkoutPlanLog>, Error> {
     let connection = &mut db::get(pool).await?;
@@ -252,7 +252,7 @@ pub async fn delete_workout_plan_log(
     _auth: API,
     pool: &State<DB>,
     user_id: Uuid,
-    plan_id: Uuid,
+    plan_id: i32,
 ) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get(pool).await?;
 

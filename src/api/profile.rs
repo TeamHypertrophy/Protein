@@ -210,3 +210,37 @@ pub async fn get_leaderboard(
 
     Ok(Json(profiles))
 }
+
+#[get("/streak/increment?<user_id>", format = "application/json")]
+pub async fn increment_streak(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DB>,
+    redis: &State<Redis>,
+    user_id: Uuid,
+) -> Result<Json<Profile>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let profile = Profile::increment_streak(user_id, connection).await?;
+
+    Cache::set(redis, "profile", user_id, Cache::serialize(&profile)?).await?;
+
+    Ok(Json(profile))
+}
+
+#[get("/streak/reset?<user_id>", format = "application/json")]
+pub async fn reset_streak(
+    _r: RateLimit<'_>,
+    _auth: API,
+    pool: &State<DB>,
+    redis: &State<Redis>,
+    user_id: Uuid,
+) -> Result<Json<Profile>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let profile = Profile::reset_streak(user_id, connection).await?;
+
+    Cache::set(redis, "profile", user_id, Cache::serialize(&profile)?).await?;
+
+    Ok(Json(profile))
+}

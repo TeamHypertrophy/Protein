@@ -175,10 +175,10 @@ pub struct WorkoutLog {
 }
 
 impl WorkoutLog {
-    pub async fn find(user: Uuid, id: Uuid, connection: &mut Conn) -> Result<WorkoutLog, Error> {
+    pub async fn find(user: Uuid, id: i32, connection: &mut Conn) -> Result<WorkoutLog, Error> {
         workout_logs::table
             .filter(workout_logs::user_id.eq(user))
-            .filter(workout_logs::workout_id.eq(id))
+            .filter(workout_logs::log_id.eq(id))
             .select(WorkoutLog::as_select())
             .first(connection)
             .await
@@ -213,13 +213,13 @@ impl WorkoutLog {
 
     pub async fn update(
         user: Uuid,
-        id: Uuid,
+        id: i32,
         data: UpdateWorkoutLog,
         connection: &mut Conn,
     ) -> Result<WorkoutLog, Error> {
         diesel::update(workout_logs::table)
             .filter(workout_logs::user_id.eq(user))
-            .filter(workout_logs::workout_id.eq(id))
+            .filter(workout_logs::log_id.eq(id))
             .set(&data)
             .get_result(connection)
             .await
@@ -229,10 +229,10 @@ impl WorkoutLog {
             })
     }
 
-    pub async fn delete(user: Uuid, id: Uuid, connection: &mut Conn) -> Result<usize, Error> {
+    pub async fn delete(user: Uuid, id: i32, connection: &mut Conn) -> Result<usize, Error> {
         diesel::delete(workout_logs::table)
             .filter(workout_logs::user_id.eq(user))
-            .filter(workout_logs::workout_id.eq(id))
+            .filter(workout_logs::log_id.eq(id))
             .execute(connection)
             .await
             .map_err(|error| {

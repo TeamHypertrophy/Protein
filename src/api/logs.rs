@@ -132,17 +132,17 @@ pub async fn delete_exercise_log(
 
 // Workouts
 
-#[get("/workout/get/<workout_id>?<user_id>", format = "application/json")]
+#[get("/workout/get/<log_id>?<user_id>", format = "application/json")]
 pub async fn get_workout_log(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
-    workout_id: Uuid,
+    log_id: i32,
     user_id: Uuid,
 ) -> Result<Json<WorkoutLog>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let log = WorkoutLog::find(user_id, workout_id, connection).await?;
+    let log = WorkoutLog::find(user_id, log_id, connection).await?;
 
     Ok(Json(log))
 }
@@ -175,7 +175,7 @@ pub async fn get_all_user_workout_logs(
 }
 
 #[post(
-    "/workout/update/<workout_id>?<user_id>",
+    "/workout/update/<log_id>?<user_id>",
     format = "application/json",
     data = "<data>"
 )]
@@ -183,13 +183,13 @@ pub async fn update_workout_log(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
-    workout_id: Uuid,
+    log_id: i32,
     user_id: Uuid,
     data: Json<UpdateWorkoutLog>,
 ) -> Result<Json<WorkoutLog>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let log = WorkoutLog::update(user_id, workout_id, data.into_inner(), connection).await?;
+    let log = WorkoutLog::update(user_id, log_id, data.into_inner(), connection).await?;
 
     Ok(Json(log))
 }
@@ -213,17 +213,17 @@ pub async fn create_workout_log(
     Ok(Json(log))
 }
 
-#[get("/workout/delete/<workout_id>?<user_id>", format = "application/json")]
+#[get("/workout/delete/<log_id>?<user_id>", format = "application/json")]
 pub async fn delete_workout_log(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
-    workout_id: Uuid,
+    log_id: i32,
     user_id: Uuid,
 ) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    WorkoutLog::delete(user_id, workout_id, connection).await?;
+    WorkoutLog::delete(user_id, log_id, connection).await?;
 
     Ok(status::Accepted(json!({
         "status": 200,

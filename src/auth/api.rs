@@ -67,7 +67,10 @@ impl<'r> FromRequest<'r> for API {
         // 3. Check If The API Key Is The Master Key
         if let Ok(master) = Uuid::parse_str(admin.master_key.as_str()) {
             if api_key == master {
-                if admin.app_env == "development" {
+                if admin.app_env == "development"
+                    || admin.app_env == "staging"
+                    || admin.app_env == "production"
+                {
                     return Outcome::Success(API);
                 } else {
                     return Outcome::Error((

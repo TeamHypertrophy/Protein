@@ -251,12 +251,12 @@ pub struct WorkoutPlanLog {
 impl WorkoutPlanLog {
     pub async fn find(
         user: &User,
-        plan: Uuid,
+        plan: i32,
         connection: &mut Conn,
     ) -> Result<WorkoutPlanLog, Error> {
         WorkoutPlanLog::belonging_to(user)
             .select(WorkoutPlanLog::as_select())
-            .filter(workout_plan_logs::plan_id.eq(plan))
+            .filter(workout_plan_logs::log_id.eq(plan))
             .first(connection)
             .await
             .map_err(|error| {
@@ -290,13 +290,13 @@ impl WorkoutPlanLog {
 
     pub async fn update(
         user: Uuid,
-        plan: Uuid,
+        plan: i32,
         data: UpdateWorkoutPlanLog,
         connection: &mut Conn,
     ) -> Result<WorkoutPlanLog, Error> {
         diesel::update(workout_plan_logs::table)
             .filter(workout_plan_logs::user_id.eq(user))
-            .filter(workout_plan_logs::plan_id.eq(plan))
+            .filter(workout_plan_logs::log_id.eq(plan))
             .set(&data)
             .get_result::<WorkoutPlanLog>(connection)
             .await
@@ -306,10 +306,10 @@ impl WorkoutPlanLog {
             })
     }
 
-    pub async fn delete(user: Uuid, plan: Uuid, connection: &mut Conn) -> Result<usize, Error> {
+    pub async fn delete(user: Uuid, plan: i32, connection: &mut Conn) -> Result<usize, Error> {
         diesel::delete(workout_plan_logs::table)
             .filter(workout_plan_logs::user_id.eq(user))
-            .filter(workout_plan_logs::plan_id.eq(plan))
+            .filter(workout_plan_logs::log_id.eq(plan))
             .execute(connection)
             .await
             .map_err(|error| {
