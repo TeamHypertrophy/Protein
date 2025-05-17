@@ -33,7 +33,7 @@ pub async fn get_exercise(
     redis: &State<Redis>,
     exercise_id: i64,
 ) -> Result<Json<Exercise>, Error> {
-    let cache: Value = Cache::get(redis, "exercise", exercise_id.to_string()).await?;
+    let cache: Value = Cache::get(redis, "exercise", exercise_id).await?;
 
     if cache.is_null() {
         let connection = &mut db::get(pool).await?;

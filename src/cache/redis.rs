@@ -11,6 +11,7 @@ ______          _       _
 
 use std::{fmt::Display, time::Duration};
 
+use uuid::Uuid;
 use rocket::{
     State,
     serde::{Deserialize, Serialize, json, json::Value},
@@ -20,6 +21,53 @@ use fred::{prelude::*, types::config::UnresponsiveConfig};
 use crate::{constants::*, errors::Error};
 
 pub type Redis = Pool;
+
+// -- Trait to Convert More Complex Types Into Cache Keys
+pub trait CacheKey {
+    fn get(&self) -> String;
+}
+
+impl CacheKey for &str {
+    fn get(&self) -> String {
+        self.to_string()
+    }
+}
+
+impl CacheKey for String {
+    fn get(&self) -> String {
+        self.clone()
+    }
+}
+
+impl CacheKey for Uuid {
+    fn get(&self) -> String {
+        self.to_string()
+    }
+}
+
+impl<T: Display, U: Display> CacheKey for (T, U) {
+    fn get(&self) -> String {
+        format!("{}_{}", self.0, self.1)
+    }
+}
+
+macro_rules! impl_cache_key_for_numbers {
+    ($($t:ty),*) => {
+        $(
+            impl CacheKey for $t {
+                fn get(&self) -> String { self.to_string() }
+            }
+            impl CacheKey for &$t {
+                fn get(&self) -> String { (*self).to_string() }
+            }
+        )*
+    };
+}
+
+impl_cache_key_for_numbers!(
+    i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize
+);
+impl_cache_key_for_numbers!(f32, f64);
 
 pub async fn create() -> Result<Pool, Error> {
     // Get Redis URI
@@ -75,13 +123,14 @@ pub struct Cache;
 
 impl Cache {
     // Get Value From Redis Cache
-    pub async fn get<T: Display>(pool: &State<Redis>, group: &str, key: T) -> Result<Value, Error> {
-        tracing::info!(
-            "[Cache] ⚙️ Fetching Key From Redis Cache: {:#?}",
-            format!("{}:{}", group, key)
-        );
+    pub async fn get<K: CacheKey>(
+        pool: &State<Redis>,
+        group: &str,
+        key: K,
+    ) -> Result<Value, Error> {
+        tracing::info!("[Cache] ⚙️ Fetching Key From Redis Cache",);
 
-        pool.get(format!("{}:{}", group, key))
+        pool.get(format!("{}:{}", group, key.get()))
             .await
             .map_err(|error| {
                 tracing::error!("[!] Redis Error: {:?}", error);
@@ -90,20 +139,16 @@ impl Cache {
     }
 
     // Sets A Value In Redis Cache
-    pub async fn set<T: Display>(
+    pub async fn set<K: CacheKey>(
         pool: &Redis,
         group: &str,
-        key: T,
+        key: K,
         value: String,
     ) -> Result<(), Error> {
-        tracing::info!(
-            "[Cache] ⚙️ Setting Key In Redis Cache: {:#?} With Values: {:#?}",
-            format!("{}:{}", group, key),
-            value
-        );
+        tracing::info!("[Cache] ⚙️ Setting Key In Redis Cache");
 
         pool.set(
-            format!("{}:{}", group, key),
+            format!("{}:{}", group, key.get()),
             value,
             Some(Expiration::EX(CACHE_EXPIRATION_TIME)),
             None,
@@ -117,13 +162,14 @@ impl Cache {
     }
 
     // Deletes A Value From Redis Cache
-    pub async fn delete<T: Display>(pool: &State<Redis>, group: &str, key: T) -> Result<(), Error> {
-        tracing::info!(
-            "[Cache] ⚙️ Deleting Key From Redis Cache: {:#?}",
-            format!("{}:{}", group, key)
-        );
+    pub async fn delete<K: CacheKey>(
+        pool: &State<Redis>,
+        group: &str,
+        key: K,
+    ) -> Result<(), Error> {
+        tracing::info!("[Cache] ⚙️ Deleting Key From Redis Cache",);
 
-        pool.del(format!("{}:{}", group, key))
+        pool.del(format!("{}:{}", group, key.get()))
             .await
             .map_err(|error| {
                 tracing::error!("[!] Redis Error: {:?}", error);
@@ -142,13 +188,10 @@ impl Cache {
     }
 
     // Checks If A Key Exists In Redis Cache
-    pub async fn exists<T: Display>(pool: &Redis, group: &str, key: T) -> Result<bool, Error> {
-        tracing::info!(
-            "[Cache] ⚙️ Checking If Key Exists In Redis Cache: {:#?}",
-            format!("{}:{}", group, key)
-        );
+    pub async fn exists<K: CacheKey>(pool: &Redis, group: &str, key: K) -> Result<bool, Error> {
+        tracing::info!("[Cache] ⚙️ Checking Key Existence In Redis Cache",);
 
-        pool.exists(format!("{}:{}", group, key))
+        pool.exists(format!("{}:{}", group, key.get()))
             .await
             .map_err(|error| {
                 tracing::error!("[!] Redis Error: {:?}", error);
