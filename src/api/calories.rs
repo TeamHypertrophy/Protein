@@ -49,11 +49,11 @@ pub async fn get_calorie_log(
         )
         .await?;
 
-        return Ok(Json(log));
+        Ok(Json(log))
     } else {
         let log: CalorieLog = Cache::deserialize(cache)?;
 
-        return Ok(Json(log));
+        Ok(Json(log))
     }
 }
 
@@ -65,7 +65,7 @@ pub async fn get_all_calorie_logs(
 ) -> Result<Json<Vec<CalorieLog>>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let logs = CalorieLog::all(connection).await?;
+    let logs: Vec<CalorieLog> = CalorieLog::all(connection).await?;
 
     Ok(Json(logs))
 }
@@ -79,7 +79,7 @@ pub async fn get_all_user_calorie_logs(
 ) -> Result<Json<Vec<CalorieLog>>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let logs = CalorieLog::user_all(user_id, connection).await?;
+    let logs: Vec<CalorieLog> = CalorieLog::user_all(user_id, connection).await?;
 
     Ok(Json(logs))
 }
@@ -100,7 +100,8 @@ pub async fn update_calorie_log(
 ) -> Result<Json<CalorieLog>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let result = CalorieLog::update(user_id, log_id, log.into_inner(), connection).await?;
+    let result: CalorieLog =
+        CalorieLog::update(user_id, log_id, log.into_inner(), connection).await?;
 
     Cache::set(
         redis,
@@ -124,7 +125,7 @@ pub async fn create_calorie_log(
 ) -> Result<Json<CalorieLog>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let result = CalorieLog::create(log.into_inner(), connection).await?;
+    let result: CalorieLog = CalorieLog::create(log.into_inner(), connection).await?;
 
     Cache::set(
         redis,

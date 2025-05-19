@@ -115,7 +115,7 @@ impl Profile {
             .first(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -126,7 +126,7 @@ impl Profile {
             .load(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -142,7 +142,7 @@ impl Profile {
             .get_result::<Profile>(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -158,7 +158,7 @@ impl Profile {
             .get_result::<Profile>(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -169,7 +169,7 @@ impl Profile {
             .execute(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -180,7 +180,7 @@ impl Profile {
             .get_result::<Profile>(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -193,7 +193,7 @@ impl Profile {
             .load(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -205,7 +205,7 @@ impl Profile {
             .get_result::<Profile>(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -217,7 +217,7 @@ impl Profile {
             .get_result::<Profile>(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }

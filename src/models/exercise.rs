@@ -65,7 +65,7 @@ impl Exercise {
             .first(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -93,7 +93,7 @@ impl Exercise {
         }
 
         query.load::<Exercise>(connection).await.map_err(|error| {
-            tracing::error!("[!] PostgreSQL Error: {:?}", error);
+            tracing::error!("[DB]: {:?}", error);
             Error::Database(error.to_string())
         })
     }
@@ -104,7 +104,7 @@ impl Exercise {
             .load(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -115,7 +115,7 @@ impl Exercise {
             .execute(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -131,7 +131,7 @@ impl Exercise {
             .get_result::<Exercise>(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -142,7 +142,7 @@ impl Exercise {
             .get_result(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }

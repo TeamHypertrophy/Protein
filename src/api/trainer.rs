@@ -19,6 +19,7 @@ use rocket::{
 
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
+    cache::redis::{Cache, Redis},
     db,
     db::DB,
     errors::Error,
@@ -41,13 +42,24 @@ pub async fn get_trainer(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     trainer_id: i32,
 ) -> Result<Json<Trainer>, Error> {
-    let connection = &mut db::get(pool).await?;
+    let cache: Value = Cache::get(redis, "trainer", trainer_id).await?;
 
-    let trainer = Trainer::find(trainer_id, connection).await?;
+    if cache.is_null() {
+        let connection = &mut db::get(pool).await?;
 
-    Ok(Json(trainer))
+        let trainer = Trainer::find(trainer_id, connection).await?;
+
+        Cache::set(redis, "trainer", trainer_id, Cache::serialize(&trainer)?).await?;
+
+        Ok(Json(trainer))
+    } else {
+        let trainer: Trainer = Cache::deserialize(cache)?;
+
+        Ok(Json(trainer))
+    }
 }
 
 #[get("/by?<user_id>", format = "application/json")]
@@ -59,7 +71,7 @@ pub async fn get_trainer_by_user(
 ) -> Result<Json<Trainer>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let trainer = Trainer::by_user(user_id, connection).await?;
+    let trainer: Trainer = Trainer::by_user(user_id, connection).await?;
 
     Ok(Json(trainer))
 }
@@ -72,7 +84,7 @@ pub async fn get_all_trainers(
 ) -> Result<Json<Vec<Trainer>>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let trainers = Trainer::all(connection).await?;
+    let trainers: Vec<Trainer> = Trainer::all(connection).await?;
 
     Ok(Json(trainers))
 }
@@ -82,12 +94,21 @@ pub async fn add_client(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     trainer: Uuid,
     user_id: Uuid,
 ) -> Result<Json<Trainer>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let trainer = Trainer::add_client(trainer, user_id, connection).await?;
+    let trainer: Trainer = Trainer::add_client(trainer, user_id, connection).await?;
+
+    Cache::set(
+        redis,
+        "trainer",
+        trainer.trainer_id,
+        Cache::serialize(&trainer)?,
+    )
+    .await?;
 
     Ok(Json(trainer))
 }
@@ -97,12 +118,21 @@ pub async fn remove_client(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     trainer: Uuid,
     user_id: Uuid,
 ) -> Result<Json<Trainer>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let trainer = Trainer::remove_client(trainer, user_id, connection).await?;
+    let trainer: Trainer = Trainer::remove_client(trainer, user_id, connection).await?;
+
+    Cache::set(
+        redis,
+        "trainer",
+        trainer.trainer_id,
+        Cache::serialize(&trainer)?,
+    )
+    .await?;
 
     Ok(Json(trainer))
 }
@@ -111,12 +141,15 @@ pub async fn remove_client(
 pub async fn update_trainer(
     _r: RateLimit<'_>,
     pool: &State<DB>,
+    redis: &State<Redis>,
     trainer_id: i32,
     data: Json<UpdateTrainer>,
 ) -> Result<Json<Trainer>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let trainer = Trainer::update(trainer_id, data.into_inner(), connection).await?;
+    let trainer: Trainer = Trainer::update(trainer_id, data.into_inner(), connection).await?;
+
+    Cache::set(redis, "trainer", trainer_id, Cache::serialize(&trainer)?).await?;
 
     Ok(Json(trainer))
 }
@@ -126,11 +159,20 @@ pub async fn create_trainer(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     data: Json<NewTrainer>,
 ) -> Result<Json<Trainer>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let trainer = Trainer::create(data.into_inner(), connection).await?;
+    let trainer: Trainer = Trainer::create(data.into_inner(), connection).await?;
+
+    Cache::set(
+        redis,
+        "trainer",
+        trainer.trainer_id,
+        Cache::serialize(&trainer)?,
+    )
+    .await?;
 
     Ok(Json(trainer))
 }
@@ -140,11 +182,14 @@ pub async fn delete_trainer(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     trainer_id: i32,
 ) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get(pool).await?;
 
     Trainer::delete(trainer_id, connection).await?;
+
+    Cache::delete(redis, "trainer", trainer_id).await?;
 
     Ok(status::Accepted(json!({
         "status": 200,
@@ -160,14 +205,32 @@ pub async fn get_announcement(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     trainer_id: Uuid,
     announcement_id: i32,
 ) -> Result<Json<TrainerAnnouncement>, Error> {
-    let connection = &mut db::get(pool).await?;
+    let cache: Value = Cache::get(redis, "announcement", announcement_id).await?;
 
-    let announcement = TrainerAnnouncement::find(trainer_id, announcement_id, connection).await?;
+    if cache.is_null() {
+        let connection = &mut db::get(pool).await?;
 
-    Ok(Json(announcement))
+        let announcement: TrainerAnnouncement =
+            TrainerAnnouncement::find(trainer_id, announcement_id, connection).await?;
+
+        Cache::set(
+            redis,
+            "announcement",
+            announcement_id,
+            Cache::serialize(&announcement)?,
+        )
+        .await?;
+
+        Ok(Json(announcement))
+    } else {
+        let announcement: TrainerAnnouncement = Cache::deserialize(cache)?;
+
+        Ok(Json(announcement))
+    }
 }
 
 #[get("/announcement/all", format = "application/json")]
@@ -178,7 +241,7 @@ pub async fn get_all_announcements(
 ) -> Result<Json<Vec<TrainerAnnouncement>>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let announcements = TrainerAnnouncement::all(connection).await?;
+    let announcements: Vec<TrainerAnnouncement> = TrainerAnnouncement::all(connection).await?;
 
     Ok(Json(announcements))
 }
@@ -192,7 +255,8 @@ pub async fn get_all_trainer_announcements(
 ) -> Result<Json<Vec<TrainerAnnouncement>>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let announcements = TrainerAnnouncement::trainer_all(trainer_id, connection).await?;
+    let announcements: Vec<TrainerAnnouncement> =
+        TrainerAnnouncement::trainer_all(trainer_id, connection).await?;
 
     Ok(Json(announcements))
 }
@@ -206,15 +270,24 @@ pub async fn update_announcement(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     trainer_id: Uuid,
     announcement_id: i32,
     data: Json<UpdateTrainerAnnouncement>,
 ) -> Result<Json<TrainerAnnouncement>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let announcement =
+    let announcement: TrainerAnnouncement =
         TrainerAnnouncement::update(trainer_id, announcement_id, data.into_inner(), connection)
             .await?;
+
+    Cache::set(
+        redis,
+        "announcement",
+        announcement_id,
+        Cache::serialize(&announcement)?,
+    )
+    .await?;
 
     Ok(Json(announcement))
 }
@@ -228,12 +301,22 @@ pub async fn create_announcement(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     data: Json<NewTrainerAnnouncement>,
     trainer_id: i32,
 ) -> Result<Json<TrainerAnnouncement>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let announcement = TrainerAnnouncement::create(data.into_inner(), connection).await?;
+    let announcement: TrainerAnnouncement =
+        TrainerAnnouncement::create(data.into_inner(), connection).await?;
+
+    Cache::set(
+        redis,
+        "announcement",
+        announcement.announcement_id,
+        Cache::serialize(&announcement)?,
+    )
+    .await?;
 
     Ok(Json(announcement))
 }
@@ -246,12 +329,15 @@ pub async fn delete_announcement(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     trainer_id: Uuid,
     announcement_id: i32,
 ) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get(pool).await?;
 
     TrainerAnnouncement::delete(trainer_id, announcement_id, connection).await?;
+
+    Cache::delete(redis, "announcement", announcement_id).await?;
 
     Ok(status::Accepted(json!({
         "status": 200,
@@ -270,38 +356,47 @@ pub async fn request_trainer(
     pool: &State<DB>,
     mailer: &State<Email>,
     config: &State<Config>,
+    redis: &State<Redis>,
     user_id: Uuid,
     data: Json<RequestTrainer>,
 ) -> Result<Json<Trainer>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let experience = data.experience.clone();
-    let specialization = data.specialization.clone();
+    let experience: String = data.experience.clone();
+    let specialization: String = data.specialization.clone();
 
-    let trainer = Trainer::request(data.into_inner(), connection).await?;
+    let trainer: Trainer = Trainer::request(data.into_inner(), connection).await?;
 
-    let user = User::find(user_id, connection).await?;
+    Cache::set(
+        redis,
+        "trainer",
+        trainer.trainer_id,
+        Cache::serialize(&trainer)?,
+    )
+    .await?;
 
-    let profile = Profile::find(&user, connection).await?;
+    let user: User = User::find(user_id, connection).await?;
+
+    let profile: Profile = Profile::find(&user, connection).await?;
 
     let mail = mailer.inner().clone();
     let smtp = config.inner().clone();
 
     rocket::tokio::task::spawn(async move {
-        let full_name = format!("{} {}", profile.first_name, profile.last_name);
-        let trainer_id = trainer.trainer_id;
+        let full_name: String = format!("{} {}", profile.first_name, profile.last_name);
+        let trainer_id: i32 = trainer.trainer_id;
 
-        let now = chrono::Utc::now().to_string();
+        let now: String = chrono::Utc::now().to_string();
 
-        let accept_url = format!(
+        let accept_url: String = format!(
             "{}/trainers/request/accept?trainer_id={}",
             &smtp.host_url, &trainer_id
         );
-        let deny_url = format!(
+        let deny_url: String = format!(
             "{}/trainers/request/deny?trainer_id={}",
             &smtp.host_url, &trainer_id
         );
-        let status_url = format!("hypertrophy://trainer/status");
+        let status_url: &str = "hypertrophy://trainer/status";
 
         let admin_body = TrainerApplication {
             name: &full_name,
@@ -317,7 +412,7 @@ pub async fn request_trainer(
             specialization: &specialization,
             time: &now,
             experience: &experience,
-            status_url: &status_url,
+            status_url: status_url,
         };
 
         match email::send(
@@ -361,16 +456,25 @@ pub async fn accept_trainer(
     pool: &State<DB>,
     mailer: &State<Email>,
     config: &State<Config>,
+    redis: &State<Redis>,
     trainer_id: i32,
 ) -> Result<Json<Trainer>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let trainer = Trainer::accept(trainer_id, connection).await?;
+    let trainer: Trainer = Trainer::accept(trainer_id, connection).await?;
 
-    let user = User::find(trainer.user_id, connection).await?;
+    Cache::set(
+        redis,
+        "trainer",
+        trainer.trainer_id,
+        Cache::serialize(&trainer)?,
+    )
+    .await?;
 
-    let profile = Profile::find(&user, connection).await?;
-    let full_name = format!("{} {}", profile.first_name, profile.last_name);
+    let user: User = User::find(trainer.user_id, connection).await?;
+
+    let profile: Profile = Profile::find(&user, connection).await?;
+    let full_name: String = format!("{} {}", profile.first_name, profile.last_name);
 
     let mail = mailer.inner().clone();
     let smtp = config.inner().clone();
@@ -385,7 +489,7 @@ pub async fn accept_trainer(
     rocket::tokio::task::spawn(async move {
         let body = TrainerAccepted {
             name: &full_name,
-            specialization: &specialization,
+            specialization: specialization,
         };
 
         match email::send(
@@ -415,11 +519,20 @@ pub async fn deny_trainer(
     pool: &State<DB>,
     mailer: &State<Email>,
     config: &State<Config>,
+    redis: &State<Redis>,
     trainer_id: i32,
 ) -> Result<Json<Trainer>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let trainer = Trainer::deny(trainer_id, connection).await?;
+    let trainer: Trainer = Trainer::deny(trainer_id, connection).await?;
+
+    Cache::set(
+        redis,
+        "trainer",
+        trainer.trainer_id,
+        Cache::serialize(&trainer)?,
+    )
+    .await?;
 
     let user = User::find(trainer.user_id, connection).await?;
 
@@ -461,7 +574,7 @@ pub async fn get_trainers_for_user(
 ) -> Result<Json<Vec<Trainer>>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let trainers = Trainer::for_user(user_id, connection).await?;
+    let trainers: Vec<Trainer> = Trainer::for_user(user_id, connection).await?;
 
     Ok(Json(trainers))
 }
@@ -475,7 +588,8 @@ pub async fn get_announcements_for_user(
 ) -> Result<Json<Vec<TrainerAnnouncement>>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let announcements = TrainerAnnouncement::for_user(user_id, connection).await?;
+    let announcements: Vec<TrainerAnnouncement> =
+        TrainerAnnouncement::for_user(user_id, connection).await?;
 
     Ok(Json(announcements))
 }
@@ -490,11 +604,11 @@ pub async fn is_trainer_followed_by_user(
 ) -> Result<Json<Value>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let trainer = Trainer::is_followed_by_user(trainer, user_id, connection).await?;
+    let is_followed: bool = Trainer::is_followed_by_user(trainer, user_id, connection).await?;
 
     Ok(Json(json!({
         "status": 200,
         "message": "Trainer Followed Status",
-        "followed": trainer,
+        "followed": is_followed,
     })))
 }

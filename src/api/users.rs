@@ -115,7 +115,7 @@ pub async fn signup(
     }
 
     // Get IP Address
-    let ip_address: String = email::get_ip_address(&ip)?;
+    let ip_address: String = email::get_ip_address(ip)?;
 
     // Create New User Struct
     let new_user = NewUser {
@@ -261,7 +261,7 @@ pub async fn login(
     let connection = &mut db::get(pool).await?;
 
     // Get Current IP Address
-    let ip_address: String = email::get_ip_address(&ip)?;
+    let ip_address: String = email::get_ip_address(ip)?;
 
     // Get Current User Agent OS
     let device = email::get_user_agent(&os);
@@ -523,7 +523,7 @@ pub async fn update_user_password(
     let connection = &mut db::get(pool).await?;
 
     // Get IP Address
-    let ip_address: String = email::get_ip_address(&ip)?;
+    let ip_address: String = email::get_ip_address(ip)?;
 
     // Grab User
     let user = User::find(user_id, connection).await?;
@@ -668,13 +668,10 @@ pub async fn reset_password(
     // Get User Profile
     let user = User::find_by_email(data.email.clone(), connection).await?;
 
-    match user.mfa_code {
-        Some(_code) => {
-            return Err(Error::Authorization(
-                "MFA Code Found, Please Verify To Reset".to_string(),
-            ));
-        }
-        None => (),
+    if let Some(_code) = user.mfa_code {
+        return Err(Error::Authorization(
+            "MFA Code Found, Please Verify To Reset".to_string(),
+        ));
     }
 
     // Hash Generated Password
@@ -955,7 +952,7 @@ pub async fn check_mfa(
 ) -> Result<Json<Value>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let ip_address: String = email::get_ip_address(&ip)?;
+    let ip_address: String = email::get_ip_address(ip)?;
 
     // Get Current User Agent OS
     let device = email::get_user_agent(&os);

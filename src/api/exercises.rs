@@ -38,7 +38,7 @@ pub async fn get_exercise(
     if cache.is_null() {
         let connection = &mut db::get(pool).await?;
 
-        let exercise = Exercise::find(exercise_id, connection).await?;
+        let exercise: Exercise = Exercise::find(exercise_id, connection).await?;
 
         Cache::set(redis, "exercise", exercise_id, Cache::serialize(&exercise)?).await?;
 
@@ -59,7 +59,7 @@ pub async fn search_exercises(
 ) -> Result<Json<Vec<Exercise>>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let exercises = Exercise::search(connection, data.into_inner()).await?;
+    let exercises: Vec<Exercise> = Exercise::search(connection, data.into_inner()).await?;
 
     Ok(Json(exercises))
 }
@@ -72,7 +72,7 @@ pub async fn get_all_exercises(
 ) -> Result<Json<Vec<Exercise>>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let exercises = Exercise::all(connection).await?;
+    let exercises: Vec<Exercise> = Exercise::all(connection).await?;
 
     Ok(Json(exercises))
 }
@@ -93,7 +93,7 @@ pub async fn update_exercise(
         Err(error) => return Err(Error::Validation(error.to_string())),
     }
 
-    let exercise = Exercise::update(exercise_id, data.into_inner(), connection).await?;
+    let exercise: Exercise = Exercise::update(exercise_id, data.into_inner(), connection).await?;
 
     Cache::set(redis, "exercise", exercise_id, Cache::serialize(&exercise)?).await?;
 

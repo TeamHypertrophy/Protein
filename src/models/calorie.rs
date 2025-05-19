@@ -10,7 +10,7 @@ ______          _       _
 */
 
 use uuid::Uuid;
-use diesel::prelude::*;
+use diesel::{prelude::*, result::Error as DieselError};
 use diesel_async::RunQueryDsl;
 use rocket::serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
@@ -59,8 +59,8 @@ impl CalorieLog {
             .select(CalorieLog::as_select())
             .first(connection)
             .await
-            .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+            .map_err(|error: DieselError| {
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -71,7 +71,7 @@ impl CalorieLog {
             .load(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -83,7 +83,7 @@ impl CalorieLog {
             .load(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -101,7 +101,7 @@ impl CalorieLog {
             .get_result::<CalorieLog>(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -113,7 +113,7 @@ impl CalorieLog {
             .execute(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -124,7 +124,7 @@ impl CalorieLog {
             .get_result::<CalorieLog>(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }

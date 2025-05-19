@@ -41,20 +41,21 @@ pub async fn get_api_key(
     redis: &State<Redis>,
     api_key: Uuid,
 ) -> Result<Json<APIKey>, Error> {
-    let connection = &mut db::get(pool).await?;
+    let cache: Value = Cache::get(redis, "api_key", api_key).await?;
 
-    let api_key = APIKey::find(api_key, connection).await?;
+    if cache.is_null() {
+        let connection = &mut db::get(pool).await?;
 
-    // Store The API Key In Redis
-    Cache::set(
-        redis,
-        "api_key",
-        api_key.api_key,
-        Cache::serialize(&api_key)?,
-    )
-    .await?;
+        let key: APIKey = APIKey::find(api_key, connection).await?;
 
-    Ok(Json(api_key))
+        Cache::set(redis, "api_key", key.api_key, Cache::serialize(&key)?).await?;
+
+        Ok(Json(key))
+    } else {
+        let key: APIKey = Cache::deserialize(cache)?;
+
+        Ok(Json(key))
+    }
 }
 
 #[get("/create?<user_id>", format = "application/json")]
@@ -66,9 +67,9 @@ pub async fn create_api_key(
 ) -> Result<Json<APIKey>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let user = User::find(user_id, connection).await?;
+    let user: User = User::find(user_id, connection).await?;
 
-    let all = APIKey::user_all(user.user_id, connection).await?;
+    let all: Vec<APIKey> = APIKey::user_all(user.user_id, connection).await?;
 
     for key in all {
         if key.status == Status::Active {
@@ -78,9 +79,8 @@ pub async fn create_api_key(
         }
     }
 
-    let new = APIKey::generate(&user, connection).await?;
+    let new: APIKey = APIKey::generate(&user, connection).await?;
 
-    // Store The API Key In Redis
     Cache::set(redis, "api_key", new.api_key, Cache::serialize(&new)?).await?;
 
     Ok(Json(new))
@@ -94,7 +94,7 @@ pub async fn get_all_api_keys(
 ) -> Result<Json<Vec<APIKey>>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let api_keys = APIKey::all(connection).await?;
+    let api_keys: Vec<APIKey> = APIKey::all(connection).await?;
 
     Ok(Json(api_keys))
 }
@@ -108,7 +108,7 @@ pub async fn get_all_user_api_keys(
 ) -> Result<Json<Vec<APIKey>>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let user_keys = APIKey::user_all(user_id, connection).await?;
+    let user_keys: Vec<APIKey> = APIKey::user_all(user_id, connection).await?;
 
     Ok(Json(user_keys))
 }
@@ -118,12 +118,15 @@ pub async fn update_api_key(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     api_key: Uuid,
     key: Json<UpdateAPIKey>,
 ) -> Result<Json<APIKey>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let result = APIKey::update(api_key, key.into_inner(), connection).await?;
+    let result: APIKey = APIKey::update(api_key, key.into_inner(), connection).await?;
+
+    Cache::set(redis, "api_key", result.api_key, Cache::serialize(&result)?).await?;
 
     Ok(Json(result))
 }
@@ -133,11 +136,14 @@ pub async fn delete_api_key(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     api_key: Uuid,
 ) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get(pool).await?;
 
     APIKey::delete(api_key, connection).await?;
+
+    Cache::delete(redis, "api_key", api_key).await?;
 
     Ok(status::Accepted(json!({
         "status": 200,
@@ -151,12 +157,15 @@ pub async fn revoke_api_key(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     api_key: Uuid,
     reason: Json<RevokeKey>,
 ) -> Result<Json<APIKey>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let result = APIKey::revoke(api_key, reason.into_inner(), connection).await?;
+    let result: APIKey = APIKey::revoke(api_key, reason.into_inner(), connection).await?;
+
+    Cache::set(redis, "api_key", result.api_key, Cache::serialize(&result)?).await?;
 
     Ok(Json(result))
 }
@@ -166,12 +175,15 @@ pub async fn change_api_key_role(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     api_key: Uuid,
     role: Json<UpdateRole>,
 ) -> Result<Json<APIKey>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let result = APIKey::change_role(api_key, role.into_inner(), connection).await?;
+    let result: APIKey = APIKey::change_role(api_key, role.into_inner(), connection).await?;
+
+    Cache::set(redis, "api_key", result.api_key, Cache::serialize(&result)?).await?;
 
     Ok(Json(result))
 }
@@ -184,7 +196,7 @@ pub async fn is_admin_key(
 ) -> Result<Json<Value>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let key = APIKey::find(api_key, connection).await?;
+    let key: APIKey = APIKey::find(api_key, connection).await?;
 
     if key.role == Role::Admin || key.role == Role::Developer {
         Ok(Json(json!({
@@ -209,7 +221,7 @@ pub async fn get_all_api_key_logs(
 ) -> Result<Json<Vec<APIKeyLog>>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let logs = APIKeyLog::all(connection).await?;
+    let logs: Vec<APIKeyLog> = APIKeyLog::all(connection).await?;
 
     Ok(Json(logs))
 }
@@ -223,7 +235,7 @@ pub async fn get_all_user_api_key_logs(
 ) -> Result<Json<Vec<APIKeyLog>>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let logs = APIKeyLog::user_all(user_id, connection).await?;
+    let logs: Vec<APIKeyLog> = APIKeyLog::user_all(user_id, connection).await?;
 
     Ok(Json(logs))
 }
@@ -238,7 +250,7 @@ pub async fn create_api_key_log(
 ) -> Result<Json<APIKeyLog>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let result = APIKeyLog::create(log.into_inner(), connection).await?;
+    let result: APIKeyLog = APIKeyLog::create(log.into_inner(), connection).await?;
 
     Ok(Json(result))
 }
@@ -253,7 +265,7 @@ pub async fn update_api_key_log(
 ) -> Result<Json<APIKeyLog>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let result = APIKeyLog::update(log_id, log.into_inner(), connection).await?;
+    let result: APIKeyLog = APIKeyLog::update(log_id, log.into_inner(), connection).await?;
 
     Ok(Json(result))
 }

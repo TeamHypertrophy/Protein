@@ -133,7 +133,7 @@ impl Cache {
         pool.get(format!("{}:{}", group, key.get()))
             .await
             .map_err(|error| {
-                tracing::error!("[!] Redis Error: {:?}", error);
+                tracing::error!("[Redis]: {:?}", error);
                 Error::Cache(error.to_string())
             })
     }
@@ -156,7 +156,7 @@ impl Cache {
         )
         .await
         .map_err(|error| {
-            tracing::error!("[!] Redis Error: {:?}", error);
+            tracing::error!("[Redis]: {:?}", error);
             Error::Cache(error.to_string())
         })
     }
@@ -172,7 +172,7 @@ impl Cache {
         pool.del(format!("{}:{}", group, key.get()))
             .await
             .map_err(|error| {
-                tracing::error!("[!] Redis Error: {:?}", error);
+                tracing::error!("[Redis]: {:?}", error);
                 Error::Cache(error.to_string())
             })
     }
@@ -182,7 +182,7 @@ impl Cache {
         tracing::info!("[Cache] ⚙️ Pinging Redis For Health Check");
 
         pool.ping(message).await.map_err(|error| {
-            tracing::error!("[!] Redis Error: {:?}", error);
+            tracing::error!("[Redis]: {:?}", error);
             Error::Cache(error.to_string())
         })
     }
@@ -194,7 +194,7 @@ impl Cache {
         pool.exists(format!("{}:{}", group, key.get()))
             .await
             .map_err(|error| {
-                tracing::error!("[!] Redis Error: {:?}", error);
+                tracing::error!("[Redis]: {:?}", error);
                 Error::Cache(error.to_string())
             })
     }

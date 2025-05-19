@@ -57,13 +57,13 @@ pub async fn generate_api_key_log(
     status_code: i32,
 ) -> Result<(), Error> {
     let api_key_log = NewAPIKeyLog {
-        api_key: api_key,
-        user_id: user_id,
         method: request.method,
         route: request.route,
         ip_address: request.ip_address,
-        status_code: status_code,
         user_agent: request.user_agent,
+        api_key,
+        user_id,
+        status_code,
     };
 
     APIKeyLog::create(api_key_log, &mut connection).await?;
@@ -72,24 +72,24 @@ pub async fn generate_api_key_log(
 }
 
 pub fn get_request_info(request: &Request<'_>) -> RequestInfo {
-    let method = request.method().as_str();
+    let method: &'static str = request.method().as_str();
 
-    let route = request
+    let route: &str = request
         .route()
         .and_then(|route| route.name.as_deref())
         .unwrap_or("Unknown");
 
-    let ip_address = request
+    let ip_address: String = request
         .client_ip()
         .map(|ip| ip.to_string())
         .unwrap_or("Unknown".to_string());
 
-    let user_agent = request.headers().get_one("User-Agent").unwrap_or("Unknown");
+    let user_agent: &str = request.headers().get_one("User-Agent").unwrap_or("Unknown");
 
     RequestInfo {
         method: method.to_string(),
         route: route.to_string(),
-        ip_address: ip_address,
         user_agent: user_agent.to_string(),
+        ip_address,
     }
 }

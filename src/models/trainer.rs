@@ -65,7 +65,7 @@ impl Trainer {
             .first(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -76,7 +76,7 @@ impl Trainer {
             .load(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -92,7 +92,7 @@ impl Trainer {
             .get_result::<Trainer>(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -103,7 +103,7 @@ impl Trainer {
             .get_result::<Trainer>(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -127,7 +127,7 @@ impl Trainer {
             .get_result::<Trainer>(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -142,7 +142,7 @@ impl Trainer {
             .get_result::<Trainer>(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -153,7 +153,7 @@ impl Trainer {
             .get_result::<Trainer>(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -164,7 +164,7 @@ impl Trainer {
             .execute(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -178,7 +178,7 @@ impl Trainer {
             .load(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -189,7 +189,7 @@ impl Trainer {
             .first(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -205,7 +205,7 @@ impl Trainer {
             .get_result::<Trainer>(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -221,7 +221,7 @@ impl Trainer {
             .get_result::<Trainer>(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -238,7 +238,7 @@ impl Trainer {
             .first(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }

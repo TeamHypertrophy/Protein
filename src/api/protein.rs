@@ -18,6 +18,7 @@ use uuid::Uuid;
 
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
+    cache::redis::{Cache, Redis},
     db,
     db::DB,
     errors::Error,
@@ -29,14 +30,31 @@ pub async fn get_protein_log(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     user_id: Uuid,
     log_id: i32,
 ) -> Result<Json<ProteinLog>, Error> {
-    let connection = &mut db::get(pool).await?;
+    let cache: Value = Cache::get(redis, "protein_logs", (user_id, log_id)).await?;
 
-    let log = ProteinLog::find(user_id, log_id, connection).await?;
+    if cache.is_null() {
+        let connection = &mut db::get(pool).await?;
 
-    Ok(Json(log))
+        let log: ProteinLog = ProteinLog::find(user_id, log_id, connection).await?;
+
+        Cache::set(
+            redis,
+            "protein_logs",
+            (user_id, log_id),
+            Cache::serialize(&log)?,
+        )
+        .await?;
+
+        Ok(Json(log))
+    } else {
+        let log: ProteinLog = Cache::deserialize(cache)?;
+
+        Ok(Json(log))
+    }
 }
 
 #[get("/all", format = "application/json")]
@@ -47,7 +65,7 @@ pub async fn get_all_protein_logs(
 ) -> Result<Json<Vec<ProteinLog>>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let logs = ProteinLog::all(connection).await?;
+    let logs: Vec<ProteinLog> = ProteinLog::all(connection).await?;
 
     Ok(Json(logs))
 }
@@ -61,7 +79,7 @@ pub async fn get_all_user_protein_logs(
 ) -> Result<Json<Vec<ProteinLog>>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let logs = ProteinLog::user_all(user_id, connection).await?;
+    let logs: Vec<ProteinLog> = ProteinLog::user_all(user_id, connection).await?;
 
     Ok(Json(logs))
 }
@@ -75,13 +93,23 @@ pub async fn update_protein_log(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     user_id: Uuid,
     log_id: i32,
     log: Json<UpdateProteinLog>,
 ) -> Result<Json<ProteinLog>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let result = ProteinLog::update(user_id, log_id, log.into_inner(), connection).await?;
+    let result: ProteinLog =
+        ProteinLog::update(user_id, log_id, log.into_inner(), connection).await?;
+
+    Cache::set(
+        redis,
+        "protein_logs",
+        (user_id, log_id),
+        Cache::serialize(&result)?,
+    )
+    .await?;
 
     Ok(Json(result))
 }
@@ -92,11 +120,20 @@ pub async fn create_protein_log(
     _auth: API,
     user_id: Uuid,
     pool: &State<DB>,
+    redis: &State<Redis>,
     log: Json<NewProteinLog>,
 ) -> Result<Json<ProteinLog>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let result = ProteinLog::create(log.into_inner(), connection).await?;
+    let result: ProteinLog = ProteinLog::create(log.into_inner(), connection).await?;
+
+    Cache::set(
+        redis,
+        "protein_logs",
+        (user_id, result.log_id),
+        Cache::serialize(&result)?,
+    )
+    .await?;
 
     Ok(Json(result))
 }
@@ -106,12 +143,15 @@ pub async fn delete_protein_log(
     _r: RateLimit<'_>,
     _auth: API,
     pool: &State<DB>,
+    redis: &State<Redis>,
     user_id: Uuid,
     log_id: i32,
 ) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get(pool).await?;
 
     ProteinLog::delete(user_id, log_id, connection).await?;
+
+    Cache::delete(redis, "protein_logs", (user_id, log_id)).await?;
 
     Ok(status::Accepted(json!({
         "status": 200,

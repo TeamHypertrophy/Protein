@@ -44,12 +44,12 @@ use crate::{
 #[diesel(belongs_to(User))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct SleepLog {
-    log_id: i32,
-    user_id: Uuid,
-    beginning: NaiveDateTime,
-    end: NaiveDateTime,
-    amount: i32,
-    updated_at: NaiveDateTime,
+    pub log_id: i32,
+    pub user_id: Uuid,
+    pub beginning: NaiveDateTime,
+    pub end: NaiveDateTime,
+    pub amount: i32,
+    pub updated_at: NaiveDateTime,
 }
 
 impl SleepLog {
@@ -61,7 +61,7 @@ impl SleepLog {
             .first(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -72,7 +72,7 @@ impl SleepLog {
             .load(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -84,7 +84,7 @@ impl SleepLog {
             .load(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -102,7 +102,7 @@ impl SleepLog {
             .get_result::<SleepLog>(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -114,7 +114,7 @@ impl SleepLog {
             .execute(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -125,7 +125,7 @@ impl SleepLog {
             .get_result::<SleepLog>(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }

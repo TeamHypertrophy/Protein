@@ -62,7 +62,7 @@ pub async fn create() -> Result<DB, Box<dyn std::error::Error>> {
 #[inline]
 pub async fn get(pool: &State<DB>) -> Result<Conn, Error> {
     pool.get().await.map_err(|error| {
-        tracing::error!("[!] PostgreSQL Error {:?}", error);
+        tracing::error!("[DB] {:?}", error);
         Error::Database(error.to_string())
     })
 }

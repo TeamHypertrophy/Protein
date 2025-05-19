@@ -44,11 +44,11 @@ use crate::{
 #[diesel(belongs_to(User))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct WaterLog {
-    log_id: i32,
-    user_id: Uuid,
-    date: NaiveDateTime,
-    amount: i32,
-    updated_at: NaiveDateTime,
+    pub log_id: i32,
+    pub user_id: Uuid,
+    pub date: NaiveDateTime,
+    pub amount: i32,
+    pub updated_at: NaiveDateTime,
 }
 
 impl WaterLog {
@@ -60,7 +60,7 @@ impl WaterLog {
             .first(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -71,7 +71,7 @@ impl WaterLog {
             .load(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -83,7 +83,7 @@ impl WaterLog {
             .load(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -101,7 +101,7 @@ impl WaterLog {
             .get_result::<WaterLog>(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -113,7 +113,7 @@ impl WaterLog {
             .execute(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }
@@ -124,7 +124,7 @@ impl WaterLog {
             .get_result::<WaterLog>(connection)
             .await
             .map_err(|error| {
-                tracing::error!("[!] PostgreSQL Error: {:?}", error);
+                tracing::error!("[DB]: {:?}", error);
                 Error::Database(error.to_string())
             })
     }

@@ -52,11 +52,11 @@ pub async fn get_custom_exercise(
         )
         .await?;
 
-        return Ok(Json(exercise));
+        Ok(Json(exercise))
     } else {
         let exercise: CustomExercise = Cache::deserialize(cache)?;
 
-        return Ok(Json(exercise));
+        Ok(Json(exercise))
     }
 }
 
@@ -69,7 +69,8 @@ pub async fn search_custom_exercises(
 ) -> Result<Json<Vec<CustomExercise>>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let exercises = CustomExercise::search(connection, data.into_inner()).await?;
+    let exercises: Vec<CustomExercise> =
+        CustomExercise::search(connection, data.into_inner()).await?;
 
     Ok(Json(exercises))
 }
@@ -82,7 +83,7 @@ pub async fn get_all_custom_exercises(
 ) -> Result<Json<Vec<CustomExercise>>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let exercises = CustomExercise::all(connection).await?;
+    let exercises: Vec<CustomExercise> = CustomExercise::all(connection).await?;
 
     Ok(Json(exercises))
 }
@@ -96,7 +97,7 @@ pub async fn get_all_user_custom_exercises(
 ) -> Result<Json<Vec<CustomExercise>>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let exercises = CustomExercise::user_all(user_id, connection).await?;
+    let exercises: Vec<CustomExercise> = CustomExercise::user_all(user_id, connection).await?;
 
     Ok(Json(exercises))
 }
@@ -117,7 +118,7 @@ pub async fn update_custom_exercise(
 ) -> Result<Json<CustomExercise>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let result =
+    let result: CustomExercise =
         CustomExercise::update(user_id, exercise_id, exercise.into_inner(), connection).await?;
 
     Cache::set(
@@ -142,7 +143,7 @@ pub async fn create_custom_exercise(
 ) -> Result<Json<CustomExercise>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let result = CustomExercise::create(connection, exercise.into_inner()).await?;
+    let result: CustomExercise = CustomExercise::create(connection, exercise.into_inner()).await?;
 
     Cache::set(
         redis,
