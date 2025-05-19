@@ -114,12 +114,16 @@ Building with docker is *so* simple!
 
 ## Roadmap 🚚
 
-- [x] Docker Containerization
-- [x] Code Modularization
-- [x] `/workouts`, `/exercises` Routes
-- [ ] Automatic CI/CD
-
-> Most Roadmap Features are written in my own private [`obsidian`](https://obsidian.md/) notes :p
+- [ ] Better Error Messages
+- [ ] Sync Layer
+- [ ] User Sessions
+- [ ] Meal Plans
+- [ ] Shared Workout Plans, Workouts and Custom Exercises
+- [ ] Trainer/Client Chat & Video Interactions
+- [ ] Workout & Workout Plan Templates
+- [ ] Sensor Support (Steps, Physical Activity)
+- [ ] Personalized Recommendations (AI/Formulas)
+- [ ] Internationalization (i18n) Support
 
 ## Folders 🗃️
 
