@@ -115,7 +115,7 @@ pub async fn clean_assets_directory() -> Result<(), Box<dyn std::error::Error>> 
 
     // Initialize Count of Deleted Files
     // This Will Keep Track Of How Many Files Have Been Deleted
-    let mut count = 0;
+    let mut count: usize = 0;
 
     // Helper Function To Recursively Scan Directories
     fn scan_directory(
@@ -179,12 +179,12 @@ pub async fn clean_assets_directory() -> Result<(), Box<dyn std::error::Error>> 
 pub async fn cache_exercises(pool: &DB, redis: &Redis) -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("[+] 🗄️ Caching Exercises");
 
-    let mut cached = 0;
-    let mut skipped = 0;
+    let mut cached: i32 = 0;
+    let mut skipped: i32 = 0;
 
     let connection = &mut pool.get().await?;
 
-    let exercises = Exercise::all(connection).await?;
+    let exercises: Vec<Exercise> = Exercise::all(connection).await?;
 
     if exercises.is_empty() {
         tracing::warn!("[+] 🗄️ No Exercises Found");
@@ -192,7 +192,7 @@ pub async fn cache_exercises(pool: &DB, redis: &Redis) -> Result<(), Box<dyn std
     }
 
     for exercise in exercises {
-        let exists = Cache::exists(redis, Group::Exercises, exercise.exercise_id).await?;
+        let exists: bool = Cache::exists(redis, Group::Exercises, exercise.exercise_id).await?;
 
         if exists {
             tracing::info!(

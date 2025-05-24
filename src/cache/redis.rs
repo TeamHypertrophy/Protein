@@ -71,7 +71,7 @@ impl_cache_key_for_numbers!(f32, f64);
 
 pub async fn create() -> Result<Pool, Error> {
     // Get Redis URI
-    let redis_uri =
+    let redis_uri: String =
         std::env::var("REDIS_URI").expect("[!] REDIS_URI Environment Variable Must Be Set");
 
     // Create Redis Config

@@ -94,7 +94,7 @@ impl<'r> Responder<'r, 'static> for Error {
     fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
         let status_code: Status = self.get_http_status();
 
-        let message = match self {
+        let message: String = match self {
             Error::Internal(error) => error,
             Error::NotFound(error) => error,
             Error::BadRequest(error) => error,
@@ -107,7 +107,7 @@ impl<'r> Responder<'r, 'static> for Error {
             Error::IO(error) => error,
         };
 
-        let response = json::to_string(&ErrorResponse {
+        let response: String = json::to_string(&ErrorResponse {
             message,
             status_code,
         })

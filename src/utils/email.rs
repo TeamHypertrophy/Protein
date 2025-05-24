@@ -9,6 +9,8 @@ ______          _       _
     Made with ❤️
 */
 
+use std::borrow::Cow;
+
 use chrono::NaiveDateTime;
 use rocket_client_addr::ClientRealAddr;
 use user_agent_parser::OS;
@@ -101,10 +103,10 @@ pub fn get_ip_address(address: &ClientRealAddr) -> Result<String, Error> {
 
 pub fn get_user_agent(os: &OS) -> String {
     // Get User Agent
-    let name = os.name.clone().unwrap_or("Device".to_owned().into());
-    let version = os.major.clone().unwrap_or("Not Found".to_owned().into());
+    let name: Cow<'_, str> = os.name.clone().unwrap_or("Device".to_owned().into());
+    let version: Cow<'_, str> = os.major.clone().unwrap_or("Not Found".to_owned().into());
 
-    let user_agent = format!("{} {}", name, version);
+    let user_agent: String = format!("{} {}", name, version);
     user_agent
 }
 

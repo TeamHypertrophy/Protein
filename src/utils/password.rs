@@ -9,7 +9,7 @@ ______          _       _
         Made with ❤️
 */
 
-use rand::Rng;
+use rand::{Rng, prelude::ThreadRng};
 use argon2::{self, Config};
 
 use crate::errors::Error;
@@ -18,7 +18,7 @@ use crate::errors::Error;
 // https://github.com/sru-systems/rust-argon2
 pub fn generate(salt: &String, password: String) -> Result<String, Error> {
     // Create Argon2 Config
-    let config = Config::default();
+    let config: Config<'_> = Config::default();
 
     // Hash Password
     argon2::hash_encoded(password.as_bytes(), salt.as_bytes(), &config).map_err(|error| {
@@ -38,7 +38,7 @@ pub fn verify(hashed_password: String, password: String) -> Result<bool, Error> 
 
 // Generate A Random 6-Digit Verification Code For Multi-Factor Authentication
 pub fn random() -> String {
-    let mut rng = rand::rng();
+    let mut rng: ThreadRng = rand::rng();
 
     rng.random_range(100000..=999999).to_string()
 }

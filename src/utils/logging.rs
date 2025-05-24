@@ -21,7 +21,7 @@ use crate::constants::*;
 
 pub fn setup() -> Result<(WorkerGuard, ()), Box<dyn std::error::Error>> {
     // Build Path for Logs Directory
-    let path = Path::new(LOG_PATH);
+    let path: &Path = Path::new(LOG_PATH);
 
     // This Creates a Log File that Rotates Daily
     let appender: RollingFileAppender = match RollingFileAppender::builder()
@@ -38,7 +38,8 @@ pub fn setup() -> Result<(WorkerGuard, ()), Box<dyn std::error::Error>> {
     let (non_blocking_appender, guard) = tracing_appender::non_blocking(appender);
 
     // Get Filter From Environment Variables or Use Default
-    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| TERMINAL_FILTER.into());
+    let filter: EnvFilter =
+        EnvFilter::try_from_default_env().unwrap_or_else(|_| TERMINAL_FILTER.into());
 
     // Separate Layers for File and Terminal Logging
     let file_layer = fmt::layer()
