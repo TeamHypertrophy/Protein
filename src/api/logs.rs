@@ -18,7 +18,7 @@ use uuid::Uuid;
 
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
-    cache::redis::{Cache, Redis},
+    cache::redis::{Cache, Group, Redis},
     db,
     db::DB,
     errors::Error,
@@ -38,7 +38,7 @@ pub async fn get_exercise_log(
     exercise_id: i32,
     user_id: Uuid,
 ) -> Result<Json<ExerciseLog>, Error> {
-    let cache: Value = Cache::get(redis, "exercise_logs", (user_id, exercise_id)).await?;
+    let cache: Value = Cache::get(redis, Group::ExerciseLogs, (user_id, exercise_id)).await?;
 
     if cache.is_null() {
         let connection = &mut db::get(pool).await?;
@@ -47,7 +47,7 @@ pub async fn get_exercise_log(
 
         Cache::set(
             redis,
-            "exercise_logs",
+            Group::ExerciseLogs,
             (user_id, exercise_id),
             Cache::serialize(&log)?,
         )
@@ -109,7 +109,7 @@ pub async fn update_exercise_log(
 
     Cache::set(
         redis,
-        "exercise_logs",
+        Group::ExerciseLogs,
         (user_id, exercise_id),
         Cache::serialize(&log)?,
     )
@@ -137,7 +137,7 @@ pub async fn create_exercise_log(
 
     Cache::set(
         redis,
-        "exercise_logs",
+        Group::ExerciseLogs,
         (user_id, log.log_id),
         Cache::serialize(&log)?,
     )
@@ -162,7 +162,7 @@ pub async fn delete_exercise_log(
 
     ExerciseLog::delete(user_id, exercise_id, connection).await?;
 
-    Cache::delete(redis, "exercise_logs", (user_id, exercise_id)).await?;
+    Cache::delete(redis, Group::ExerciseLogs, (user_id, exercise_id)).await?;
 
     Ok(status::Accepted(json!({
         "status": 200,
@@ -181,7 +181,7 @@ pub async fn get_workout_log(
     log_id: i32,
     user_id: Uuid,
 ) -> Result<Json<WorkoutLog>, Error> {
-    let cache: Value = Cache::get(redis, "workout_logs", (user_id, log_id)).await?;
+    let cache: Value = Cache::get(redis, Group::WorkoutLogs, (user_id, log_id)).await?;
 
     if cache.is_null() {
         let connection = &mut db::get(pool).await?;
@@ -190,7 +190,7 @@ pub async fn get_workout_log(
 
         Cache::set(
             redis,
-            "workout_logs",
+            Group::WorkoutLogs,
             (user_id, log_id),
             Cache::serialize(&log)?,
         )
@@ -252,7 +252,7 @@ pub async fn update_workout_log(
 
     Cache::set(
         redis,
-        "workout_logs",
+        Group::WorkoutLogs,
         (user_id, log_id),
         Cache::serialize(&log)?,
     )
@@ -280,7 +280,7 @@ pub async fn create_workout_log(
 
     Cache::set(
         redis,
-        "workout_logs",
+        Group::WorkoutLogs,
         (user_id, log.log_id),
         Cache::serialize(&log)?,
     )
@@ -302,7 +302,7 @@ pub async fn delete_workout_log(
 
     WorkoutLog::delete(user_id, log_id, connection).await?;
 
-    Cache::delete(redis, "workout_logs", (user_id, log_id)).await?;
+    Cache::delete(redis, Group::WorkoutLogs, (user_id, log_id)).await?;
 
     Ok(status::Accepted(json!({
         "status": 200,

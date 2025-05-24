@@ -18,7 +18,7 @@ use uuid::Uuid;
 
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
-    cache::redis::{Cache, Redis},
+    cache::redis::{Cache, Group, Redis},
     db,
     db::DB,
     errors::Error,
@@ -36,7 +36,7 @@ pub async fn get_custom_exercise(
     user_id: Uuid,
     exercise_id: i64,
 ) -> Result<Json<CustomExercise>, Error> {
-    let cache: Value = Cache::get(redis, "custom", (user_id, exercise_id)).await?;
+    let cache: Value = Cache::get(redis, Group::Custom, (user_id, exercise_id)).await?;
 
     if cache.is_null() {
         let connection = &mut db::get(pool).await?;
@@ -46,7 +46,7 @@ pub async fn get_custom_exercise(
 
         Cache::set(
             redis,
-            "custom",
+            Group::Custom,
             (user_id, exercise_id),
             Cache::serialize(&exercise)?,
         )
@@ -123,7 +123,7 @@ pub async fn update_custom_exercise(
 
     Cache::set(
         redis,
-        "custom",
+        Group::Custom,
         (user_id, exercise_id),
         Cache::serialize(&result)?,
     )
@@ -147,7 +147,7 @@ pub async fn create_custom_exercise(
 
     Cache::set(
         redis,
-        "custom",
+        Group::Custom,
         (user_id, result.exercise_id),
         Cache::serialize(&result)?,
     )
@@ -169,7 +169,7 @@ pub async fn delete_custom_exercise(
 
     CustomExercise::delete(user_id, exercise_id, connection).await?;
 
-    Cache::delete(redis, "custom", (user_id, exercise_id)).await?;
+    Cache::delete(redis, Group::Custom, (user_id, exercise_id)).await?;
 
     Ok(status::Accepted(json!({
         "status": 200,

@@ -20,7 +20,7 @@ use rocket::{
 
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
-    cache::redis::{Cache, Redis},
+    cache::redis::{Cache, Group, Redis},
     db,
     db::DB,
     errors::Error,
@@ -41,14 +41,14 @@ pub async fn get_api_key(
     redis: &State<Redis>,
     api_key: Uuid,
 ) -> Result<Json<APIKey>, Error> {
-    let cache: Value = Cache::get(redis, "api_key", api_key).await?;
+    let cache: Value = Cache::get(redis, Group::Keys, api_key).await?;
 
     if cache.is_null() {
         let connection = &mut db::get(pool).await?;
 
         let key: APIKey = APIKey::find(api_key, connection).await?;
 
-        Cache::set(redis, "api_key", key.api_key, Cache::serialize(&key)?).await?;
+        Cache::set(redis, Group::Keys, key.api_key, Cache::serialize(&key)?).await?;
 
         Ok(Json(key))
     } else {
@@ -74,14 +74,14 @@ pub async fn create_api_key(
     for key in all {
         if key.status == Status::Active {
             return Err(Error::Authorization(
-                "User already has an active API key".to_string(),
+                "User Already Has An Active API Key".to_string(),
             ));
         }
     }
 
     let new: APIKey = APIKey::generate(&user, connection).await?;
 
-    Cache::set(redis, "api_key", new.api_key, Cache::serialize(&new)?).await?;
+    Cache::set(redis, Group::Keys, new.api_key, Cache::serialize(&new)?).await?;
 
     Ok(Json(new))
 }
@@ -126,7 +126,13 @@ pub async fn update_api_key(
 
     let result: APIKey = APIKey::update(api_key, key.into_inner(), connection).await?;
 
-    Cache::set(redis, "api_key", result.api_key, Cache::serialize(&result)?).await?;
+    Cache::set(
+        redis,
+        Group::Keys,
+        result.api_key,
+        Cache::serialize(&result)?,
+    )
+    .await?;
 
     Ok(Json(result))
 }
@@ -143,7 +149,7 @@ pub async fn delete_api_key(
 
     APIKey::delete(api_key, connection).await?;
 
-    Cache::delete(redis, "api_key", api_key).await?;
+    Cache::delete(redis, Group::Keys, api_key).await?;
 
     Ok(status::Accepted(json!({
         "status": 200,
@@ -165,7 +171,13 @@ pub async fn revoke_api_key(
 
     let result: APIKey = APIKey::revoke(api_key, reason.into_inner(), connection).await?;
 
-    Cache::set(redis, "api_key", result.api_key, Cache::serialize(&result)?).await?;
+    Cache::set(
+        redis,
+        Group::Keys,
+        result.api_key,
+        Cache::serialize(&result)?,
+    )
+    .await?;
 
     Ok(Json(result))
 }
@@ -183,7 +195,13 @@ pub async fn change_api_key_role(
 
     let result: APIKey = APIKey::change_role(api_key, role.into_inner(), connection).await?;
 
-    Cache::set(redis, "api_key", result.api_key, Cache::serialize(&result)?).await?;
+    Cache::set(
+        redis,
+        Group::Keys,
+        result.api_key,
+        Cache::serialize(&result)?,
+    )
+    .await?;
 
     Ok(Json(result))
 }

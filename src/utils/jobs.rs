@@ -15,7 +15,7 @@ ______          _       _
 // 3. Cache All Exercises
 
 use crate::{
-    cache::redis::{Cache, Redis},
+    cache::redis::{Cache, Group, Redis},
     constants,
     db::DB,
     models::{
@@ -182,8 +182,6 @@ pub async fn cache_exercises(pool: &DB, redis: &Redis) -> Result<(), Box<dyn std
     let mut cached = 0;
     let mut skipped = 0;
 
-    let group = "exercise";
-
     let connection = &mut pool.get().await?;
 
     let exercises = Exercise::all(connection).await?;
@@ -194,7 +192,7 @@ pub async fn cache_exercises(pool: &DB, redis: &Redis) -> Result<(), Box<dyn std
     }
 
     for exercise in exercises {
-        let exists = Cache::exists(redis, group, exercise.exercise_id).await?;
+        let exists = Cache::exists(redis, Group::Exercises, exercise.exercise_id).await?;
 
         if exists {
             tracing::info!(
@@ -213,7 +211,7 @@ pub async fn cache_exercises(pool: &DB, redis: &Redis) -> Result<(), Box<dyn std
 
             Cache::set(
                 redis,
-                group,
+                Group::Exercises,
                 exercise.exercise_id,
                 Cache::serialize(&exercise)?,
             )

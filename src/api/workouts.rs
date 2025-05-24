@@ -18,7 +18,7 @@ use uuid::Uuid;
 
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
-    cache::redis::{Cache, Redis},
+    cache::redis::{Cache, Group, Redis},
     db,
     db::DB,
     errors::Error,
@@ -37,7 +37,7 @@ pub async fn get_workout(
     user_id: Uuid,
     workout_id: Uuid,
 ) -> Result<Json<Workout>, Error> {
-    let cache: Value = Cache::get(redis, "workouts", (user_id, workout_id)).await?;
+    let cache: Value = Cache::get(redis, Group::Workouts, (user_id, workout_id)).await?;
 
     if cache.is_null() {
         let connection = &mut db::get(pool).await?;
@@ -48,7 +48,7 @@ pub async fn get_workout(
 
         Cache::set(
             redis,
-            "workouts",
+            Group::Workouts,
             (user_id, workout_id),
             Cache::serialize(&workout)?,
         )
@@ -110,7 +110,7 @@ pub async fn update_workout(
 
     Cache::set(
         redis,
-        "workouts",
+        Group::Workouts,
         (user_id, workout_id),
         Cache::serialize(&workout)?,
     )
@@ -134,7 +134,7 @@ pub async fn create_workout(
 
     Cache::set(
         redis,
-        "workouts",
+        Group::Workouts,
         (user_id, workout.workout_id),
         Cache::serialize(&workout)?,
     )
@@ -156,7 +156,7 @@ pub async fn delete_workout(
 
     Workout::delete(user_id, workout_id, connection).await?;
 
-    Cache::delete(redis, "workouts", (user_id, workout_id)).await?;
+    Cache::delete(redis, Group::Workouts, (user_id, workout_id)).await?;
 
     Ok(status::Accepted(json!({
         "status": 200,
@@ -185,7 +185,7 @@ pub async fn add_exercise(
 
     Cache::set(
         redis,
-        "workouts",
+        Group::Workouts,
         (user_id, workout_id),
         Cache::serialize(&workout)?,
     )
@@ -215,7 +215,7 @@ pub async fn remove_exercise(
 
     Cache::set(
         redis,
-        "workouts",
+        Group::Workouts,
         (user_id, workout_id),
         Cache::serialize(&workout)?,
     )

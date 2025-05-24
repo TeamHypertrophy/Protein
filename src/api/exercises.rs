@@ -18,7 +18,7 @@ use validator::Validate;
 
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
-    cache::redis::{Cache, Redis},
+    cache::redis::{Cache, Group, Redis},
     db,
     db::DB,
     errors::Error,
@@ -33,14 +33,20 @@ pub async fn get_exercise(
     redis: &State<Redis>,
     exercise_id: i64,
 ) -> Result<Json<Exercise>, Error> {
-    let cache: Value = Cache::get(redis, "exercise", exercise_id).await?;
+    let cache: Value = Cache::get(redis, Group::Exercises, exercise_id).await?;
 
     if cache.is_null() {
         let connection = &mut db::get(pool).await?;
 
         let exercise: Exercise = Exercise::find(exercise_id, connection).await?;
 
-        Cache::set(redis, "exercise", exercise_id, Cache::serialize(&exercise)?).await?;
+        Cache::set(
+            redis,
+            Group::Exercises,
+            exercise_id,
+            Cache::serialize(&exercise)?,
+        )
+        .await?;
 
         Ok(Json(exercise))
     } else {
@@ -95,7 +101,13 @@ pub async fn update_exercise(
 
     let exercise: Exercise = Exercise::update(exercise_id, data.into_inner(), connection).await?;
 
-    Cache::set(redis, "exercise", exercise_id, Cache::serialize(&exercise)?).await?;
+    Cache::set(
+        redis,
+        Group::Exercises,
+        exercise_id,
+        Cache::serialize(&exercise)?,
+    )
+    .await?;
 
     Ok(Json(exercise))
 }
@@ -115,11 +127,11 @@ pub async fn create_exercise(
         Err(error) => return Err(Error::Validation(error.to_string())),
     }
 
-    let exercise = Exercise::create(connection, data.into_inner()).await?;
+    let exercise: Exercise = Exercise::create(connection, data.into_inner()).await?;
 
     Cache::set(
         redis,
-        "exercise",
+        Group::Exercises,
         exercise.exercise_id,
         Cache::serialize(&exercise)?,
     )
@@ -140,7 +152,7 @@ pub async fn delete_exercise(
 
     Exercise::delete(exercise_id, connection).await?;
 
-    Cache::delete(redis, "exercise", exercise_id).await?;
+    Cache::delete(redis, Group::Exercises, exercise_id).await?;
 
     Ok(status::Accepted(json!({
         "status": 200,

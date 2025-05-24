@@ -118,6 +118,52 @@ pub async fn create() -> Result<Pool, Error> {
     Ok(pool)
 }
 
+// -- Cache Groups
+// Type Safe Enum for Cache Groups
+#[derive(Debug, Clone, Copy)]
+pub enum Group {
+    Calories,
+    Custom,
+    Keys,
+    Exercises,
+    ExerciseLogs,
+    WorkoutPlans,
+    WorkoutPlanLogs,
+    Workouts,
+    WorkoutLogs,
+    Profiles,
+    Protein,
+    Sleep,
+    Trainers,
+    Announcements,
+    Water,
+    Users,
+}
+
+impl Display for Group {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let group = match self {
+            Group::Calories => "calories",
+            Group::Custom => "custom",
+            Group::Keys => "api_keys",
+            Group::Exercises => "exercises",
+            Group::ExerciseLogs => "exercise_logs",
+            Group::WorkoutPlans => "workout_plans",
+            Group::WorkoutPlanLogs => "workout_plan_logs",
+            Group::Workouts => "workouts",
+            Group::WorkoutLogs => "workout_logs",
+            Group::Profiles => "profiles",
+            Group::Protein => "protein",
+            Group::Sleep => "sleep",
+            Group::Trainers => "trainers",
+            Group::Announcements => "trainer_announcements",
+            Group::Water => "water",
+            Group::Users => "users",
+        };
+        write!(f, "{}", group)
+    }
+}
+
 // -- Redis Functions
 pub struct Cache;
 
@@ -125,7 +171,7 @@ impl Cache {
     // Get Value From Redis Cache
     pub async fn get<K: CacheKey>(
         pool: &State<Redis>,
-        group: &str,
+        group: Group,
         key: K,
     ) -> Result<Value, Error> {
         tracing::info!("[Cache] ⚙️ Fetching Key From Redis Cache",);
@@ -141,7 +187,7 @@ impl Cache {
     // Sets A Value In Redis Cache
     pub async fn set<K: CacheKey>(
         pool: &Redis,
-        group: &str,
+        group: Group,
         key: K,
         value: String,
     ) -> Result<(), Error> {
@@ -164,7 +210,7 @@ impl Cache {
     // Deletes A Value From Redis Cache
     pub async fn delete<K: CacheKey>(
         pool: &State<Redis>,
-        group: &str,
+        group: Group,
         key: K,
     ) -> Result<(), Error> {
         tracing::info!("[Cache] ⚙️ Deleting Key From Redis Cache",);
@@ -188,7 +234,7 @@ impl Cache {
     }
 
     // Checks If A Key Exists In Redis Cache
-    pub async fn exists<K: CacheKey>(pool: &Redis, group: &str, key: K) -> Result<bool, Error> {
+    pub async fn exists<K: CacheKey>(pool: &Redis, group: Group, key: K) -> Result<bool, Error> {
         tracing::info!("[Cache] ⚙️ Checking Key Existence In Redis Cache",);
 
         pool.exists(format!("{}:{}", group, key.get()))

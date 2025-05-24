@@ -19,7 +19,7 @@ use rocket::{
 
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
-    cache::redis::{Cache, Redis},
+    cache::redis::{Cache, Group, Redis},
     db,
     db::DB,
     errors::Error,
@@ -45,14 +45,20 @@ pub async fn get_trainer(
     redis: &State<Redis>,
     trainer_id: i32,
 ) -> Result<Json<Trainer>, Error> {
-    let cache: Value = Cache::get(redis, "trainer", trainer_id).await?;
+    let cache: Value = Cache::get(redis, Group::Trainers, trainer_id).await?;
 
     if cache.is_null() {
         let connection = &mut db::get(pool).await?;
 
         let trainer = Trainer::find(trainer_id, connection).await?;
 
-        Cache::set(redis, "trainer", trainer_id, Cache::serialize(&trainer)?).await?;
+        Cache::set(
+            redis,
+            Group::Trainers,
+            trainer_id,
+            Cache::serialize(&trainer)?,
+        )
+        .await?;
 
         Ok(Json(trainer))
     } else {
@@ -104,7 +110,7 @@ pub async fn add_client(
 
     Cache::set(
         redis,
-        "trainer",
+        Group::Trainers,
         trainer.trainer_id,
         Cache::serialize(&trainer)?,
     )
@@ -128,7 +134,7 @@ pub async fn remove_client(
 
     Cache::set(
         redis,
-        "trainer",
+        Group::Trainers,
         trainer.trainer_id,
         Cache::serialize(&trainer)?,
     )
@@ -149,7 +155,13 @@ pub async fn update_trainer(
 
     let trainer: Trainer = Trainer::update(trainer_id, data.into_inner(), connection).await?;
 
-    Cache::set(redis, "trainer", trainer_id, Cache::serialize(&trainer)?).await?;
+    Cache::set(
+        redis,
+        Group::Trainers,
+        trainer_id,
+        Cache::serialize(&trainer)?,
+    )
+    .await?;
 
     Ok(Json(trainer))
 }
@@ -168,7 +180,7 @@ pub async fn create_trainer(
 
     Cache::set(
         redis,
-        "trainer",
+        Group::Trainers,
         trainer.trainer_id,
         Cache::serialize(&trainer)?,
     )
@@ -189,7 +201,7 @@ pub async fn delete_trainer(
 
     Trainer::delete(trainer_id, connection).await?;
 
-    Cache::delete(redis, "trainer", trainer_id).await?;
+    Cache::delete(redis, Group::Trainers, trainer_id).await?;
 
     Ok(status::Accepted(json!({
         "status": 200,
@@ -209,7 +221,7 @@ pub async fn get_announcement(
     trainer_id: Uuid,
     announcement_id: i32,
 ) -> Result<Json<TrainerAnnouncement>, Error> {
-    let cache: Value = Cache::get(redis, "announcement", announcement_id).await?;
+    let cache: Value = Cache::get(redis, Group::Announcements, announcement_id).await?;
 
     if cache.is_null() {
         let connection = &mut db::get(pool).await?;
@@ -219,7 +231,7 @@ pub async fn get_announcement(
 
         Cache::set(
             redis,
-            "announcement",
+            Group::Announcements,
             announcement_id,
             Cache::serialize(&announcement)?,
         )
@@ -283,7 +295,7 @@ pub async fn update_announcement(
 
     Cache::set(
         redis,
-        "announcement",
+        Group::Announcements,
         announcement_id,
         Cache::serialize(&announcement)?,
     )
@@ -312,7 +324,7 @@ pub async fn create_announcement(
 
     Cache::set(
         redis,
-        "announcement",
+        Group::Announcements,
         announcement.announcement_id,
         Cache::serialize(&announcement)?,
     )
@@ -337,7 +349,7 @@ pub async fn delete_announcement(
 
     TrainerAnnouncement::delete(trainer_id, announcement_id, connection).await?;
 
-    Cache::delete(redis, "announcement", announcement_id).await?;
+    Cache::delete(redis, Group::Announcements, announcement_id).await?;
 
     Ok(status::Accepted(json!({
         "status": 200,
@@ -369,7 +381,7 @@ pub async fn request_trainer(
 
     Cache::set(
         redis,
-        "trainer",
+        Group::Trainers,
         trainer.trainer_id,
         Cache::serialize(&trainer)?,
     )
@@ -465,7 +477,7 @@ pub async fn accept_trainer(
 
     Cache::set(
         redis,
-        "trainer",
+        Group::Trainers,
         trainer.trainer_id,
         Cache::serialize(&trainer)?,
     )
@@ -528,7 +540,7 @@ pub async fn deny_trainer(
 
     Cache::set(
         redis,
-        "trainer",
+        Group::Trainers,
         trainer.trainer_id,
         Cache::serialize(&trainer)?,
     )

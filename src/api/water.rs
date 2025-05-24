@@ -18,7 +18,7 @@ use uuid::Uuid;
 
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
-    cache::redis::{Cache, Redis},
+    cache::redis::{Cache, Group, Redis},
     db,
     db::DB,
     errors::Error,
@@ -34,7 +34,7 @@ pub async fn get_water_log(
     user_id: Uuid,
     log_id: i32,
 ) -> Result<Json<WaterLog>, Error> {
-    let cache: Value = Cache::get(redis, "water_logs", (user_id, log_id)).await?;
+    let cache: Value = Cache::get(redis, Group::Water, (user_id, log_id)).await?;
 
     if cache.is_null() {
         let connection = &mut db::get(pool).await?;
@@ -43,7 +43,7 @@ pub async fn get_water_log(
 
         Cache::set(
             redis,
-            "water_logs",
+            Group::Water,
             (user_id, log_id),
             Cache::serialize(&log)?,
         )
@@ -104,7 +104,7 @@ pub async fn update_water_log(
 
     Cache::set(
         redis,
-        "water_logs",
+        Group::Water,
         (user_id, log_id),
         Cache::serialize(&result)?,
     )
@@ -128,7 +128,7 @@ pub async fn create_water_log(
 
     Cache::set(
         redis,
-        "water_logs",
+        Group::Water,
         (user_id, result.log_id),
         Cache::serialize(&result)?,
     )
@@ -150,7 +150,7 @@ pub async fn delete_water_log(
 
     WaterLog::delete(user_id, log_id, connection).await?;
 
-    Cache::delete(redis, "water_logs", (user_id, log_id)).await?;
+    Cache::delete(redis, Group::Water, (user_id, log_id)).await?;
 
     Ok(status::Accepted(json!({
         "status": 200,

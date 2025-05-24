@@ -18,7 +18,7 @@ use uuid::Uuid;
 
 use crate::{
     auth::{api::API, rate_limit::RateLimit},
-    cache::redis::{Cache, Redis},
+    cache::redis::{Cache, Group, Redis},
     db,
     db::DB,
     errors::Error,
@@ -34,7 +34,7 @@ pub async fn get_calorie_log(
     user_id: Uuid,
     log_id: i32,
 ) -> Result<Json<CalorieLog>, Error> {
-    let cache: Value = Cache::get(redis, "calories", (user_id, log_id)).await?;
+    let cache: Value = Cache::get(redis, Group::Calories, (user_id, log_id)).await?;
 
     if cache.is_null() {
         let connection = &mut db::get(pool).await?;
@@ -43,7 +43,7 @@ pub async fn get_calorie_log(
 
         Cache::set(
             redis,
-            "calories",
+            Group::Calories,
             (user_id, log_id),
             Cache::serialize(&log)?,
         )
@@ -105,7 +105,7 @@ pub async fn update_calorie_log(
 
     Cache::set(
         redis,
-        "calories",
+        Group::Calories,
         (user_id, log_id),
         Cache::serialize(&result)?,
     )
@@ -129,7 +129,7 @@ pub async fn create_calorie_log(
 
     Cache::set(
         redis,
-        "calories",
+        Group::Calories,
         (user_id, result.log_id),
         Cache::serialize(&result)?,
     )
@@ -151,7 +151,7 @@ pub async fn delete_calorie_log(
 
     CalorieLog::delete(user_id, log_id, connection).await?;
 
-    Cache::delete(redis, "calories", (user_id, log_id)).await?;
+    Cache::delete(redis, Group::Calories, (user_id, log_id)).await?;
 
     Ok(status::Accepted(json!({
         "status": 200,
