@@ -38,7 +38,7 @@ pub const POSTGRES_VERSION: &str = "17.4"; // Postgres Version
 pub const DEFAULT_ERROR_MESSAGE: &str = "[!!] Error in Protein Service";
 pub const NOT_FOUND_ERROR_MESSAGE: &str = "[!!] Requested Path was Not Found";
 pub const INTERNAL_SERVER_ERROR_MESSAGE: &str = "[!!] There was an Internal Server Issue!";
-pub const UNAUTHORIZED_ERROR_MESSAGE: &str = "[!!] Unauthorized Request";
+pub const UNAUTHORIZED_ERROR_MESSAGE: &str = "[!!] You are Not Authorized to Access This Resource";
 pub const UNPROCESSABLE_ENTITY_MESSAGE: &str = "[!!] This Request Has An Unprocessable Entity";
 pub const UNPROCESSABLE_ENTITY_NOTE: &str =
     "The request was well-formed but was unable to be followed due to semantic/parsing errors.";

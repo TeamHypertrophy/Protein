@@ -1,152 +1,244 @@
-<!-- omit in toc -->
-# Contributing to Protein
+# Contributing to Protein 🧬
 
-First off, thanks for taking the time to contribute! ❤️
+[![forthebadge](https://forthebadge.com/images/featured/featured-built-with-love.svg)](https://forthebadge.com)
 
-All types of contributions are encouraged and valued. See the [Table of Contents](#table-of-contents) for different ways to help and details about how this project handles them. Please make sure to read the relevant section before making your contribution. It will make it a lot easier for us maintainers and smooth out the experience for all involved. The community looks forward to your contributions. 🎉
+Thank you for your interest in contributing to Protein! This document provides guidelines and information for contributing to our Rust-based fitness API.
 
-> And if you like the project, but just don't have time to contribute, that's fine. There are other easy ways to support the project and show your appreciation, which we would also be very happy about:
->
-> - Star the project
-> - Tweet about it
-> - Refer this project in your project's readme
-> - Mention the project at local meetups and tell your friends/colleagues
-
-<!-- omit in toc -->
 ## Table of Contents
 
-- [I Have a Question](#i-have-a-question)
-- [I Want To Contribute](#i-want-to-contribute)
-  - [Reporting Bugs](#reporting-bugs)
-  - [Suggesting Enhancements](#suggesting-enhancements)
-  - [Your First Code Contribution](#your-first-code-contribution)
-  - [Improving The Documentation](#improving-the-documentation)
-- [Styleguides](#styleguides)
-  - [Commit Messages](#commit-messages)
-- [Join The Project Team](#join-the-project-team)
+- [Getting Started](#getting-started)
+- [Development Setup](#development-setup)
+- [Code Style Guidelines](#code-style-guidelines)
+- [Architecture Overview](#architecture-overview)
+- [Database Guidelines](#database-guidelines)
+- [Documentation](#documentation)
+- [Pull Request Process](#pull-request-process)
+- [Issue Guidelines](#issue-guidelines)
 
-## I Have a Question
+## Getting Started
 
-> If you want to ask a question, we assume that you have read the available [Documentation](https://github.com/TeamHypertrophy/Protein/blob/dev/README.md#L1/).
+Before contributing, please:
 
-Before you ask a question, it is best to search for existing [Issues](https://github.com/TeamHypertrophy/Protein/issues) that might help you. In case you have found a suitable issue and still need clarification, you can write your question in this issue. It is also advisable to search the internet for answers first.
+1. Read our [Code of Conduct](.github/CODE_OF_CONDUCT.md)
+2. Check existing [issues](https://github.com/TeamHypertrophy/Protein/issues) and [pull requests](https://github.com/TeamHypertrophy/Protein/pulls)
+3. Review our [roadmap](README.md#roadmap-) for planned features
 
-If you then still feel the need to ask a question and need clarification, we recommend the following:
+## Development Setup
 
-- Open an [Issue](https://github.com/TeamHypertrophy/Protein/issues/new).
-- Provide as much context as you can about what you're running into.
-- Provide project and platform versions (nodejs, npm, etc), depending on what seems relevant.
+### Prerequisites
 
-We will then take care of the issue as soon as possible.
+Ensure you have all the required tools installed as listed in [README.md](README.md#prerequisites-):
 
-<!--
-You might want to create a separate issue tag for questions and include it in this description. People should then tag their issues accordingly.
+## Code Style Guidelines
 
-Depending on how large the project is, you may want to outsource the questioning, e.g. to Stack Overflow or Gitter. You may add additional contact and information possibilities:
-- IRC
-- Slack
-- Gitter
-- Stack Overflow tag
-- Blog
-- FAQ
-- Roadmap
-- E-Mail List
-- Forum
--->
+### Rust Formatting
 
-## I Want To Contribute
+We use `rustfmt` with nightly features. Configuration is in [`rustfmt.toml`](rustfmt.toml).
 
-> ### Legal Notice <!-- omit in toc -->
->
-> When contributing to this project, you must agree that you have authored 100% of the content, that you have the necessary rights to the content and that the content you contribute may be provided under the project license.
+```bash
+cargo +nightly fmt
 
-### Reporting Bugs
+./scripts/format.bat  # Windows
+```
 
-<!-- omit in toc -->
-#### Before Submitting a Bug Report
+### Naming Conventions
 
-A good bug report shouldn't leave others needing to chase you up for more information. Therefore, we ask you to investigate carefully, collect information and describe the issue in detail in your report. Please complete the following steps in advance to help us fix any potential bug as fast as possible.
+- **Functions**: Use `snake_case` (e.g., `create_workout_plan`, `add_workout`)
+- **Structs**: Use `PascalCase` (e.g., `WorkoutPlan`, `CustomExercise`)
+- **Constants**: Use `SCREAMING_SNAKE_CASE` (e.g., `ASSETS_AVATARS_PATH`)
+- **Modules**: Use `snake_case` (e.g., `workout`, `custom`, `trainer`)
 
-- Make sure that you are using the latest version.
-- Determine if your bug is really a bug and not an error on your side e.g. using incompatible environment components/versions (Make sure that you have read the [documentation](https://github.com/TeamHypertrophy/Protein/blob/dev/README.md#L1/). If you are looking for support, you might want to check [this section](#i-have-a-question)).
-- To see if other users have experienced (and potentially already solved) the same issue you are having, check if there is not already a bug report existing for your bug or error in the [bug tracker](https://github.com/TeamHypertrophy/Protein/issues?q=label%3Abug).
-- Also make sure to search the internet (including Stack Overflow) to see if users outside of the GitHub community have discussed the issue.
-- Collect information about the bug:
-- Stack trace (Traceback)
-- OS, Platform and Version (Windows, Linux, macOS, x86, ARM)
-- Version of the interpreter, compiler, SDK, runtime environment, package manager, depending on what seems relevant.
-- Possibly your input and the output
-- Can you reliably reproduce the issue? And can you also reproduce it with older versions?
+### File Organization
 
-<!-- omit in toc -->
-#### How Do I Submit a Good Bug Report?
+Follow the established directory structure:
 
-> You must never report security related issues, vulnerabilities or bugs including sensitive information to the issue tracker, or elsewhere in public. Instead sensitive bugs must be sent by email to <>.
-<!-- You may add a PGP key to allow the messages to be sent encrypted as well. -->
+```
+src/
+├── api/          # API route handlers
+├── auth/         # Authentication & authorization
+├── cache/        # Redis caching logic
+├── catchers/     # Error handlers
+├── constants/    # Application constants
+├── db/           # Database connection
+├── errors/       # Error types
+├── fairings/     # Rocket fairings
+├── models/       # Database models
+└── utils/        # Utility functions
+```
 
-We use GitHub issues to track bugs and errors. If you run into an issue with the project:
+## Architecture Overview
 
-- Open an [Issue](https://github.com/TeamHypertrophy/Protein/issues/new). (Since we can't be sure at this point whether it is a bug or not, we ask you not to talk about a bug yet and not to label the issue.)
-- Explain the behavior you would expect and the actual behavior.
-- Please provide as much context as possible and describe the *reproduction steps* that someone else can follow to recreate the issue on their own. This usually includes your code. For good bug reports you should isolate the problem and create a reduced test case.
-- Provide the information you collected in the previous section.
+### Models Pattern
 
-Once it's filed:
+Our models follow a consistent pattern with associated functions:
 
-- The project team will label the issue accordingly.
-- A team member will try to reproduce the issue with your provided steps. If there are no reproduction steps or no obvious way to reproduce the issue, the team will ask you for those steps and mark the issue as `needs-repro`. Bugs with the `needs-repro` tag will not be addressed until they are reproduced.
-- If the team is able to reproduce the issue, it will be marked `needs-fix`, as well as possibly other tags (such as `critical`), and the issue will be left to be [implemented by someone](#your-first-code-contribution).
+```rust
+impl ModelName {
+    pub async fn find(/* params */) -> Result<ModelName, Error> { /* */ }
+    pub async fn all(connection: &mut Conn) -> Result<Vec<ModelName>, Error> { /* */ }
+    pub async fn user_all(user: Uuid, connection: &mut Conn) -> Result<Vec<ModelName>, Error> { /* */ }
+    pub async fn create(data: NewModelName, connection: &mut Conn) -> Result<ModelName, Error> { /* */ }
+    pub async fn update(/* params */, data: UpdateModelName, connection: &mut Conn) -> Result<ModelName, Error> { /* */ }
+    pub async fn delete(/* params */, connection: &mut Conn) -> Result<usize, Error> { /* */ }
+}
+```
 
-<!-- You might want to create an issue template for bugs and errors that can be used as a guide and that defines the structure of the information to be included. If you do so, reference it here in the description. -->
+### API Route Structure
 
-### Suggesting Enhancements
+API routes are organized by functionality:
 
-This section guides you through submitting an enhancement suggestion for Protein, **including completely new features and minor improvements to existing functionality**. Following these guidelines will help maintainers and the community to understand your suggestion and find related suggestions.
+- `/v1/users` - User management
+- `/v1/exercises` - Exercise CRUD operations
+- `/v1/exercises/custom` - Custom exercise management
+- `/v1/workouts` - Workout operations
+- `/v1/plans` - Workout plan management
+- `/v1/trainers` - Trainer functionality
+- `/v1/profile` - User profile management
+- `/v1/logs` - Various logging endpoints
 
-<!-- omit in toc -->
-#### Before Submitting an Enhancement
+### Admin Routes
 
-- Make sure that you are using the latest version.
-- Read the [documentation](https://github.com/TeamHypertrophy/Protein) carefully and find out if the functionality is already covered, maybe by an individual configuration.
-- Perform a [search](https://github.com/TeamHypertrophy/Protein/issues) to see if the enhancement has already been suggested. If it has, add a comment to the existing issue instead of opening a new one.
-- Find out whether your idea fits with the scope and aims of the project. It's up to you to make a strong case to convince the project's developers of the merits of this feature. Keep in mind that we want features that will be useful to the majority of our users and not just a small subset. If you're just targeting a minority of users, consider writing an add-on/plugin library.
+Admin-only routes are defined in the [`Admin`](src/utils/admin.rs) struct. When adding new admin routes:
 
-<!-- omit in toc -->
-#### How Do I Submit a Good Enhancement Suggestion?
+1. Add the route name to the `routes` vector in [`src/main.rs`](src/main.rs)
+2. Implement the route handler with admin authentication
+3. Update the admin route list documentation
 
-Enhancement suggestions are tracked as [GitHub issues](https://github.com/TeamHypertrophy/Protein/issues).
+## Database Guidelines
 
-- Use a **clear and descriptive title** for the issue to identify the suggestion.
-- Provide a **step-by-step description of the suggested enhancement** in as many details as possible.
-- **Describe the current behavior** and **explain which behavior you expected to see instead** and why. At this point you can also tell which alternatives do not work for you.
-- You may want to **include screenshots and animated GIFs** which help you demonstrate the steps or point out the part which the suggestion is related to. You can use [this tool](https://www.cockos.com/licecap/) to record GIFs on macOS and Windows, and [this tool](https://github.com/colinkeenan/silentcast) or [this tool](https://github.com/GNOME/byzanz) on Linux. <!-- this should only be included if the project has a GUI -->
-- **Explain why this enhancement would be useful** to most Protein users. You may also want to point out the other projects that solved it better and which could serve as inspiration.
+### Migrations
 
-<!-- You might want to create an issue template for enhancement suggestions that can be used as a guide and that defines the structure of the information to be included. If you do so, reference it here in the description. -->
+Use Diesel for database migrations:
 
-### Your First Code Contribution
-<!-- TODO
-include Setup of env, IDE and typical getting started instructions?
+```bash
+# Create a new migration
+diesel migration generate migration_name
 
--->
+# Apply migrations
+diesel migration run
 
-### Improving The Documentation
-<!-- TODO
-Updating, improving and correcting the documentation
+# Revert migrations
+diesel migration revert
+```
 
--->
+### Model Definitions
 
-## Styleguides
+Follow the established pattern for models:
 
-### Commit Messages
-<!-- TODO
+```rust
+#[derive(
+    Clone,
+    Debug,
+    Eq,
+    PartialEq,
+    Queryable,
+    Selectable,
+    Serialize,
+    Deserialize,
+    Identifiable,
+    Associations,
+)]
+#[diesel(primary_key(id_field))]
+#[diesel(table_name = table_name)]
+#[diesel(belongs_to(RelatedModel))]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct ModelName {
+    // Fields here
+}
+```
 
--->
+### Error Handling
 
-## Join The Project Team
-<!-- TODO -->
+Use the established error pattern with tracing:
 
-<!-- omit in toc -->
-## Attribution
+```rust
+.map_err(|error| {
+    tracing::error!("[DB]: {:?}", error);
+    Error::Database(error.to_string())
+})
+```
 
-This guide is based on the **contributing-gen**. [Make your own](https://github.com/bttger/contributing-gen)!
+### Response Types
+
+- Use `Json<T>` for successful responses
+- Follow REST conventions for status codes
+
+## Documentation
+
+### Email Templates
+
+Email templates are located in [`templates/`](templates/) and use the Askama templating engine:
+
+- Follow the established HTML structure
+- Include the Hypertrophy logo and branding
+- Use consistent styling across templates
+- Templates are defined in [`src/utils/templates.rs`](src/utils/templates.rs)
+
+## Pull Request Process
+
+1. **Create a Branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. **Make Changes**
+   - Follow the code style guidelines
+   - Add tests for new functionality
+   - Update documentation as needed
+
+3. **Pre-commit Checks**
+   ```bash
+   # These run automatically with pre-commit hooks
+   cargo +nightly fmt --check
+   cargo clippy -- -D warnings
+   ```
+
+4. **Commit Changes**
+   ```bash
+   git add .
+   git commit -m "feat: add your feature description"
+   ```
+
+5. **Push and Create PR**
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+
+## Issue Guidelines
+
+### Bug Reports
+
+Include:
+- Steps to reproduce
+- Expected vs actual behavior
+- Environment details (OS, Rust version, etc.)
+- Relevant logs or error messages
+
+### Feature Requests
+
+Include:
+- Clear description of the feature
+- Use case or problem it solves
+- Proposed implementation (if any)
+- Check if it aligns with our [roadmap](README.md#roadmap-)
+
+### Labels
+
+We use these labels to categorize issues:
+- `bug` - Something isn't working
+- `enhancement` - New feature or request
+- `documentation` - Improvements to documentation
+- `good first issue` - Good for newcomers
+- `help wanted` - Extra attention is needed
+
+## Questions?
+
+- Check existing [issues](https://github.com/TeamHypertrophy/Protein/issues)
+- Review the [README](README.md)
+- Contact the maintainers through GitHub issues
+
+---
+
+Thank you for contributing to Protein! 🧬💚
+
+*Made with ❤️ by the Hypertrophy Team*

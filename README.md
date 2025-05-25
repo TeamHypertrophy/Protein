@@ -103,7 +103,7 @@ Building with docker is *so* simple!
     $ protein
     ```
 
-9. Start Ngrok Server (Local Mobile Access) (Optional)
+9. Start Ngrok Server (Local Mobile Access)
 
     ```sh
     $ ngrok config add-authtoken YOURAUTHTOKEN
