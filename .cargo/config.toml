@@ -1,11 +1,9 @@
-# Enable a small amount of optimization in the dev profile.
 [profile.dev]
 opt-level = 1
 codegen-backend = "cranelift"
 incremental = true
 rustflags = ["-Zthreads=8"]
 
-# Enable a large amount of optimization in the release profile.
 [profile.release]
 lto = true
 codegen-units = 1
@@ -17,21 +15,17 @@ rustflags = ["-Cdebuginfo=0", "-Zthreads=8"]
 [build]
 rustflags = ["-C", "target-cpu=native"]
 
-# Enable a large amount of optimization in the dev profile for dependencies.
 [profile.dev.package."*"]
 opt-level = 3
 codegen-backend = "llvm"
 
-# Linux
 [target.x86_64-unknown-linux-gnu]
 linker = "clang"
 rustflags = ["-C", "link-arg=-fuse-ld=lld", "-Zshare-generics=y"]
 
-# Windows
 [target.x86_64-pc-windows-msvc]
 linker = "rust-lld.exe"
 
-# Cranelift
 [unstable]
 codegen-backend = true
 

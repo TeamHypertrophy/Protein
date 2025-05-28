@@ -9,6 +9,9 @@ ______          _       _
         Made with ❤️
 */
 
+// STD
+use std::sync::Arc;
+
 // Rocket
 #[macro_use]
 extern crate rocket;
@@ -17,7 +20,10 @@ extern crate rocket;
 extern crate argon2;
 
 // Vendor Dependencies
+use fred::prelude::Pool;
 use rocket::fs::{FileServer, relative};
+use rocket_prometheus::PrometheusMetrics;
+use lettre::{AsyncSmtpTransport, Tokio1Executor};
 use tokio_cron_scheduler::{Job, JobScheduler};
 use discord_webhook2::webhook::DiscordWebhook;
 use user_agent_parser::UserAgentParser;
@@ -51,7 +57,6 @@ pub mod utils;
 pub mod auth;
 pub mod errors;
 
-// Launch Rocket Instance
 #[launch]
 async fn protein() -> _ {
     // Load Environment Variables
@@ -78,7 +83,7 @@ async fn protein() -> _ {
     };
 
     // PostgreSQL
-    let pool = match db::create().await {
+    let pool: db::DB = match db::create().await {
         Ok(pool) => {
             tracing::info!("[+] ✅ Database Connection Established!");
             pool
@@ -90,7 +95,7 @@ async fn protein() -> _ {
     };
 
     // Redis
-    let redis = match cache::redis::create().await {
+    let redis: Pool = match cache::redis::create().await {
         Ok(redis) => {
             tracing::info!("[+] ✅ Redis Connection Established!");
             redis
@@ -102,7 +107,7 @@ async fn protein() -> _ {
     };
 
     // Email
-    let email = match utils::email::setup().await {
+    let email: AsyncSmtpTransport<Tokio1Executor> = match utils::email::setup().await {
         Ok(email) => {
             tracing::info!("[+] ✅ Email System Initialized!");
             email
@@ -114,25 +119,26 @@ async fn protein() -> _ {
     };
 
     // User Agent Parser
-    let user_agent_parser = match UserAgentParser::from_path(constants::USER_AGENT_PARSER_PATH) {
-        Ok(parser) => {
-            tracing::info!("[+] ✅ User Agent Parser Initialized!");
-            parser
-        }
-        Err(error) => {
-            tracing::error!("[-] ❌ Error Initializing User Agent Parser: {:?}", error);
-            std::process::exit(1)
-        }
-    };
+    let user_agent_parser: UserAgentParser =
+        match UserAgentParser::from_path(constants::USER_AGENT_PARSER_PATH) {
+            Ok(parser) => {
+                tracing::info!("[+] ✅ User Agent Parser Initialized!");
+                parser
+            }
+            Err(error) => {
+                tracing::error!("[-] ❌ Error Initializing User Agent Parser: {:?}", error);
+                std::process::exit(1)
+            }
+        };
 
     // Discord Webhooks
-    let webhook = match DiscordWebhook::new(
+    let webhook: Arc<DiscordWebhook> = match DiscordWebhook::new(
         std::env::var("DISCORD_WEBHOOK_URL")
             .expect("[!] DISCORD_WEBHOOK_URL Environment Variable Must Be Set"),
     ) {
         Ok(webhook) => {
             tracing::info!("[+] ✅ Discord Webhook Initialized!");
-            std::sync::Arc::new(webhook)
+            Arc::new(webhook)
         }
         Err(error) => {
             tracing::error!("[-] ❌ Error Initializing Discord Webhook: {:?}", error);
@@ -150,10 +156,10 @@ async fn protein() -> _ {
     }
 
     // Prometheus Metrics
-    let prometheus = rocket_prometheus::PrometheusMetrics::new();
+    let prometheus: PrometheusMetrics = PrometheusMetrics::new();
 
     // Job Scheduler
-    let scheduler = match JobScheduler::new().await {
+    let scheduler: JobScheduler = match JobScheduler::new().await {
         Ok(mut scheduler) => {
             tracing::info!("[+] ✅ Job Scheduler Initialized!");
 
@@ -167,31 +173,32 @@ async fn protein() -> _ {
 
             let database = pool.clone();
 
-            let job = match Job::new_async(constants::API_KEY_JOB_INTERVAL, move |_uuid, _l| {
-                Box::pin({
-                    let db = database.clone();
-                    async move {
-                        match utils::jobs::verify_api_keys(&db).await {
-                            Ok(_) => tracing::info!("[Scheduler] ✅ API Keys Verified!"),
-                            Err(error) => tracing::error!(
-                                "[Scheduler] ❌ Error Verifying API Keys: {:?}",
-                                error
-                            ),
+            let job: Job =
+                match Job::new_async(constants::API_KEY_JOB_INTERVAL, move |_uuid, _l| {
+                    Box::pin({
+                        let db = database.clone();
+                        async move {
+                            match utils::jobs::verify_api_keys(&db).await {
+                                Ok(_) => tracing::info!("[Scheduler] ✅ API Keys Verified!"),
+                                Err(error) => tracing::error!(
+                                    "[Scheduler] ❌ Error Verifying API Keys: {:?}",
+                                    error
+                                ),
+                            }
                         }
+                    })
+                }) {
+                    Ok(job) => {
+                        tracing::info!("[Scheduler] ✅ API Key Job Created!");
+                        job
                     }
-                })
-            }) {
-                Ok(job) => {
-                    tracing::info!("[Scheduler] ✅ API Key Job Created!");
-                    job
-                }
-                Err(error) => {
-                    tracing::error!("[Scheduler] ❌ Error Creating API Key Job: {:?}", error);
-                    std::process::exit(1)
-                }
-            };
+                    Err(error) => {
+                        tracing::error!("[Scheduler] ❌ Error Creating API Key Job: {:?}", error);
+                        std::process::exit(1)
+                    }
+                };
 
-            let cleanup =
+            let cleanup: Job =
                 match Job::new_async(constants::ASSET_CLEANER_JOB_INTERVAL, move |_uuid, _l| {
                     Box::pin({
                         async move {
@@ -221,7 +228,7 @@ async fn protein() -> _ {
             let db = pool.clone();
             let cache = redis.clone();
 
-            let cacher =
+            let cacher: Job =
                 match Job::new_async(constants::EXERCISE_CACHE_JOB_INTERVAL, move |_uuid, _l| {
                     Box::pin({
                         let db = db.clone();
@@ -308,7 +315,7 @@ async fn protein() -> _ {
         .manage(scheduler)
         .manage(webhook)
         .manage(user_agent_parser)
-        .manage(std::sync::Arc::new(utils::admin::Admin {
+        .manage(Arc::new(utils::admin::Admin {
             routes: std::sync::LazyLock::new(|| {
                 vec![
                     // Calorie Logs

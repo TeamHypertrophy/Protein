@@ -3,7 +3,7 @@ name: protein
 services:
   db:
     container_name: storage
-    image: postgres:17.2-bookworm
+    image: postgres:17.5-bookworm
     environment:
       POSTGRES_USER: postgres
       PGUSER: postgres
@@ -25,7 +25,7 @@ services:
 
   backup_db:
     container_name: backup_db
-    image: postgres:17.2-bookworm
+    image: postgres:17.5-bookworm
     environment:
       POSTGRES_USER: postgres
       PGUSER: postgres
@@ -36,7 +36,7 @@ services:
       - backup_pgdata:/var/lib/postgresql/
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 1m30s
+      interval: 30s
       timeout: 30s
       retries: 5
     ports:
@@ -86,7 +86,7 @@ services:
 
   redis:
     container_name: redis
-    image: "redis:7-alpine"
+    image: "redis:8-alpine"
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -94,7 +94,7 @@ services:
       - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 1m30s
+      interval: 30s
       timeout: 30s
       retries: 5
     profiles:
@@ -129,6 +129,20 @@ services:
     profiles:
       - monitoring
 
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+    profiles:
+      - monitoring
+
   node-exporter:
     image: prom/node-exporter:latest
     container_name: node-exporter
@@ -144,20 +158,6 @@ services:
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
     expose:
       - 9100
-    profiles:
-      - monitoring
-
-  grafana:
-    image: grafana/grafana
-    container_name: grafana
-    ports:
-      - 3000:3000
-    restart: unless-stopped
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=grafana
-    volumes:
-      - grafana_data:/var/lib/grafana
     profiles:
       - monitoring
 
