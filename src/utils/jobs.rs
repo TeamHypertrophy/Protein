@@ -153,7 +153,7 @@ pub async fn clean_assets_directory() -> Result<(), Box<dyn std::error::Error>> 
                         .unwrap_or(&path)
                         .display();
 
-                    tracing::info!("[+] 🗑️ Removing old avatar: {}", relative_path);
+                    tracing::info!("[+] 🗑️ Removing Old Avatar: {}", relative_path);
 
                     // Delete The File
                     std::fs::remove_file(&path)?;
