@@ -389,4 +389,18 @@ impl User {
                 Error::Database(error.to_string())
             })
     }
+
+    pub async fn has_any_admin_users(connection: &mut Conn) -> Result<bool, Error> {
+        let count = users::table
+            .filter(users::role.eq(Role::Admin))
+            .count()
+            .get_result::<i64>(connection)
+            .await
+            .map_err(|error| {
+                tracing::error!("[DB]: {:?}", error);
+                Error::Database(error.to_string())
+            })?;
+
+        Ok(count > 0)
+    }
 }

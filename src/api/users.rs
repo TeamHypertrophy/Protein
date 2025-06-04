@@ -118,7 +118,7 @@ pub async fn signup(
     let ip_address: String = email::get_ip_address(ip)?;
 
     // Create New User Struct
-    let new_user = NewUser {
+    let new_user: NewUser = NewUser {
         username: user.username.clone(),
         password: password_hash,
         email: user.email.clone(),
@@ -153,7 +153,7 @@ pub async fn signup(
     )
     .await?;
 
-    let verification_link = format!(
+    let verification_link: String = format!(
         "{}/users/email/verify?token={}",
         config.host_url, result.email_verification_token
     );
@@ -205,7 +205,7 @@ pub async fn verify_email(
     let user: User = User::find_by_email_verification_token(token, connection).await?;
 
     if !user.email_verified {
-        let verified_user = User::verify_email(user.user_id, connection).await?;
+        let verified_user: User = User::verify_email(user.user_id, connection).await?;
 
         Cache::set(
             redis,
@@ -281,7 +281,7 @@ pub async fn login(
     // If Password Entered == Stored Hashed Password
     if password_matches {
         // Grab Current API Key
-        let api_key = match APIKey::get_current(&result, connection).await {
+        let api_key: APIKey = match APIKey::get_current(&result, connection).await {
             Ok(key) => key,
             Err(_) => {
                 tracing::info!(
@@ -363,7 +363,7 @@ pub async fn login(
             // Generate MFA Code and Expiry
             // MFA Codes Are 6 Digits: 12346
             // Expires By Default In 10 Minutes
-            let mfa_user = User::generate_mfa_code(result.user_id, connection).await?;
+            let mfa_user: User = User::generate_mfa_code(result.user_id, connection).await?;
 
             // Update Cache
             Cache::set(
@@ -375,7 +375,7 @@ pub async fn login(
             .await?;
 
             // Get Successfully Generated Code
-            let code = match mfa_user.mfa_code {
+            let code: String = match mfa_user.mfa_code {
                 Some(ref code) => code.clone(),
                 None => return Err(Error::Internal("MFA Code Not Generated".to_string())),
             };
@@ -612,13 +612,13 @@ pub async fn request_password_reset(
 ) -> Result<status::Accepted<Value>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let user = User::find_by_email(email, connection).await?;
+    let user: User = User::find_by_email(email, connection).await?;
 
     if user.mfa_enabled {
         // Generate MFA Code and Expiry
         // MFA Codes Are 6 Digits: 12346
         // Expires By Default In 10 Minutes
-        let mfa_user = User::generate_mfa_code(user.user_id, connection).await?;
+        let mfa_user: User = User::generate_mfa_code(user.user_id, connection).await?;
 
         // Update Cache
         Cache::set(
@@ -690,10 +690,10 @@ pub async fn reset_password(
     let ip_address: String = email::get_ip_address(&ip)?;
 
     // Get Current User Agent OS
-    let device = email::get_user_agent(&os);
+    let device: String = email::get_user_agent(&os);
 
     // Get User Profile
-    let user = User::find_by_email(data.email.clone(), connection).await?;
+    let user: User = User::find_by_email(data.email.clone(), connection).await?;
 
     if let Some(_code) = user.mfa_code {
         return Err(Error::Authorization(
@@ -702,10 +702,11 @@ pub async fn reset_password(
     }
 
     // Hash Generated Password
-    let hashed_password = password::generate(&config.password_salt, data.password.clone())?;
+    let hashed_password: String = password::generate(&config.password_salt, data.password.clone())?;
 
     // Update User Password With New Hashed Data
-    let updated_user = User::update_password(user.user_id, &hashed_password, connection).await?;
+    let updated_user: User =
+        User::update_password(user.user_id, &hashed_password, connection).await?;
 
     // Update Cache
     Cache::set(
@@ -762,7 +763,7 @@ pub async fn resend_mfa(
 ) -> Result<Json<Value>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let user = User::find(user_id, connection).await?;
+    let user: User = User::find(user_id, connection).await?;
 
     if !user.mfa_enabled {
         return Err(Error::Authorization("MFA Not Enabled".to_string()));
@@ -841,13 +842,13 @@ pub async fn enable_mfa(
 ) -> Result<Json<User>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let user = User::find(user_id, connection).await?;
+    let user: User = User::find(user_id, connection).await?;
 
     if user.mfa_enabled {
         return Err(Error::Authorization("MFA Already Enabled".to_string()));
     }
 
-    let mfa_user = User::enable_mfa(user_id, connection).await?;
+    let mfa_user: User = User::enable_mfa(user_id, connection).await?;
 
     // Update Cache
     Cache::set(redis, Group::Users, user_id, Cache::serialize(&mfa_user)?).await?;
@@ -896,9 +897,9 @@ pub async fn password_request_check_code(
 ) -> Result<Json<Value>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let user = User::find(user_id, connection).await?;
+    let user: User = User::find(user_id, connection).await?;
 
-    let key = match APIKey::get_current(&user, connection).await {
+    let key: APIKey = match APIKey::get_current(&user, connection).await {
         Ok(key) => key,
         Err(_) => {
             tracing::info!(
@@ -906,7 +907,7 @@ pub async fn password_request_check_code(
                 user.username
             );
 
-            let new = APIKey::generate(&user, connection).await?;
+            let new: APIKey = APIKey::generate(&user, connection).await?;
 
             // Set API Key in Cache
             Cache::set(redis, Group::Keys, new.api_key, Cache::serialize(&new)?).await?;
@@ -941,7 +942,7 @@ pub async fn password_request_check_code(
 
         if let Some(ref mfa_code) = user.mfa_code {
             if *mfa_code == code {
-                let result = User::reset_mfa(user_id, connection).await?;
+                let result: User = User::reset_mfa(user_id, connection).await?;
 
                 // Update Cache
                 Cache::set(redis, Group::Users, user_id, Cache::serialize(&result)?).await?;
@@ -982,11 +983,11 @@ pub async fn check_mfa(
     let ip_address: String = email::get_ip_address(ip)?;
 
     // Get Current User Agent OS
-    let device = email::get_user_agent(&os);
+    let device: String = email::get_user_agent(&os);
 
-    let user = User::find(user_id, connection).await?;
+    let user: User = User::find(user_id, connection).await?;
 
-    let key = match APIKey::get_current(&user, connection).await {
+    let key: APIKey = match APIKey::get_current(&user, connection).await {
         Ok(key) => key,
         Err(_) => {
             tracing::info!(
@@ -994,7 +995,7 @@ pub async fn check_mfa(
                 user.username
             );
 
-            let new = APIKey::generate(&user, connection).await?;
+            let new: APIKey = APIKey::generate(&user, connection).await?;
 
             // Set API Key in Cache
             Cache::set(redis, Group::Keys, new.api_key, Cache::serialize(&new)?).await?;
@@ -1029,7 +1030,7 @@ pub async fn check_mfa(
 
         if let Some(ref mfa_code) = user.mfa_code {
             if *mfa_code == code {
-                let result = User::reset_mfa(user_id, connection).await?;
+                let result: User = User::reset_mfa(user_id, connection).await?;
 
                 // Update Cache
                 Cache::set(redis, Group::Users, user_id, Cache::serialize(&result)?).await?;
@@ -1095,10 +1096,10 @@ pub async fn verify_mfa(
     let connection = &mut db::get(pool).await?;
 
     // Find User By Token
-    let user = User::find_by_mfa_verification_token(token, connection).await?;
+    let user: User = User::find_by_mfa_verification_token(token, connection).await?;
 
     if !user.mfa_verified && user.mfa_enabled {
-        let verified_user = User::verify_mfa(user.user_id, connection).await?;
+        let verified_user: User = User::verify_mfa(user.user_id, connection).await?;
 
         Cache::set(
             redis,
@@ -1130,7 +1131,7 @@ pub async fn disable_mfa(
 ) -> Result<Json<User>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let user = User::disable_mfa(user_id, connection).await?;
+    let user: User = User::disable_mfa(user_id, connection).await?;
 
     Cache::set(redis, Group::Users, user_id, Cache::serialize(&user)?).await?;
 
@@ -1169,7 +1170,7 @@ pub async fn get_user_by_email(
 ) -> Result<Json<User>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let user = User::find_by_email(email, connection).await?;
+    let user: User = User::find_by_email(email, connection).await?;
 
     Ok(Json(user))
 }
@@ -1185,7 +1186,7 @@ pub async fn elevate_user(
 ) -> Result<Json<User>, Error> {
     let connection = &mut db::get(pool).await?;
 
-    let result = User::elevate(user, connection).await?;
+    let result: User = User::elevate(user, connection).await?;
 
     Cache::set(
         redis,
@@ -1196,4 +1197,19 @@ pub async fn elevate_user(
     .await?;
 
     Ok(Json(result))
+}
+
+#[get("/admin/has-any", format = "application/json")]
+pub async fn has_any_admin_users(
+    _r: RateLimit<'_>,
+    pool: &State<DB>,
+) -> Result<Json<Value>, Error> {
+    let connection = &mut db::get(pool).await?;
+
+    let has_admin: bool = User::has_any_admin_users(connection).await?;
+
+    Ok(Json(json!({
+        "status": 200,
+        "has_any_admin_users": has_admin,
+    })))
 }

@@ -420,7 +420,8 @@ async fn protein() -> _ {
                 api::users::verify_mfa,
                 api::users::disable_mfa,
                 api::users::resend_mfa,
-                api::users::elevate_user
+                api::users::elevate_user,
+                api::users::has_any_admin_users,
             ],
         )
         .mount(
