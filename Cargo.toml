@@ -45,7 +45,7 @@ rust-argon2 = "2.1"
 dotenvy = "0.15.7"
 # -- Tracing
 tracing = "0.1.41"
-tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 tracing-appender = "0.2.3"
 # -- Redis
 fred = { version = "10.1.0", features = ["serde-json", "i-keys"] }
