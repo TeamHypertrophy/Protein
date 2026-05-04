@@ -56,7 +56,7 @@ discord-webhook2 = "0.4.3"
 askama = "0.14.0"
 lettre = { version = "0.11.15", features = ["tokio1", "tokio1-native-tls"] }
 # -- Random
-rand = "0.9.1"
+rand = "0.10.1"
 
 [workspace.metadata.typos]
 files.extend-exclude = ["regexes.yaml"]
