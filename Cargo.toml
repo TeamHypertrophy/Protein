@@ -50,7 +50,7 @@ tracing-appender = "0.2.3"
 # -- Redis
 fred = { version = "10.1.0", features = ["serde-json", "i-keys"] }
 ## -- Communication
-rocket-sentry = "0.20.0"
+rocket-sentry = "0.24.0"
 discord-webhook2 = "0.4.3"
 ## -- Emailing
 askama = "0.14.0"
