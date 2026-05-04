@@ -54,7 +54,7 @@ rocket-sentry = "0.20.0"
 discord-webhook2 = "0.4.3"
 ## -- Emailing
 askama = "0.14.0"
-lettre = { version = "0.11.15", features = ["tokio1", "tokio1-native-tls"] }
+lettre = { version = "0.11.21", features = ["tokio1", "tokio1-native-tls"] }
 # -- Random
 rand = "0.9.1"
 
